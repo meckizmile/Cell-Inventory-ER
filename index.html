@@ -449,7 +449,7 @@
       height: auto;
       min-height: 100vh;
       padding: 4px;
-      padding-bottom: 60px; /* Space for floating bar */
+      padding-bottom: 60px;
     }
 
     .app-card {
@@ -516,8 +516,6 @@
         <p>North & South Zone • Anode & Cathode Setting</p>
       </div>
       <div class="header-actions">
-        <button onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
-        <button onclick="redo()" title="Redo (Ctrl+Y)">↪ Redo</button>
         <div class="update-badge" id="liveClock">00:00:00</div>
       </div>
     </div>
@@ -636,15 +634,7 @@
         </div>
 
         <div class="action-box" id="inspectorControls" style="display: none;">
-          <h4>1. Mobile / Quick Actions:</h4>
-          <div class="status-btn-grid">
-            <button onclick="copyActiveCell()">📋 Copy</button>
-            <button onclick="pasteActiveCell()">📋 Paste</button>
-            <button onclick="undo()">↩ Undo</button>
-            <button onclick="redo()">↪ Redo</button>
-          </div>
-
-          <h4>2. Cell Anode Status:</h4>
+          <h4>1. Cell Anode Status:</h4>
           <div class="status-btn-grid">
             <button onclick="updateActiveCellAnode('63 FL')">63 FL [1]</button>
             <button onclick="updateActiveCellAnode('62 KU')">62 KU [2]</button>
@@ -652,17 +642,17 @@
             <button onclick="updateActiveCellAnode('NONE')">Clear Anode</button>
           </div>
 
-          <h4>3. Cell Cathode Status:</h4>
+          <h4>2. Cell Cathode Status:</h4>
           <div class="status-btn-grid">
             <button style="background:var(--copper); color:#1a0800; font-weight:bold; border-color:var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH [C]</button>
             <button style="background:var(--stainless); color:#0f172a; font-weight:bold; border-color:var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS Blank [S]</button>
             <button style="grid-column: span 2;" onclick="updateActiveCellCathode('NONE')">Clear Cathode</button>
           </div>
 
-          <h4>4. Clear Options:</h4>
+          <h4>3. Clear Options:</h4>
           <button style="width: 100%; color: var(--error);" onclick="clearCellCompletely()">Clear / Delete Cell [Del]</button>
 
-          <h4>5. Set Group Harvest:</h4>
+          <h4>4. Set Group Harvest:</h4>
           <div class="status-btn-grid">
             <button class="crop-c1" onclick="updateActiveGroupCrop('Crop 1')">Crop 1</button>
             <button class="crop-c2" onclick="updateActiveGroupCrop('Crop 2')">Crop 2</button>
@@ -684,8 +674,6 @@
 
 <!-- Floating Action Bar for Mobile -->
 <div class="mobile-quick-bar" id="mobileQuickBar">
-  <button onclick="undo()" title="Undo">↩</button>
-  <button onclick="redo()" title="Redo">↪</button>
   <button onclick="copyActiveCell()">📋 Copy</button>
   <button onclick="pasteActiveCell()">📋 Paste</button>
   <button class="btn-danger" onclick="clearCellCompletely()">🗑️ Del</button>
@@ -704,6 +692,8 @@
   let plantData = [];
   let currentPhaseFilter = 'ALL';
   let activeSelectedCell = null;
+  let selectionAnchor = null;
+  let selectedCellsList = [];
   let copiedCellData = null;
 
   let undoStack = [];
@@ -754,32 +744,41 @@
   }
 
   function copyActiveCell() {
-    if (activeSelectedCell) {
-      let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
-      let cell = grp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+    let targets = getActiveTargets();
+    if (targets.length > 0) {
+      let first = targets[0];
+      let grp = plantData.find(g => g.groupId === first.groupId);
+      let cell = grp.cells.find(c => c.cellNum === first.cellNum);
       copiedCellData = {
         anodeStatus: cell.anodeStatus,
         cathodeStatus: cell.cathodeStatus,
         pcs: cell.pcs
       };
-      showToast(`Copied: G${grp.groupId}-${cell.cellId}`);
+      showToast(`Copied (${targets.length} Cell)`);
     } else {
       showToast("Select a cell first");
     }
   }
 
   function pasteActiveCell() {
-    if (activeSelectedCell && copiedCellData) {
+    let targets = getActiveTargets();
+    if (targets.length > 0 && copiedCellData) {
       saveState();
-      let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
-      let cell = grp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
-      cell.anodeStatus = copiedCellData.anodeStatus;
-      cell.cathodeStatus = copiedCellData.cathodeStatus;
-      cell.pcs = copiedCellData.pcs;
-      selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
-      showToast(`Pasted to G${grp.groupId}-${cell.cellId}`);
+      targets.forEach(t => {
+        let grp = plantData.find(g => g.groupId === t.groupId);
+        if (grp) {
+          let cell = grp.cells.find(c => c.cellNum === t.cellNum);
+          if (cell) {
+            cell.anodeStatus = copiedCellData.anodeStatus;
+            cell.cathodeStatus = copiedCellData.cathodeStatus;
+            cell.pcs = copiedCellData.pcs;
+          }
+        }
+      });
+      renderMatrix();
+      showToast(`Pasted to ${targets.length} Cell`);
       syncToCloud();
-    } else if (!activeSelectedCell) {
+    } else if (targets.length === 0) {
       showToast("Select a cell first");
     } else {
       showToast("No copied cell data");
@@ -788,6 +787,8 @@
 
   function deselectCell() {
     activeSelectedCell = null;
+    selectionAnchor = null;
+    selectedCellsList = [];
     document.getElementById('inspectorControls').style.display = 'none';
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'none';
@@ -797,6 +798,12 @@
       </div>
     `;
     renderMatrix();
+  }
+
+  function getActiveTargets() {
+    if (selectedCellsList.length > 0) return selectedCellsList;
+    if (activeSelectedCell) return [activeSelectedCell];
+    return [];
   }
 
   function showToast(msg) {
@@ -978,9 +985,11 @@
         let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
 
         let hasCathodeGlow = (c.cathodeStatus === 'CATH' || c.cathodeStatus === 'SS') ? 'cell-glow' : '';
-        let isSelected = activeSelectedCell && activeSelectedCell.groupId === g.groupId && activeSelectedCell.cellNum === c.cellNum;
+        let isSelected = selectedCellsList.some(sc => sc.groupId === g.groupId && sc.cellNum === c.cellNum) || (activeSelectedCell && activeSelectedCell.groupId === g.groupId && activeSelectedCell.cellNum === c.cellNum);
 
         cellDiv.className = `cell-card ${statusClass} ${hasCathodeGlow} ${isSelected ? 'selected' : ''}`;
+        cellDiv.setAttribute('data-group', g.groupId);
+        cellDiv.setAttribute('data-cell', c.cellNum);
         cellDiv.onclick = (e) => selectCell(g.groupId, c.cellNum, e);
 
         let html = `<div class="cell-id">${c.cellId}</div>`;
@@ -1008,75 +1017,63 @@
     }, 40);
   }
 
-  function selectCell(gId, cNum, event, skipPasteLogic = false) {
-    let grp = plantData.find(g => g.groupId === gId);
-    let cell = grp.cells.find(c => c.cellNum === cNum);
+  function selectRangeTo(targetGId, targetCNum) {
+    if (!selectionAnchor) {
+      selectionAnchor = { groupId: targetGId, cellNum: targetCNum };
+    }
+    
+    let allCardEls = Array.from(document.querySelectorAll('.cell-card'));
+    let anchorEl = document.querySelector(`.cell-card[data-group="${selectionAnchor.groupId}"][data-cell="${selectionAnchor.cellNum}"]`);
+    let targetEl = document.querySelector(`.cell-card[data-group="${targetGId}"][data-cell="${targetCNum}"]`);
 
-    if (!skipPasteLogic) {
-      if (event && event.shiftKey && activeSelectedCell) {
-        let sourceData = copiedCellData;
+    if (anchorEl && targetEl) {
+      let idx1 = allCardEls.indexOf(anchorEl);
+      let idx2 = allCardEls.indexOf(targetEl);
+      let minIdx = Math.min(idx1, idx2);
+      let maxIdx = Math.max(idx1, idx2);
 
-        if (!sourceData) {
-          let prevGrp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
-          let prevCell = prevGrp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
-          sourceData = {
-            anodeStatus: prevCell.anodeStatus,
-            cathodeStatus: prevCell.cathodeStatus,
-            pcs: prevCell.pcs
-          };
-          copiedCellData = sourceData;
-        }
-
-        saveState();
-
-        if (activeSelectedCell.groupId === gId) {
-          let startNum = Math.min(activeSelectedCell.cellNum, cNum);
-          let endNum = Math.max(activeSelectedCell.cellNum, cNum);
-
-          for (let i = startNum; i <= endNum; i++) {
-            let targetC = grp.cells.find(c => c.cellNum === i);
-            if (targetC) {
-              targetC.anodeStatus = sourceData.anodeStatus;
-              targetC.cathodeStatus = sourceData.cathodeStatus;
-              targetC.pcs = sourceData.pcs;
-            }
-          }
-
-          let sFormatted = startNum < 10 ? '0' + startNum : startNum;
-          let eFormatted = endNum < 10 ? '0' + endNum : endNum;
-          showToast(`Range Paste: G${gId} (C${sFormatted}-C${eFormatted})`);
-        } else {
-          cell.anodeStatus = sourceData.anodeStatus;
-          cell.cathodeStatus = sourceData.cathodeStatus;
-          cell.pcs = sourceData.pcs;
-          showToast(`Pasted to G${gId}-${cell.cellId}`);
-        }
-        syncToCloud();
-      } else if (event && (event.ctrlKey || event.metaKey)) {
-        saveState();
-        if (copiedCellData) {
-          cell.anodeStatus = copiedCellData.anodeStatus;
-          cell.cathodeStatus = copiedCellData.cathodeStatus;
-          cell.pcs = copiedCellData.pcs;
-          showToast(`Pasted to G${gId}-${cell.cellId}`);
-        } else if (activeSelectedCell) {
-          let prevGrp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
-          let prevCell = prevGrp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
-          cell.anodeStatus = prevCell.anodeStatus;
-          cell.cathodeStatus = prevCell.cathodeStatus;
-          cell.pcs = prevCell.pcs;
-          copiedCellData = {
-            anodeStatus: prevCell.anodeStatus,
-            cathodeStatus: prevCell.cathodeStatus,
-            pcs: prevCell.pcs
-          };
-          showToast(`Pasted to G${gId}-${cell.cellId}`);
-        }
-        syncToCloud();
+      selectedCellsList = [];
+      for (let i = minIdx; i <= maxIdx; i++) {
+        let el = allCardEls[i];
+        selectedCellsList.push({
+          groupId: parseInt(el.getAttribute('data-group')),
+          cellNum: parseInt(el.getAttribute('data-cell'))
+        });
       }
+    } else {
+      selectedCellsList = [{ groupId: targetGId, cellNum: targetCNum }];
     }
 
+    activeSelectedCell = { groupId: targetGId, cellNum: targetCNum };
+
+    document.getElementById('inspectorControls').style.display = 'flex';
+    let mb = document.getElementById('mobileQuickBar');
+    if (mb) mb.style.display = 'flex';
+
+    let grp = plantData.find(g => g.groupId === targetGId);
+    let cell = grp.cells.find(c => c.cellNum === targetCNum);
+    
+    document.getElementById('inspectorContent').innerHTML = `
+      <div class="detail-row"><span class="detail-label">Selection:</span><span class="detail-val" style="color:var(--primary);">${selectedCellsList.length} Cell Marked</span></div>
+      <div class="detail-row"><span class="detail-label">Focus Cell:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
+      <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
+    `;
+
+    renderMatrix();
+  }
+
+  function selectCell(gId, cNum, event, skipRangeLogic = false) {
+    if (!skipRangeLogic && event && event.shiftKey && selectionAnchor) {
+      selectRangeTo(gId, cNum);
+      return;
+    }
+
+    selectionAnchor = { groupId: gId, cellNum: cNum };
     activeSelectedCell = { groupId: gId, cellNum: cNum };
+    selectedCellsList = [{ groupId: gId, cellNum: cNum }];
+
+    let grp = plantData.find(g => g.groupId === gId);
+    let cell = grp.cells.find(c => c.cellNum === cNum);
 
     document.getElementById('inspectorControls').style.display = 'flex';
     let mb = document.getElementById('mobileQuickBar');
@@ -1094,36 +1091,49 @@
   }
 
   function updateActiveCellAnode(val) {
-    if(!activeSelectedCell) return;
+    let targets = getActiveTargets();
+    if(targets.length === 0) return;
     saveState();
-    let cell = plantData.find(g => g.groupId === activeSelectedCell.groupId).cells.find(c => c.cellNum === activeSelectedCell.cellNum);
-    cell.anodeStatus = val;
-    cell.pcs = val === '63 FL' ? 63 : (val === '62 KU' || val === '62 KS' ? 62 : 0);
+    targets.forEach(t => {
+      let cell = plantData.find(g => g.groupId === t.groupId).cells.find(c => c.cellNum === t.cellNum);
+      cell.anodeStatus = val;
+      cell.pcs = val === '63 FL' ? 63 : (val === '62 KU' || val === '62 KS' ? 62 : 0);
+    });
+    let last = targets[targets.length - 1];
+    let cell = plantData.find(g => g.groupId === last.groupId).cells.find(c => c.cellNum === last.cellNum);
     copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
-    selectCell(activeSelectedCell.groupId, cell.cellNum, null, true);
+    renderMatrix();
     syncToCloud();
   }
 
   function updateActiveCellCathode(val) {
-    if(!activeSelectedCell) return;
+    let targets = getActiveTargets();
+    if(targets.length === 0) return;
     saveState();
-    let cell = plantData.find(g => g.groupId === activeSelectedCell.groupId).cells.find(c => c.cellNum === activeSelectedCell.cellNum);
-    cell.cathodeStatus = val;
+    targets.forEach(t => {
+      let cell = plantData.find(g => g.groupId === t.groupId).cells.find(c => c.cellNum === t.cellNum);
+      cell.cathodeStatus = val;
+    });
+    let last = targets[targets.length - 1];
+    let cell = plantData.find(g => g.groupId === last.groupId).cells.find(c => c.cellNum === last.cellNum);
     copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
-    selectCell(activeSelectedCell.groupId, cell.cellNum, null, true);
+    renderMatrix();
     syncToCloud();
   }
 
   function clearCellCompletely() {
-    if(!activeSelectedCell) return;
+    let targets = getActiveTargets();
+    if(targets.length === 0) return;
     saveState();
-    let cell = plantData.find(g => g.groupId === activeSelectedCell.groupId).cells.find(c => c.cellNum === activeSelectedCell.cellNum);
-    cell.anodeStatus = 'NONE';
-    cell.cathodeStatus = 'NONE';
-    cell.pcs = 0;
+    targets.forEach(t => {
+      let cell = plantData.find(g => g.groupId === t.groupId).cells.find(c => c.cellNum === t.cellNum);
+      cell.anodeStatus = 'NONE';
+      cell.cathodeStatus = 'NONE';
+      cell.pcs = 0;
+    });
     copiedCellData = { anodeStatus: 'NONE', cathodeStatus: 'NONE', pcs: 0 };
-    selectCell(activeSelectedCell.groupId, cell.cellNum, null, true);
-    showToast(`Cleared: G${activeSelectedCell.groupId}-${cell.cellId}`);
+    renderMatrix();
+    showToast(`Cleared (${targets.length} Cell)`);
     syncToCloud();
   }
 
@@ -1132,7 +1142,7 @@
     saveState();
     let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
     grp.cropStatus = val;
-    selectCell(grp.groupId, activeSelectedCell.cellNum, null, true);
+    renderMatrix();
     syncToCloud();
   }
 
@@ -1141,8 +1151,7 @@
     let grp = plantData.find(g => g.groupId === gId);
     let crops = ['-', 'Crop 1', 'Crop 2', 'Crop 3'];
     grp.cropStatus = crops[(crops.indexOf(grp.cropStatus) + 1) % crops.length];
-    if (activeSelectedCell && activeSelectedCell.groupId === gId) selectCell(gId, activeSelectedCell.cellNum, null, true);
-    else renderMatrix();
+    renderMatrix();
     syncToCloud();
   }
 
@@ -1348,6 +1357,50 @@
     setTimeout(() => { btn.textContent = oldText; }, 1500);
   }
 
+  // Cari cell terdekat secara visual berdasarkan posisi Bounding Box (Visual Grid Position)
+  function getVisualNeighborCell(direction) {
+    const currentEl = document.querySelector('.cell-card.selected');
+    if (!currentEl) return null;
+    
+    const currentRect = currentEl.getBoundingClientRect();
+    const currentX = currentRect.left + currentRect.width / 2;
+    const currentY = currentRect.top + currentRect.height / 2;
+    
+    const allCells = Array.from(document.querySelectorAll('.cell-card'));
+    let candidates = [];
+    
+    allCells.forEach(el => {
+      if (el === currentEl) return;
+      const rect = el.getBoundingClientRect();
+      const x = rect.left + rect.width / 2;
+      const y = rect.top + rect.height / 2;
+      
+      if (direction === 'down' && y > currentY + 10) {
+        candidates.push({
+          gId: parseInt(el.getAttribute('data-group')),
+          cNum: parseInt(el.getAttribute('data-cell')),
+          dy: y - currentY,
+          dx: Math.abs(x - currentX)
+        });
+      } else if (direction === 'up' && y < currentY - 10) {
+        candidates.push({
+          gId: parseInt(el.getAttribute('data-group')),
+          cNum: parseInt(el.getAttribute('data-cell')),
+          dy: currentY - y,
+          dx: Math.abs(x - currentX)
+        });
+      }
+    });
+    
+    if (candidates.length === 0) return null;
+    
+    const minDy = Math.min(...candidates.map(c => c.dy));
+    const rowCandidates = candidates.filter(c => c.dy <= minDy + 15);
+    rowCandidates.sort((a, b) => a.dx - b.dx);
+    
+    return { groupId: rowCandidates[0].gId, cellNum: rowCandidates[0].cNum };
+  }
+
   document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
 
@@ -1372,7 +1425,7 @@
     }
 
     if (e.key === 'Delete' || e.key === 'Del' || e.key === 'Backspace') {
-      if (activeSelectedCell) {
+      if (activeSelectedCell || selectedCellsList.length > 0) {
         e.preventDefault();
         clearCellCompletely();
       }
@@ -1394,38 +1447,45 @@
       
       let curG = activeSelectedCell.groupId;
       let curC = activeSelectedCell.cellNum;
+      let targetG = curG;
+      let targetC = curC;
 
       if (e.key === 'ArrowLeft') {
         if (curC > 1) {
-          selectCell(curG, curC - 1, null, true);
+          targetC = curC - 1;
         } else if (curG > 1) {
           let prevGroup = plantData.find(g => g.groupId === curG - 1);
-          if (prevGroup) selectCell(curG - 1, prevGroup.cellCount, null, true);
+          if (prevGroup) {
+            targetG = curG - 1;
+            targetC = prevGroup.cellCount;
+          }
         }
       } else if (e.key === 'ArrowRight') {
         let grp = plantData.find(g => g.groupId === curG);
         if (curC < grp.cellCount) {
-          selectCell(curG, curC + 1, null, true);
+          targetC = curC + 1;
         } else if (curG < 48) {
-          selectCell(curG + 1, 1, null, true);
+          targetG = curG + 1;
+          targetC = 1;
         }
-      } else if (e.key === 'ArrowUp') {
-        if (curG > 1) {
-          let prevGrp = plantData.find(g => g.groupId === curG - 1);
-          let targetC = Math.min(curC, prevGrp.cellCount);
-          selectCell(curG - 1, targetC, null, true);
+      } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        const dir = e.key === 'ArrowDown' ? 'down' : 'up';
+        const neighbor = getVisualNeighborCell(dir);
+        if (neighbor) {
+          targetG = neighbor.groupId;
+          targetC = neighbor.cellNum;
         }
-      } else if (e.key === 'ArrowDown') {
-        if (curG < 48) {
-          let nextGrp = plantData.find(g => g.groupId === curG + 1);
-          let targetC = Math.min(curC, nextGrp.cellCount);
-          selectCell(curG + 1, targetC, null, true);
-        }
+      }
+
+      if (e.shiftKey) {
+        selectRangeTo(targetG, targetC);
+      } else {
+        selectCell(targetG, targetC, null, true);
       }
       return;
     }
 
-    if (activeSelectedCell && !e.ctrlKey && !e.metaKey && !e.altKey) {
+    if ((activeSelectedCell || selectedCellsList.length > 0) && !e.ctrlKey && !e.metaKey && !e.altKey) {
       let key = e.key.toLowerCase();
       if (key === '1') {
         e.preventDefault();
@@ -1438,14 +1498,10 @@
         updateActiveCellAnode('62 KS');
       } else if (key === 'c') {
         e.preventDefault();
-        let cell = plantData.find(g => g.groupId === activeSelectedCell.groupId).cells.find(c => c.cellNum === activeSelectedCell.cellNum);
-        let newCath = cell.cathodeStatus === 'CATH' ? 'NONE' : 'CATH';
-        updateActiveCellCathode(newCath);
+        updateActiveCellCathode('CATH');
       } else if (key === 's') {
         e.preventDefault();
-        let cell = plantData.find(g => g.groupId === activeSelectedCell.groupId).cells.find(c => c.cellNum === activeSelectedCell.cellNum);
-        let newCath = cell.cathodeStatus === 'SS' ? 'NONE' : 'SS';
-        updateActiveCellCathode(newCath);
+        updateActiveCellCathode('SS');
       } else if (key === '0') {
         e.preventDefault();
         clearCellCompletely();
