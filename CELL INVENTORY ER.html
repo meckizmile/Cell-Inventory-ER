@@ -1,0 +1,1377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cell Inventory</title>
+
+<!-- html2canvas Library -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<!-- Firebase Realtime Database SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+<style>
+  :root {
+    --body-bg: #0f0f0f;
+    --surface: #141414;
+    --surface-dim: #1c1c1c;
+    --surface-container-high: #2c2f38;
+    --on-surface: #e0e0e0;
+    --on-surface-variant: rgba(255, 255, 255, 0.6);
+    --primary: #9dd2ff;
+    --primary-container: #192967;
+    --positive: #0ebc5f;
+    --positive-container: #002220;
+    --error: #ff4c45;
+    --error-container: #3c0202;
+    --stroke-default: #2d2f38;
+    --chart-8: #f5d77f;
+    --copper: #d97724;
+    --copper-border: #f39c63;
+    --stainless: #90a4ae;
+    --stainless-border: #b0bec5;
+    --ff-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --ff-mono: monospace;
+    --r-s: 6px;
+    --r-m: 10px;
+    --r-full: 999px;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: var(--ff-sans);
+  }
+
+  html, body {
+    width: 100vw;
+    height: 100vh;
+    background: var(--body-bg);
+    color: var(--on-surface);
+    font-size: 11px;
+    overflow: hidden;
+  }
+
+  .widget-container {
+    width: 100%;
+    height: 100vh;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .app-card {
+    background: var(--surface);
+    border-radius: var(--r-m);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    border: 1px solid var(--stroke-default);
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--stroke-default);
+  }
+  
+  .title-area h1 {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--on-surface);
+  }
+  
+  .title-area p {
+    color: var(--on-surface-variant);
+    font-size: 11px;
+  }
+  
+  .header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .update-badge {
+    background: var(--surface-dim);
+    border: 1px solid var(--stroke-default);
+    padding: 2px 8px;
+    border-radius: var(--r-full);
+    font-size: 11px;
+    font-family: var(--ff-mono);
+    color: var(--on-surface-variant);
+  }
+
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 26px;
+    padding: 2px 10px;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--on-surface);
+    background-color: var(--surface-dim);
+    border: 1px solid var(--stroke-default);
+    border-radius: var(--r-full);
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: var(--surface-container-high);
+  }
+
+  .btn-primary {
+    background-color: var(--primary);
+    color: #192967;
+    border-color: transparent;
+    font-weight: 600;
+  }
+
+  .btn-danger {
+    background-color: var(--error-container);
+    color: var(--error);
+    border-color: transparent;
+    font-weight: 600;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 6px;
+  }
+  
+  .kpi-card {
+    background: var(--surface-dim);
+    border-radius: var(--r-s);
+    padding: 6px 8px;
+    border: 1px solid var(--stroke-default);
+  }
+  
+  .kpi-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--on-surface-variant);
+    font-weight: 600;
+  }
+  
+  .kpi-value {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--on-surface);
+  }
+  
+  .kpi-sub {
+    font-size: 10px;
+    color: var(--on-surface-variant);
+  }
+
+  .controls-bar {
+    background: var(--surface-dim);
+    border-radius: var(--r-s);
+    border: 1px solid var(--stroke-default);
+    padding: 6px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    align-items: flex-end;
+  }
+
+  .control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  
+  .control-group label {
+    font-size: 10px;
+    color: var(--on-surface-variant);
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+  
+  .segmented-pills {
+    display: flex;
+    gap: 2px;
+  }
+
+  .lumi-chip {
+    padding: 0 6px;
+    min-height: 24px;
+    font-size: 10px;
+    background: var(--surface);
+    border: 1px solid var(--stroke-default);
+    border-radius: var(--r-full);
+    color: var(--on-surface);
+    cursor: pointer;
+  }
+  .lumi-chip.is-active {
+    background: var(--primary-container);
+    color: var(--primary);
+    border-color: transparent;
+    font-weight: 600;
+  }
+
+  select.lumi-select {
+    width: 100%;
+    padding: 4px 6px;
+    border: 1px solid var(--stroke-default);
+    border-radius: var(--r-full);
+    background-color: var(--surface);
+    color: var(--on-surface);
+    font-size: 11px;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .main-content {
+    display: grid;
+    grid-template-columns: 1fr 310px;
+    gap: 8px;
+    flex: 1;
+    min-height: 0;
+  }
+
+  .matrix-box {
+    background: var(--surface-dim);
+    border-radius: var(--r-s);
+    border: 1px solid var(--stroke-default);
+    padding: 8px;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .group-section {
+    margin-bottom: 10px;
+  }
+
+  .group-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
+    border-bottom: 1px dashed var(--stroke-default);
+  }
+
+  .group-title {
+    font-weight: 700;
+    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .crop-tag {
+    padding: 1px 6px;
+    border-radius: var(--r-full);
+    font-size: 10px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .crop-c1 { background: var(--positive-container); color: var(--positive); }
+  .crop-c2 { background: var(--primary-container); color: var(--primary); }
+  .crop-c3 { background: var(--error-container); color: var(--error); }
+  .crop-none { background: var(--surface); color: var(--on-surface-variant); }
+
+  .cell-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+    gap: 4px;
+  }
+
+  .cell-card {
+    background: var(--surface);
+    border: 1px solid var(--stroke-default);
+    border-radius: var(--r-s);
+    padding: 2px;
+    text-align: center;
+    cursor: pointer;
+    position: relative;
+    min-height: 42px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    transition: all 0.15s ease;
+    user-select: none;
+  }
+  .cell-card:hover {
+    background: var(--surface-container-high);
+  }
+
+  .cell-glow {
+    background: #132247 !important;
+    border: 1.5px solid #80c8ff !important;
+    box-shadow: 0 0 8px #3b82f6, inset 0 0 4px rgba(128, 200, 255, 0.4) !important;
+    opacity: 1 !important;
+  }
+
+  .cell-card.selected {
+    border-color: #ffffff !important;
+    box-shadow: 0 0 10px #ffffff, 0 0 4px var(--primary) !important;
+  }
+
+  .cell-id {
+    font-size: 10px;
+    font-family: var(--ff-mono);
+    font-weight: 700;
+    color: var(--on-surface);
+  }
+
+  .cell-status {
+    font-size: 10px;
+    font-weight: 700;
+  }
+
+  .cathode-tag {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 1px 4px;
+    border-radius: 3px;
+    margin-top: 2px;
+    letter-spacing: 0.2px;
+  }
+  
+  .tag-cath { 
+    background: var(--copper); 
+    color: #1a0800; 
+    border: 1px solid var(--copper-border);
+    box-shadow: 0 0 5px rgba(217, 119, 36, 0.5);
+  }
+
+  .tag-ss { 
+    background: var(--stainless); 
+    color: #0f172a; 
+    border: 1px solid var(--stainless-border);
+    box-shadow: 0 0 5px rgba(144, 164, 174, 0.5);
+  }
+
+  .cell-63 { border-color: var(--positive); }
+  .cell-63 .cell-status { color: var(--positive); }
+  .cell-62ku { border-color: var(--primary); }
+  .cell-62ku .cell-status { color: var(--primary); }
+  .cell-62ks { border-color: var(--chart-8); }
+  .cell-62ks .cell-status { color: var(--chart-8); }
+  
+  .cell-blank {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px dashed rgba(255, 255, 255, 0.15);
+    opacity: 0.5;
+  }
+
+  .inspector-panel {
+    background: var(--surface-dim);
+    border-radius: var(--r-s);
+    border: 1px solid var(--stroke-default);
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    height: 100%;
+    overflow-y: auto;
+  }
+
+  .inspector-title {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: var(--on-surface-variant);
+    border-bottom: 1px solid var(--stroke-default);
+    padding-bottom: 4px;
+  }
+
+  .detail-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+  .detail-label { color: var(--on-surface-variant); }
+  .detail-val { font-weight: 600; color: var(--on-surface); }
+
+  .action-box {
+    background: var(--surface);
+    padding: 6px;
+    border-radius: var(--r-s);
+    border: 1px solid var(--stroke-default);
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .action-box h4 {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: var(--on-surface-variant);
+    font-weight: 600;
+  }
+
+  .status-btn-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 4px;
+  }
+
+  .wa-textarea {
+    width: 100%;
+    height: 120px;
+    background: var(--surface);
+    border: 1px solid var(--stroke-default);
+    color: var(--on-surface);
+    font-family: var(--ff-mono);
+    font-size: 10px;
+    padding: 6px;
+    border-radius: var(--r-s);
+    resize: none;
+    outline: none;
+    line-height: 1.4;
+  }
+
+  @media (max-width: 900px) {
+    html, body {
+      height: auto;
+      min-height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .widget-container {
+      height: auto;
+      min-height: 100vh;
+      padding: 4px;
+    }
+
+    .app-card {
+      height: auto;
+      overflow: visible;
+      padding: 8px;
+    }
+
+    .kpi-grid {
+      grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+    }
+
+    .controls-bar {
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    }
+
+    .main-content {
+      grid-template-columns: 1fr;
+      height: auto;
+      flex: none;
+    }
+
+    .matrix-box {
+      max-height: 55vh;
+      height: auto;
+    }
+
+    .inspector-panel {
+      height: auto;
+      max-height: none;
+    }
+
+    .cell-grid {
+      grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="widget-container">
+  <div class="app-card" id="captureArea">
+    
+    <div class="header">
+      <div class="title-area">
+        <h1>Cell Inventory</h1>
+        <p>North & South Zone • Anode & Cathode Setting</p>
+      </div>
+      <div class="header-actions">
+        <button class="btn-primary" id="exportBtn" onclick="exportToJPG()">Export JPG</button>
+        <div class="update-badge" id="liveClock">00:00:00</div>
+      </div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label">Total Anodes</div>
+        <div class="kpi-value" id="kpiTotalAnode" style="color: var(--primary);">0</div>
+        <div class="kpi-sub" id="kpiTotalAnodeNS">N: 0 • S: 0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Anode 63 FL</div>
+        <div class="kpi-value" id="kpiCount63" style="color: var(--positive);">0</div>
+        <div class="kpi-sub" id="kpiCount63NS">N: 0 • S: 0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Anode 62 KU</div>
+        <div class="kpi-value" id="kpiCount62KU" style="color: var(--primary);">0</div>
+        <div class="kpi-sub" id="kpiCount62KUNS">N: 0 • S: 0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Anode 62 KS</div>
+        <div class="kpi-value" id="kpiCount62KS" style="color: var(--chart-8);">0</div>
+        <div class="kpi-sub" id="kpiCount62KSNS">N: 0 • S: 0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">Cathodes (CATH)</div>
+        <div class="kpi-value" id="kpiCathodeCount" style="color: var(--copper);">0</div>
+        <div class="kpi-sub" id="kpiCathodeNS">N: 0 • S: 0</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label">SS Blanks</div>
+        <div class="kpi-value" id="kpiSSCount" style="color: var(--stainless);">0</div>
+        <div class="kpi-sub" id="kpiSSNS">N: 0 • S: 0</div>
+      </div>
+    </div>
+
+    <div class="controls-bar">
+      <div class="control-group">
+        <label>Phase</label>
+        <div class="segmented-pills">
+          <button class="lumi-chip is-active" onclick="setPhaseFilter('ALL', this)">All</button>
+          <button class="lumi-chip" onclick="setPhaseFilter(1, this)">P1</button>
+          <button class="lumi-chip" onclick="setPhaseFilter(2, this)">P2</button>
+          <button class="lumi-chip" onclick="setPhaseFilter(3, this)">P3</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <label>Cell View</label>
+        <select class="lumi-select" id="contentSelect" onchange="renderMatrix()">
+          <option value="ALL">All Cells</option>
+          <option value="FILLED" selected>Filled Cells Only</option>
+          <option value="EMPTY">Empty Cells Only</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Zone</label>
+        <select class="lumi-select" id="zoneSelect" onchange="renderMatrix()">
+          <option value="ALL">All Zones</option>
+          <option value="North">North</option>
+          <option value="South">South</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Group</label>
+        <select class="lumi-select" id="groupSelect" onchange="renderMatrix()">
+          <option value="ALL">All Groups</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Anode</label>
+        <select class="lumi-select" id="statusSelect" onchange="renderMatrix()">
+          <option value="ALL">All Anodes</option>
+          <option value="63 FL">63 FL</option>
+          <option value="62 KU">62 KU</option>
+          <option value="62 KS">62 KS</option>
+          <option value="NONE">Empty</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Cathode</label>
+        <select class="lumi-select" id="cathSelect" onchange="renderMatrix()">
+          <option value="ALL">All Cathodes</option>
+          <option value="CATH">CATH</option>
+          <option value="SS">SS Blank</option>
+          <option value="NONE">Empty</option>
+        </select>
+      </div>
+
+      <div class="control-group">
+        <label>Clear Cell Data</label>
+        <div class="segmented-pills">
+          <button onclick="kosongkanIsianPhase(1)">Clear P1</button>
+          <button onclick="kosongkanIsianPhase(2)">Clear P2</button>
+          <button onclick="kosongkanIsianPhase(3)">Clear P3</button>
+          <button class="btn-danger" onclick="kosongkanIsianPhase('ALL')">Clear All</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-content">
+      <div class="matrix-box" id="matrixContainer"></div>
+
+      <div class="inspector-panel">
+        <div class="inspector-title">Cell Settings</div>
+        
+        <div id="inspectorContent">
+          <div style="text-align: center; color: var(--on-surface-variant); padding: 6px 0; font-size: 11px;">
+            Click a cell in the grid to configure status.
+          </div>
+        </div>
+
+        <div class="action-box" id="inspectorControls" style="display: none;">
+          <h4>1. Cell Anode Status:</h4>
+          <div class="status-btn-grid">
+            <button onclick="updateActiveCellAnode('63 FL')">63 FL [1]</button>
+            <button onclick="updateActiveCellAnode('62 KU')">62 KU [2]</button>
+            <button onclick="updateActiveCellAnode('62 KS')">62 KS [3]</button>
+            <button onclick="updateActiveCellAnode('NONE')">Clear Anode</button>
+          </div>
+
+          <h4>2. Cell Cathode Status:</h4>
+          <div class="status-btn-grid">
+            <button style="background:var(--copper); color:#1a0800; font-weight:bold; border-color:var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH [C]</button>
+            <button style="background:var(--stainless); color:#0f172a; font-weight:bold; border-color:var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS Blank [S]</button>
+            <button style="grid-column: span 2;" onclick="updateActiveCellCathode('NONE')">Clear Cathode</button>
+          </div>
+
+          <h4>3. Clear Options:</h4>
+          <button style="width: 100%; color: var(--error);" onclick="clearCellCompletely()">Clear This Cell Completely [Del]</button>
+
+          <h4>4. Set Group Harvest:</h4>
+          <div class="status-btn-grid">
+            <button class="crop-c1" onclick="updateActiveGroupCrop('Crop 1')">Crop 1</button>
+            <button class="crop-c2" onclick="updateActiveGroupCrop('Crop 2')">Crop 2</button>
+            <button class="crop-c3" onclick="updateActiveGroupCrop('Crop 3')">Crop 3</button>
+            <button class="crop-none" onclick="updateActiveGroupCrop('-')">Reset Harvest</button>
+          </div>
+        </div>
+
+        <div>
+          <div class="inspector-title" style="margin-bottom: 4px;">WA Report</div>
+          <textarea class="wa-textarea" id="waText" readonly></textarea>
+          <button class="btn-primary" style="width: 100%; margin-top: 4px;" id="btnCopy" onclick="copyWAReport()">Copy WA Text</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  const firebaseConfig = {
+    databaseURL: "https://cell-inventory-er-default-rtdb.asia-southeast1.firebasedatabase.app/"
+  };
+  
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  let isRemoteSync = false;
+
+  let plantData = [];
+  let currentPhaseFilter = 'ALL';
+  let activeSelectedCell = null;
+  let copiedCellData = null;
+
+  let undoStack = [];
+  let redoStack = [];
+  const MAX_HISTORY = 50;
+
+  function syncToCloud() {
+    if (isRemoteSync) return;
+    db.ref('tankhouseData').set(plantData);
+  }
+
+  function saveState() {
+    undoStack.push(JSON.stringify(plantData));
+    if (undoStack.length > MAX_HISTORY) undoStack.shift();
+    redoStack = [];
+  }
+
+  function undo() {
+    if (undoStack.length === 0) {
+      showToast("No changes to undo");
+      return;
+    }
+    redoStack.push(JSON.stringify(plantData));
+    plantData = JSON.parse(undoStack.pop());
+    recalculateStats();
+    renderMatrix();
+    if (activeSelectedCell) {
+      selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
+    }
+    syncToCloud();
+    showToast("Undo (Ctrl+Z)");
+  }
+
+  function redo() {
+    if (redoStack.length === 0) {
+      showToast("No changes to redo");
+      return;
+    }
+    undoStack.push(JSON.stringify(plantData));
+    plantData = JSON.parse(redoStack.pop());
+    recalculateStats();
+    renderMatrix();
+    if (activeSelectedCell) {
+      selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
+    }
+    syncToCloud();
+    showToast("Redo (Ctrl+Y)");
+  }
+
+  function showToast(msg) {
+    let toast = document.getElementById('toastMsg');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'toastMsg';
+      toast.style.cssText = 'position:fixed; bottom:16px; right:16px; background:#192967; color:#9dd2ff; padding:8px 14px; border-radius:20px; border:1px solid #9dd2ff; font-size:11px; z-index:9999; transition:opacity 0.2s; pointer-events:none; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+      document.body.appendChild(toast);
+    }
+    toast.textContent = msg;
+    toast.style.opacity = '1';
+    setTimeout(() => { toast.style.opacity = '0'; }, 1500);
+  }
+
+  function initPlantData() {
+    plantData = [];
+    undoStack = [];
+    redoStack = [];
+    for (let g = 1; g <= 48; g++) {
+      let phase = g <= 16 ? 1 : (g <= 32 ? 2 : 3);
+      let cellCount = (g >= 13 && g <= 20) ? 28 : 26;
+      let zoneValue = (g - 1) % 4;
+      let zone = (zoneValue === 0 || zoneValue === 1) ? 'North' : 'South';
+      
+      let groupObj = {
+        groupId: g, phase: phase, zone: zone, cellCount: cellCount,
+        cropStatus: '-', cells: []
+      };
+
+      for (let c = 1; c <= cellCount; c++) {
+        let isEW0 = false;
+        if (g === 33 && ((c >= 1 && c <= 8) || (c >= 14 && c <= 21))) isEW0 = true;
+        let cFormatted = c < 10 ? '0' + c : c;
+
+        groupObj.cells.push({
+          cellNum: c, 
+          cellId: `C${cFormatted}`,
+          anodeStatus: 'NONE', 
+          cathodeStatus: 'NONE',
+          pcs: 0, 
+          isEW0: isEW0
+        });
+      }
+      plantData.push(groupObj);
+    }
+    populateGroupSelect();
+    recalculateStats();
+    renderMatrix();
+  }
+
+  db.ref('tankhouseData').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      isRemoteSync = true;
+      plantData = data;
+      recalculateStats();
+      renderMatrix();
+      if (activeSelectedCell) {
+        selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
+      }
+      isRemoteSync = false;
+    }
+  });
+
+  function kosongkanIsianPhase(targetPhase) {
+    let confirmMsg = targetPhase === 'ALL' 
+      ? 'TOTAL erase all Anode, Cathode, and SS Blank entries across ALL Phases?' 
+      : `TOTAL erase all Anode, Cathode, and SS Blank entries in Phase ${targetPhase}?`;
+      
+    if (!confirm(confirmMsg)) return;
+
+    saveState();
+
+    plantData.forEach(g => {
+      if (targetPhase === 'ALL' || g.phase === targetPhase) {
+        g.cropStatus = '-';
+        g.cells.forEach(c => {
+          c.anodeStatus = 'NONE';
+          c.cathodeStatus = 'NONE';
+          c.pcs = 0;
+        });
+      }
+    });
+
+    if (activeSelectedCell) {
+      let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
+      if (targetPhase === 'ALL' || grp.phase === targetPhase) {
+        selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
+      }
+    }
+
+    recalculateStats();
+    renderMatrix();
+    syncToCloud();
+  }
+
+  function populateGroupSelect() {
+    const sel = document.getElementById('groupSelect');
+    if (sel) sel.innerHTML = '<option value="ALL">All Groups</option>';
+    plantData.forEach(g => {
+      let opt = document.createElement('option');
+      opt.value = g.groupId;
+      opt.textContent = `G${g.groupId} (P${g.phase}-${g.zone})`;
+      sel.appendChild(opt);
+    });
+  }
+
+  function setPhaseFilter(p, btn) {
+    currentPhaseFilter = p;
+    document.querySelectorAll('.segmented-pills .lumi-chip').forEach(b => b.classList.remove('is-active'));
+    if (btn) btn.classList.add('is-active');
+    renderMatrix();
+  }
+
+  function renderMatrix() {
+    const container = document.getElementById('matrixContainer');
+    const selZone = document.getElementById('zoneSelect').value;
+    const selG = document.getElementById('groupSelect').value;
+    const selA = document.getElementById('statusSelect').value;
+    const selC = document.getElementById('cathSelect').value;
+    const selContent = document.getElementById('contentSelect').value;
+
+    container.innerHTML = '';
+
+    let filteredGroups = plantData.filter(g => {
+      if (currentPhaseFilter !== 'ALL' && g.phase !== currentPhaseFilter) return false;
+      if (selZone !== 'ALL' && g.zone !== selZone) return false;
+      if (selG !== 'ALL' && g.groupId != selG) return false;
+      return true;
+    });
+
+    let renderedCount = 0;
+
+    filteredGroups.forEach(g => {
+      let visibleCells = g.cells.filter(c => {
+        let isBlank = (c.anodeStatus === 'NONE' || !c.anodeStatus) && (c.cathodeStatus === 'NONE' || !c.cathodeStatus);
+        
+        if (selContent === 'FILLED' && isBlank) return false;
+        if (selContent === 'EMPTY' && !isBlank) return false;
+        if (selA !== 'ALL' && c.anodeStatus !== selA) return false;
+        if (selC !== 'ALL' && c.cathodeStatus !== selC) return false;
+        
+        return true;
+      });
+
+      if (visibleCells.length === 0) return;
+
+      renderedCount++;
+
+      let grpSec = document.createElement('div');
+      grpSec.className = 'group-section';
+
+      let cropClass = g.cropStatus === 'Crop 1' ? 'crop-c1' : (g.cropStatus === 'Crop 2' ? 'crop-c2' : (g.cropStatus === 'Crop 3' ? 'crop-c3' : 'crop-none'));
+      let cropLabel = g.cropStatus !== '-' ? `Harvest: ${g.cropStatus}` : 'No Harvest';
+      let tagSpecial = g.groupId === 33 ? 'EW0' : `${g.cellCount} Cells`;
+
+      grpSec.innerHTML = `
+        <div class="group-header">
+          <div class="group-title">
+            <span>Group ${g.groupId}</span> 
+            <span style="font-size:9px; background:var(--primary-container); color:var(--primary); padding:1px 4px; border-radius:3px;">${g.zone}</span>
+            <span style="font-size:9px; background:var(--surface); padding:1px 4px; border:1px solid var(--stroke-default); border-radius:3px; color:var(--on-surface-variant);">${tagSpecial}</span>
+          </div>
+          <div class="crop-tag ${cropClass}" onclick="toggleCrop(${g.groupId})">${cropLabel}</div>
+        </div>
+        <div class="cell-grid" id="grid-g-${g.groupId}"></div>
+      `;
+      container.appendChild(grpSec);
+
+      const gridBox = grpSec.querySelector(`#grid-g-${g.groupId}`);
+
+      visibleCells.forEach(c => {
+        let cellDiv = document.createElement('div');
+        let isBlank = (c.anodeStatus === 'NONE' || !c.anodeStatus) && (c.cathodeStatus === 'NONE' || !c.cathodeStatus);
+        
+        let statusClass = isBlank ? 'cell-blank' : (c.anodeStatus === '63 FL' ? 'cell-63' : (c.anodeStatus === '62 KU' ? 'cell-62ku' : (c.anodeStatus === '62 KS' ? 'cell-62ks' : 'cell-blank')));
+        let shortA = c.anodeStatus === '63 FL' ? '63' : (c.anodeStatus === '62 KU' ? '62KU' : (c.anodeStatus === '62 KS' ? '62KS' : ''));
+        let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
+
+        let hasCathodeGlow = (c.cathodeStatus === 'CATH' || c.cathodeStatus === 'SS') ? 'cell-glow' : '';
+        let isSelected = activeSelectedCell && activeSelectedCell.groupId === g.groupId && activeSelectedCell.cellNum === c.cellNum;
+
+        cellDiv.className = `cell-card ${statusClass} ${hasCathodeGlow} ${isSelected ? 'selected' : ''}`;
+        cellDiv.onclick = (e) => selectCell(g.groupId, c.cellNum, e);
+
+        let html = `<div class="cell-id">${c.cellId}</div>`;
+        if (!isBlank) {
+          if (shortA) html += `<div class="cell-status">${shortA}</div>`;
+          if (c.cathodeStatus && c.cathodeStatus !== 'NONE') html += `<div class="cathode-tag ${cathClass}">${c.cathodeStatus}</div>`;
+        }
+
+        cellDiv.innerHTML = html;
+        gridBox.appendChild(cellDiv);
+      });
+    });
+
+    if (renderedCount === 0) {
+      container.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">No filled cells found (Select "All Cells" filter to view empty cells).</div>';
+    }
+
+    recalculateStats();
+
+    setTimeout(() => {
+      let selEl = document.querySelector('.cell-card.selected');
+      if (selEl) {
+        selEl.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+      }
+    }, 40);
+  }
+
+  function selectCell(gId, cNum, event, skipPasteLogic = false) {
+    let grp = plantData.find(g => g.groupId === gId);
+    let cell = grp.cells.find(c => c.cellNum === cNum);
+
+    if (!skipPasteLogic) {
+      if (event && event.shiftKey && activeSelectedCell) {
+        let sourceData = copiedCellData;
+
+        if (!sourceData) {
+          let prevGrp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
+          let prevCell = prevGrp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+          sourceData = {
+            anodeStatus: prevCell.anodeStatus,
+            cathodeStatus: prevCell.cathodeStatus,
+            pcs: prevCell.pcs
+          };
+          copiedCellData = sourceData;
+        }
+
+        saveState();
+
+        if (activeSelectedCell.groupId === gId) {
+          let startNum = Math.min(activeSelectedCell.cellNum, cNum);
+          let endNum = Math.max(activeSelectedCell.cellNum, cNum);
+
+          for (let i = startNum; i <= endNum; i++) {
+            let targetC = grp.cells.find(c => c.cellNum === i);
+            if (targetC) {
+              targetC.anodeStatus = sourceData.anodeStatus;
+              targetC.cathodeStatus = sourceData.cathodeStatus;
+              targetC.pcs = sourceData.pcs;
+            }
+          }
+
+          let sFormatted = startNum < 10 ? '0' + startNum : startNum;
+          let eFormatted = endNum < 10 ? '0' + endNum : endNum;
+          showToast(`Range Paste: G${gId} (C${sFormatted}-C${eFormatted})`);
+        } else {
+          cell.anodeStatus = sourceData.anodeStatus;
+          cell.cathodeStatus = sourceData.cathodeStatus;
+          cell.pcs = sourceData.pcs;
+          showToast(`Pasted to G${gId}-${cell.cellId}`);
+        }
+        syncToCloud();
+      } else if (event && (event.ctrlKey || event.metaKey)) {
+        saveState();
+        if (copiedCellData) {
+          cell.anodeStatus = copiedCellData.anodeStatus;
+          cell.cathodeStatus = copiedCellData.cathodeStatus;
+          cell.pcs = copiedCellData.pcs;
+          showToast(`Pasted to G${gId}-${cell.cellId}`);
+        } else if (activeSelectedCell) {
+          let prevGrp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
+          let prevCell = prevGrp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+          cell.anodeStatus = prevCell.anodeStatus;
+          cell.cathodeStatus = prevCell.cathodeStatus;
+          cell.pcs = prevCell.pcs;
+          copiedCellData = {
+            anodeStatus: prevCell.anodeStatus,
+            cathodeStatus: prevCell.cathodeStatus,
+            pcs: prevCell.pcs
+          };
+          showToast(`Pasted to G${gId}-${cell.cellId}`);
+        }
+        syncToCloud();
+      }
+    }
+
+    activeSelectedCell = { groupId: gId, cellNum: cNum };
+
+    document.getElementById('inspectorControls').style.display = 'flex';
+    
+    let isBlank = cell.anodeStatus === 'NONE' && cell.cathodeStatus === 'NONE';
+    document.getElementById('inspectorContent').innerHTML = `
+      <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
+      <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
+      <div class="detail-row"><span class="detail-label">Anode:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
+      <div class="detail-row"><span class="detail-label">Cathode:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
+      <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-val" style="color:${isBlank?'var(--error)':'var(--positive)'};">${isBlank ? 'COMPLETELY EMPTY' : 'FILLED'}</span></div>
+    `;
+    renderMatrix();
+  }
+
+  function updateActiveCellAnode(val) {
+    if(!activeSelectedCell) return;
+    saveState();
+    let cell = plantData.find(g => g.groupId === activeSelectedCell.groupId).cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+    cell.anodeStatus = val;
+    cell.pcs = val === '63 FL' ? 63 : (val === '62 KU' || val === '62 KS' ? 62 : 0);
+    copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
+    selectCell(activeSelectedCell.groupId, cell.cellNum, null, true);
+    syncToCloud();
+  }
+
+  function updateActiveCellCathode(val) {
+    if(!activeSelectedCell) return;
+    saveState();
+    let cell = plantData.find(g => g.groupId === activeSelectedCell.groupId).cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+    cell.cathodeStatus = val;
+    copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
+    selectCell(activeSelectedCell.groupId, cell.cellNum, null, true);
+    syncToCloud();
+  }
+
+  function clearCellCompletely() {
+    if(!activeSelectedCell) return;
+    saveState();
+    let cell = plantData.find(g => g.groupId === activeSelectedCell.groupId).cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+    cell.anodeStatus = 'NONE';
+    cell.cathodeStatus = 'NONE';
+    cell.pcs = 0;
+    copiedCellData = { anodeStatus: 'NONE', cathodeStatus: 'NONE', pcs: 0 };
+    selectCell(activeSelectedCell.groupId, cell.cellNum, null, true);
+    syncToCloud();
+  }
+
+  function updateActiveGroupCrop(val) {
+    if(!activeSelectedCell) return;
+    saveState();
+    let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
+    grp.cropStatus = val;
+    selectCell(grp.groupId, activeSelectedCell.cellNum, null, true);
+    syncToCloud();
+  }
+
+  function toggleCrop(gId) {
+    saveState();
+    let grp = plantData.find(g => g.groupId === gId);
+    let crops = ['-', 'Crop 1', 'Crop 2', 'Crop 3'];
+    grp.cropStatus = crops[(crops.indexOf(grp.cropStatus) + 1) % crops.length];
+    if (activeSelectedCell && activeSelectedCell.groupId === gId) selectCell(gId, activeSelectedCell.cellNum, null, true);
+    else renderMatrix();
+    syncToCloud();
+  }
+
+  function recalculateStats() {
+    let stats = {
+      tA: 0, tAN: 0, tAS: 0,
+      c63: 0, c63N: 0, c63S: 0,
+      c62ku: 0, c62kuN: 0, c62kuS: 0,
+      c62ks: 0, c62ksN: 0, c62ksS: 0,
+      cCA: 0, cCAN: 0, cCAS: 0,
+      cSS: 0, cSSN: 0, cSSS: 0
+    };
+
+    plantData.forEach(g => {
+      const isNorth = (g.zone === 'North' || g.zone === 'Utara');
+      g.cells.forEach(c => {
+        // Total Anode (Pcs)
+        stats.tA += c.pcs;
+        if (isNorth) stats.tAN += c.pcs;
+        else stats.tAS += c.pcs;
+
+        // Anode 63 FL
+        if (c.anodeStatus === '63 FL') {
+          stats.c63++;
+          if (isNorth) stats.c63N++;
+          else stats.c63S++;
+        }
+
+        // Anode 62 KU (Kosong Utara)
+        if (c.anodeStatus === '62 KU') {
+          stats.c62ku++;
+          if (isNorth) stats.c62kuN++;
+          else stats.c62kuS++;
+        }
+
+        // Anode 62 KS (Kosong Selatan)
+        if (c.anodeStatus === '62 KS') {
+          stats.c62ks++;
+          if (isNorth) stats.c62ksN++;
+          else stats.c62ksS++;
+        }
+
+        // Cathode (CATH)
+        if (c.cathodeStatus === 'CATH') {
+          stats.cCA++;
+          if (isNorth) stats.cCAN++;
+          else stats.cCAS++;
+        }
+        
+        // SS Blank
+        if (c.cathodeStatus === 'SS') {
+          stats.cSS++;
+          if (isNorth) stats.cSSN++;
+          else stats.cSSS++;
+        }
+      });
+    });
+
+    // Update KPI Card 1: Total Anodes
+    document.getElementById('kpiTotalAnode').textContent = stats.tA.toLocaleString('en-US');
+    document.getElementById('kpiTotalAnodeNS').textContent = `N: ${stats.tAN.toLocaleString('en-US')} • S: ${stats.tAS.toLocaleString('en-US')}`;
+
+    // Update KPI Card 2: Anode 63 FL
+    document.getElementById('kpiCount63').textContent = stats.c63.toLocaleString('en-US');
+    document.getElementById('kpiCount63NS').textContent = `N: ${stats.c63N.toLocaleString('en-US')} • S: ${stats.c63S.toLocaleString('en-US')}`;
+
+    // Update KPI Card 3: Anode 62 KU
+    document.getElementById('kpiCount62KU').textContent = stats.c62ku.toLocaleString('en-US');
+    document.getElementById('kpiCount62KUNS').textContent = `N: ${stats.c62kuN.toLocaleString('en-US')} • S: ${stats.c62kuS.toLocaleString('en-US')}`;
+
+    // Update KPI Card 4: Anode 62 KS
+    document.getElementById('kpiCount62KS').textContent = stats.c62ks.toLocaleString('en-US');
+    document.getElementById('kpiCount62KSNS').textContent = `N: ${stats.c62ksN.toLocaleString('en-US')} • S: ${stats.c62ksS.toLocaleString('en-US')}`;
+
+    // Update KPI Card 5: Cathodes (CATH)
+    document.getElementById('kpiCathodeCount').textContent = stats.cCA.toLocaleString('en-US');
+    document.getElementById('kpiCathodeNS').textContent = `N: ${stats.cCAN.toLocaleString('en-US')} • S: ${stats.cCAS.toLocaleString('en-US')}`;
+
+    // Update KPI Card 6: SS Blanks
+    document.getElementById('kpiSSCount').textContent = stats.cSS.toLocaleString('en-US');
+    document.getElementById('kpiSSNS').textContent = `N: ${stats.cSSN.toLocaleString('en-US')} • S: ${stats.cSSS.toLocaleString('en-US')}`;
+
+    // WA Laporan
+    let text = `*TANKHOUSE UPDATE*\n\n`;
+    let activeG = plantData.filter(g => g.cells.some(c => c.anodeStatus !== 'NONE' || c.cathodeStatus !== 'NONE') || g.cropStatus !== '-');
+    
+    if (activeG.length === 0) {
+      text += `• All cells are completely empty (Blank)\n`;
+    } else {
+      activeG.forEach(g => {
+        let filledCells = g.cells.filter(c => c.anodeStatus !== 'NONE' || c.cathodeStatus !== 'NONE');
+        
+        if (filledCells.length === 0) {
+          text += `• *G${g.groupId} (${g.zone})* ${g.cropStatus !== '-' ? `[${g.cropStatus}]` : ''}\n  - Empty Cells\n`;
+          return;
+        }
+
+        let ranges = [];
+        let currentRange = null;
+
+        filledCells.forEach(c => {
+          let ex = [];
+          if (c.anodeStatus !== 'NONE') ex.push(c.anodeStatus);
+          if (c.cathodeStatus !== 'NONE') ex.push(c.cathodeStatus);
+          let statusStr = ex.join('/');
+
+          if (!currentRange) {
+            currentRange = { startCell: c, endCell: c, status: statusStr, prevNum: c.cellNum };
+          } else if (c.cellNum === currentRange.prevNum + 1 && statusStr === currentRange.status) {
+            currentRange.endCell = c;
+            currentRange.prevNum = c.cellNum;
+          } else {
+            ranges.push(currentRange);
+            currentRange = { startCell: c, endCell: c, status: statusStr, prevNum: c.cellNum };
+          }
+        });
+        if (currentRange) ranges.push(currentRange);
+
+        let rangeStrings = ranges.map(r => {
+          if (r.startCell.cellNum === r.endCell.cellNum) {
+            return `${r.startCell.cellId}: [${r.status}]`;
+          } else {
+            return `${r.startCell.cellId}-${r.endCell.cellId}: [${r.status}]`;
+          }
+        });
+
+        text += `• *G${g.groupId} (${g.zone})* ${g.cropStatus !== '-' ? `[${g.cropStatus}]` : ''}\n`;
+        rangeStrings.forEach(str => {
+          text += `  - ${str}\n`;
+        });
+      });
+    }
+    document.getElementById('waText').value = text;
+  }
+
+  function copyWAReport() {
+    let t = document.getElementById('waText');
+    t.select();
+    document.execCommand('copy');
+    
+    const btn = document.getElementById('btnCopy');
+    const oldText = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = oldText; }, 1500);
+  }
+
+  function exportToJPG() {
+    const btn = document.getElementById('exportBtn');
+    const originalText = btn.textContent;
+    btn.textContent = 'Preparing...';
+    btn.disabled = true;
+
+    html2canvas(document.getElementById('captureArea'), {
+      backgroundColor: '#141414',
+      scale: 2
+    }).then(canvas => {
+      let image = canvas.toDataURL("image/jpeg", 0.95);
+      let downloadLink = document.createElement("a");
+      let timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+      downloadLink.href = image;
+      downloadLink.download = `Cell_Inventory_${timestamp}.jpg`;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+      document.body.removeChild(downloadLink);
+
+      btn.textContent = 'Success!';
+      setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 1500);
+    }).catch(err => {
+      console.error(err);
+      btn.textContent = originalText;
+      btn.disabled = false;
+    });
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      undo();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.shiftKey && e.key.toLowerCase() === 'z'))) {
+      e.preventDefault();
+      redo();
+      return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
+      if (activeSelectedCell) {
+        let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
+        let cell = grp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+        copiedCellData = {
+          anodeStatus: cell.anodeStatus,
+          cathodeStatus: cell.cathodeStatus,
+          pcs: cell.pcs
+        };
+        showToast(`Copied: G${grp.groupId}-${cell.cellId}`);
+      }
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
+      if (activeSelectedCell && copiedCellData) {
+        saveState();
+        let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
+        let cell = grp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+        cell.anodeStatus = copiedCellData.anodeStatus;
+        cell.cathodeStatus = copiedCellData.cathodeStatus;
+        cell.pcs = copiedCellData.pcs;
+        selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
+        showToast(`Pasted to G${grp.groupId}-${cell.cellId}`);
+        syncToCloud();
+      }
+      return;
+    }
+
+    if (e.key === 'Delete' || e.key === 'Del' || e.key === 'Backspace') {
+      if (activeSelectedCell) {
+        e.preventDefault();
+        let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
+        let cell = grp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+        clearCellCompletely();
+        showToast(`Cleared: G${grp.groupId}-${cell.cellId}`);
+      }
+      return;
+    }
+
+    if (e.key === 'Escape') {
+      activeSelectedCell = null;
+      document.getElementById('inspectorControls').style.display = 'none';
+      document.getElementById('inspectorContent').innerHTML = `
+        <div style="text-align: center; color: var(--on-surface-variant); padding: 6px 0; font-size: 11px;">
+          Click a cell in the grid to configure status.
+        </div>
+      `;
+      renderMatrix();
+      showToast("Selection cancelled");
+      return;
+    }
+
+    if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
+      if (!activeSelectedCell) {
+        selectCell(1, 1, null, true);
+        return;
+      }
+      e.preventDefault();
+      
+      let curG = activeSelectedCell.groupId;
+      let curC = activeSelectedCell.cellNum;
+
+      if (e.key === 'ArrowLeft') {
+        if (curC > 1) {
+          selectCell(curG, curC - 1, null, true);
+        } else if (curG > 1) {
+          let prevGroup = plantData.find(g => g.groupId === curG - 1);
+          if (prevGroup) selectCell(curG - 1, prevGroup.cellCount, null, true);
+        }
+      } else if (e.key === 'ArrowRight') {
+        let grp = plantData.find(g => g.groupId === curG);
+        if (curC < grp.cellCount) {
+          selectCell(curG, curC + 1, null, true);
+        } else if (curG < 48) {
+          selectCell(curG + 1, 1, null, true);
+        }
+      } else if (e.key === 'ArrowUp') {
+        if (curG > 1) {
+          let prevGrp = plantData.find(g => g.groupId === curG - 1);
+          let targetC = Math.min(curC, prevGrp.cellCount);
+          selectCell(curG - 1, targetC, null, true);
+        }
+      } else if (e.key === 'ArrowDown') {
+        if (curG < 48) {
+          let nextGrp = plantData.find(g => g.groupId === curG + 1);
+          let targetC = Math.min(curC, nextGrp.cellCount);
+          selectCell(curG + 1, targetC, null, true);
+        }
+      }
+      return;
+    }
+
+    if (activeSelectedCell && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      let key = e.key.toLowerCase();
+      if (key === '1') {
+        e.preventDefault();
+        updateActiveCellAnode('63 FL');
+      } else if (key === '2') {
+        e.preventDefault();
+        updateActiveCellAnode('62 KU');
+      } else if (key === '3') {
+        e.preventDefault();
+        updateActiveCellAnode('62 KS');
+      } else if (key === 'c') {
+        e.preventDefault();
+        let cell = plantData.find(g => g.groupId === activeSelectedCell.groupId).cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+        let newCath = cell.cathodeStatus === 'CATH' ? 'NONE' : 'CATH';
+        updateActiveCellCathode(newCath);
+      } else if (key === 's') {
+        e.preventDefault();
+        let cell = plantData.find(g => g.groupId === activeSelectedCell.groupId).cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+        let newCath = cell.cathodeStatus === 'SS' ? 'NONE' : 'SS';
+        updateActiveCellCathode(newCath);
+      } else if (key === '0') {
+        e.preventDefault();
+        clearCellCompletely();
+      }
+    }
+  });
+
+  setInterval(() => {
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    
+    document.getElementById('liveClock').textContent = `${dateStr} • ${timeStr}`;
+  }, 1000);
+
+  initPlantData();
+</script>
+</body>
+</html>
