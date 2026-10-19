@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Cell Inventory</title>
 
-<!-- html2canvas Library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-
 <!-- Firebase Realtime Database SDK -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
@@ -422,7 +419,7 @@
 
   .wa-textarea {
     width: 100%;
-    height: 120px;
+    height: 140px;
     background: var(--surface);
     border: 1px solid var(--stroke-default);
     color: var(--on-surface);
@@ -433,6 +430,11 @@
     resize: none;
     outline: none;
     line-height: 1.4;
+  }
+
+  /* Mobile Quick Action Floating Bar */
+  .mobile-quick-bar {
+    display: none;
   }
 
   @media (max-width: 900px) {
@@ -447,6 +449,7 @@
       height: auto;
       min-height: 100vh;
       padding: 4px;
+      padding-bottom: 60px; /* Space for floating bar */
     }
 
     .app-card {
@@ -482,6 +485,23 @@
     .cell-grid {
       grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
     }
+
+    .mobile-quick-bar {
+      position: fixed;
+      bottom: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(28, 28, 28, 0.95);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--stroke-default);
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+      padding: 6px 12px;
+      border-radius: var(--r-full);
+      gap: 6px;
+      z-index: 10000;
+      align-items: center;
+      justify-content: center;
+    }
   }
 </style>
 </head>
@@ -496,7 +516,8 @@
         <p>North & South Zone • Anode & Cathode Setting</p>
       </div>
       <div class="header-actions">
-        <button class="btn-primary" id="exportBtn" onclick="exportToJPG()">Export JPG</button>
+        <button onclick="undo()" title="Undo (Ctrl+Z)">↩ Undo</button>
+        <button onclick="redo()" title="Redo (Ctrl+Y)">↪ Redo</button>
         <div class="update-badge" id="liveClock">00:00:00</div>
       </div>
     </div>
@@ -615,7 +636,15 @@
         </div>
 
         <div class="action-box" id="inspectorControls" style="display: none;">
-          <h4>1. Cell Anode Status:</h4>
+          <h4>1. Mobile / Quick Actions:</h4>
+          <div class="status-btn-grid">
+            <button onclick="copyActiveCell()">📋 Copy</button>
+            <button onclick="pasteActiveCell()">📋 Paste</button>
+            <button onclick="undo()">↩ Undo</button>
+            <button onclick="redo()">↪ Redo</button>
+          </div>
+
+          <h4>2. Cell Anode Status:</h4>
           <div class="status-btn-grid">
             <button onclick="updateActiveCellAnode('63 FL')">63 FL [1]</button>
             <button onclick="updateActiveCellAnode('62 KU')">62 KU [2]</button>
@@ -623,17 +652,17 @@
             <button onclick="updateActiveCellAnode('NONE')">Clear Anode</button>
           </div>
 
-          <h4>2. Cell Cathode Status:</h4>
+          <h4>3. Cell Cathode Status:</h4>
           <div class="status-btn-grid">
             <button style="background:var(--copper); color:#1a0800; font-weight:bold; border-color:var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH [C]</button>
             <button style="background:var(--stainless); color:#0f172a; font-weight:bold; border-color:var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS Blank [S]</button>
             <button style="grid-column: span 2;" onclick="updateActiveCellCathode('NONE')">Clear Cathode</button>
           </div>
 
-          <h4>3. Clear Options:</h4>
-          <button style="width: 100%; color: var(--error);" onclick="clearCellCompletely()">Clear This Cell Completely [Del]</button>
+          <h4>4. Clear Options:</h4>
+          <button style="width: 100%; color: var(--error);" onclick="clearCellCompletely()">Clear / Delete Cell [Del]</button>
 
-          <h4>4. Set Group Harvest:</h4>
+          <h4>5. Set Group Harvest:</h4>
           <div class="status-btn-grid">
             <button class="crop-c1" onclick="updateActiveGroupCrop('Crop 1')">Crop 1</button>
             <button class="crop-c2" onclick="updateActiveGroupCrop('Crop 2')">Crop 2</button>
@@ -653,9 +682,19 @@
   </div>
 </div>
 
+<!-- Floating Action Bar for Mobile -->
+<div class="mobile-quick-bar" id="mobileQuickBar">
+  <button onclick="undo()" title="Undo">↩</button>
+  <button onclick="redo()" title="Redo">↪</button>
+  <button onclick="copyActiveCell()">📋 Copy</button>
+  <button onclick="pasteActiveCell()">📋 Paste</button>
+  <button class="btn-danger" onclick="clearCellCompletely()">🗑️ Del</button>
+  <button style="background:var(--surface);" onclick="deselectCell()">✕</button>
+</div>
+
 <script>
   const firebaseConfig = {
-    databaseURL: "https://cell-inventory-er-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    databaseURL: "https://NAMA-PROJECT-KAMU-default-rtdb.firebaseio.com"
   };
   
   firebase.initializeApp(firebaseConfig);
@@ -695,7 +734,7 @@
       selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
     }
     syncToCloud();
-    showToast("Undo (Ctrl+Z)");
+    showToast("Undo");
   }
 
   function redo() {
@@ -711,7 +750,53 @@
       selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
     }
     syncToCloud();
-    showToast("Redo (Ctrl+Y)");
+    showToast("Redo");
+  }
+
+  function copyActiveCell() {
+    if (activeSelectedCell) {
+      let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
+      let cell = grp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+      copiedCellData = {
+        anodeStatus: cell.anodeStatus,
+        cathodeStatus: cell.cathodeStatus,
+        pcs: cell.pcs
+      };
+      showToast(`Copied: G${grp.groupId}-${cell.cellId}`);
+    } else {
+      showToast("Select a cell first");
+    }
+  }
+
+  function pasteActiveCell() {
+    if (activeSelectedCell && copiedCellData) {
+      saveState();
+      let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
+      let cell = grp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
+      cell.anodeStatus = copiedCellData.anodeStatus;
+      cell.cathodeStatus = copiedCellData.cathodeStatus;
+      cell.pcs = copiedCellData.pcs;
+      selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
+      showToast(`Pasted to G${grp.groupId}-${cell.cellId}`);
+      syncToCloud();
+    } else if (!activeSelectedCell) {
+      showToast("Select a cell first");
+    } else {
+      showToast("No copied cell data");
+    }
+  }
+
+  function deselectCell() {
+    activeSelectedCell = null;
+    document.getElementById('inspectorControls').style.display = 'none';
+    let mb = document.getElementById('mobileQuickBar');
+    if (mb) mb.style.display = 'none';
+    document.getElementById('inspectorContent').innerHTML = `
+      <div style="text-align: center; color: var(--on-surface-variant); padding: 6px 0; font-size: 11px;">
+        Click a cell in the grid to configure status.
+      </div>
+    `;
+    renderMatrix();
   }
 
   function showToast(msg) {
@@ -719,7 +804,7 @@
     if (!toast) {
       toast = document.createElement('div');
       toast.id = 'toastMsg';
-      toast.style.cssText = 'position:fixed; bottom:16px; right:16px; background:#192967; color:#9dd2ff; padding:8px 14px; border-radius:20px; border:1px solid #9dd2ff; font-size:11px; z-index:9999; transition:opacity 0.2s; pointer-events:none; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+      toast.style.cssText = 'position:fixed; bottom:16px; right:16px; background:#192967; color:#9dd2ff; padding:8px 14px; border-radius:20px; border:1px solid #9dd2ff; font-size:11px; z-index:99999; transition:opacity 0.2s; pointer-events:none; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.5);';
       document.body.appendChild(toast);
     }
     toast.textContent = msg;
@@ -994,6 +1079,8 @@
     activeSelectedCell = { groupId: gId, cellNum: cNum };
 
     document.getElementById('inspectorControls').style.display = 'flex';
+    let mb = document.getElementById('mobileQuickBar');
+    if (mb) mb.style.display = 'flex';
     
     let isBlank = cell.anodeStatus === 'NONE' && cell.cathodeStatus === 'NONE';
     document.getElementById('inspectorContent').innerHTML = `
@@ -1036,6 +1123,7 @@
     cell.pcs = 0;
     copiedCellData = { anodeStatus: 'NONE', cathodeStatus: 'NONE', pcs: 0 };
     selectCell(activeSelectedCell.groupId, cell.cellNum, null, true);
+    showToast(`Cleared: G${activeSelectedCell.groupId}-${cell.cellId}`);
     syncToCloud();
   }
 
@@ -1056,6 +1144,43 @@
     if (activeSelectedCell && activeSelectedCell.groupId === gId) selectCell(gId, activeSelectedCell.cellNum, null, true);
     else renderMatrix();
     syncToCloud();
+  }
+
+  // Format deretan angka cell menjadi rentang angka seperti 1-7 & 15, 18, 19
+  function formatCellNumbers(nums) {
+    if (!nums || nums.length === 0) return '';
+    nums = [...nums].sort((a, b) => a - b);
+    let ranges = [];
+    let start = nums[0];
+    let prev = nums[0];
+
+    for (let i = 1; i < nums.length; i++) {
+      if (nums[i] === prev + 1) {
+        prev = nums[i];
+      } else {
+        if (start === prev) {
+          ranges.push(`${start}`);
+        } else {
+          ranges.push(`${start}-${prev}`);
+        }
+        start = nums[i];
+        prev = nums[i];
+      }
+    }
+    if (start === prev) {
+      ranges.push(`${start}`);
+    } else {
+      ranges.push(`${start}-${prev}`);
+    }
+
+    let multiRanges = ranges.filter(r => r.includes('-'));
+    let singleRanges = ranges.filter(r => !r.includes('-'));
+
+    if (multiRanges.length > 0 && singleRanges.length > 0) {
+      return `${multiRanges.join(', ')} & ${singleRanges.join(', ')}`;
+    } else {
+      return ranges.join(', ');
+    }
   }
 
   function recalculateStats() {
@@ -1137,57 +1262,79 @@
     document.getElementById('kpiSSCount').textContent = stats.cSS.toLocaleString('en-US');
     document.getElementById('kpiSSNS').textContent = `N: ${stats.cSSN.toLocaleString('en-US')} • S: ${stats.cSSS.toLocaleString('en-US')}`;
 
-    // WA Laporan
+    // Generate WA Laporan Terstruktur
+    let categories = [
+      {
+        categoryName: 'Anode',
+        types: [
+          { id: '63 FL', label: 'Anode 63' },
+          { id: '62 KU', label: 'Anode 62 Kosong Utara' },
+          { id: '62 KS', label: 'Anode 62 Kosong Selatan' }
+        ],
+        field: 'anodeStatus'
+      },
+      {
+        categoryName: 'Cathode',
+        types: [
+          { id: 'CATH', label: 'Cathode' }
+        ],
+        field: 'cathodeStatus'
+      },
+      {
+        categoryName: 'SS Blank',
+        types: [
+          { id: 'SS', label: 'SS Blank' }
+        ],
+        field: 'cathodeStatus'
+      }
+    ];
+
+    let zones = [
+      { key: 'North', name: 'Utara' },
+      { key: 'South', name: 'Selatan' }
+    ];
+
+    let reportBlocks = [];
+
+    categories.forEach(cat => {
+      zones.forEach(z => {
+        let blockLines = [];
+
+        cat.types.forEach(t => {
+          let groups = plantData.filter(g => (g.zone === z.key || (z.key === 'North' && g.zone === 'Utara') || (z.key === 'South' && g.zone === 'Selatan')));
+          let typeGroupLines = [];
+          let totalTypeCount = 0;
+
+          groups.forEach(g => {
+            let matchedCells = g.cells.filter(c => c[cat.field] === t.id).map(c => c.cellNum);
+            if (matchedCells.length > 0) {
+              let formattedCells = formatCellNumbers(matchedCells);
+              typeGroupLines.push(`- Group ${g.groupId} Cell ${formattedCells} = ${matchedCells.length} Cell`);
+              totalTypeCount += matchedCells.length;
+            }
+          });
+
+          if (typeGroupLines.length > 0) {
+            blockLines.push(`${t.label}`);
+            blockLines.push(...typeGroupLines);
+            blockLines.push(`- Total = ${totalTypeCount} Cell\n`);
+          }
+        });
+
+        if (blockLines.length > 0) {
+          reportBlocks.push(`*${cat.categoryName} Sisi ${z.name}*\n` + blockLines.join('\n'));
+        }
+      });
+    });
+
     let text = `*TANKHOUSE UPDATE*\n\n`;
-    let activeG = plantData.filter(g => g.cells.some(c => c.anodeStatus !== 'NONE' || c.cathodeStatus !== 'NONE') || g.cropStatus !== '-');
-    
-    if (activeG.length === 0) {
+    if (reportBlocks.length === 0) {
       text += `• All cells are completely empty (Blank)\n`;
     } else {
-      activeG.forEach(g => {
-        let filledCells = g.cells.filter(c => c.anodeStatus !== 'NONE' || c.cathodeStatus !== 'NONE');
-        
-        if (filledCells.length === 0) {
-          text += `• *G${g.groupId} (${g.zone})* ${g.cropStatus !== '-' ? `[${g.cropStatus}]` : ''}\n  - Empty Cells\n`;
-          return;
-        }
-
-        let ranges = [];
-        let currentRange = null;
-
-        filledCells.forEach(c => {
-          let ex = [];
-          if (c.anodeStatus !== 'NONE') ex.push(c.anodeStatus);
-          if (c.cathodeStatus !== 'NONE') ex.push(c.cathodeStatus);
-          let statusStr = ex.join('/');
-
-          if (!currentRange) {
-            currentRange = { startCell: c, endCell: c, status: statusStr, prevNum: c.cellNum };
-          } else if (c.cellNum === currentRange.prevNum + 1 && statusStr === currentRange.status) {
-            currentRange.endCell = c;
-            currentRange.prevNum = c.cellNum;
-          } else {
-            ranges.push(currentRange);
-            currentRange = { startCell: c, endCell: c, status: statusStr, prevNum: c.cellNum };
-          }
-        });
-        if (currentRange) ranges.push(currentRange);
-
-        let rangeStrings = ranges.map(r => {
-          if (r.startCell.cellNum === r.endCell.cellNum) {
-            return `${r.startCell.cellId}: [${r.status}]`;
-          } else {
-            return `${r.startCell.cellId}-${r.endCell.cellId}: [${r.status}]`;
-          }
-        });
-
-        text += `• *G${g.groupId} (${g.zone})* ${g.cropStatus !== '-' ? `[${g.cropStatus}]` : ''}\n`;
-        rangeStrings.forEach(str => {
-          text += `  - ${str}\n`;
-        });
-      });
+      text += reportBlocks.join('\n');
     }
-    document.getElementById('waText').value = text;
+
+    document.getElementById('waText').value = text.trim();
   }
 
   function copyWAReport() {
@@ -1199,34 +1346,6 @@
     const oldText = btn.textContent;
     btn.textContent = 'Copied!';
     setTimeout(() => { btn.textContent = oldText; }, 1500);
-  }
-
-  function exportToJPG() {
-    const btn = document.getElementById('exportBtn');
-    const originalText = btn.textContent;
-    btn.textContent = 'Preparing...';
-    btn.disabled = true;
-
-    html2canvas(document.getElementById('captureArea'), {
-      backgroundColor: '#141414',
-      scale: 2
-    }).then(canvas => {
-      let image = canvas.toDataURL("image/jpeg", 0.95);
-      let downloadLink = document.createElement("a");
-      let timestamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-      downloadLink.href = image;
-      downloadLink.download = `Cell_Inventory_${timestamp}.jpg`;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-      document.body.removeChild(downloadLink);
-
-      btn.textContent = 'Success!';
-      setTimeout(() => { btn.textContent = originalText; btn.disabled = false; }, 1500);
-    }).catch(err => {
-      console.error(err);
-      btn.textContent = originalText;
-      btn.disabled = false;
-    });
   }
 
   document.addEventListener('keydown', function(e) {
@@ -1244,53 +1363,24 @@
     }
 
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'c') {
-      if (activeSelectedCell) {
-        let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
-        let cell = grp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
-        copiedCellData = {
-          anodeStatus: cell.anodeStatus,
-          cathodeStatus: cell.cathodeStatus,
-          pcs: cell.pcs
-        };
-        showToast(`Copied: G${grp.groupId}-${cell.cellId}`);
-      }
+      copyActiveCell();
       return;
     }
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'v') {
-      if (activeSelectedCell && copiedCellData) {
-        saveState();
-        let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
-        let cell = grp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
-        cell.anodeStatus = copiedCellData.anodeStatus;
-        cell.cathodeStatus = copiedCellData.cathodeStatus;
-        cell.pcs = copiedCellData.pcs;
-        selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
-        showToast(`Pasted to G${grp.groupId}-${cell.cellId}`);
-        syncToCloud();
-      }
+      pasteActiveCell();
       return;
     }
 
     if (e.key === 'Delete' || e.key === 'Del' || e.key === 'Backspace') {
       if (activeSelectedCell) {
         e.preventDefault();
-        let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
-        let cell = grp.cells.find(c => c.cellNum === activeSelectedCell.cellNum);
         clearCellCompletely();
-        showToast(`Cleared: G${grp.groupId}-${cell.cellId}`);
       }
       return;
     }
 
     if (e.key === 'Escape') {
-      activeSelectedCell = null;
-      document.getElementById('inspectorControls').style.display = 'none';
-      document.getElementById('inspectorContent').innerHTML = `
-        <div style="text-align: center; color: var(--on-surface-variant); padding: 6px 0; font-size: 11px;">
-          Click a cell in the grid to configure status.
-        </div>
-      `;
-      renderMatrix();
+      deselectCell();
       showToast("Selection cancelled");
       return;
     }
