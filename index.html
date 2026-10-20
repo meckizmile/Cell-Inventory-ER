@@ -495,12 +495,18 @@
       backdrop-filter: blur(8px);
       border: 1px solid var(--stroke-default);
       box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
-      padding: 6px 12px;
+      padding: 6px 10px;
       border-radius: var(--r-full);
-      gap: 6px;
+      gap: 4px;
       z-index: 10000;
       align-items: center;
       justify-content: center;
+      max-width: 95vw;
+    }
+
+    .mobile-quick-bar button {
+      padding: 2px 8px;
+      font-size: 10px;
     }
   }
 </style>
@@ -674,8 +680,8 @@
 
 <!-- Floating Action Bar for Mobile -->
 <div class="mobile-quick-bar" id="mobileQuickBar">
-  <button onclick="undo()" title="Undo">↩</button>
-  <button onclick="redo()" title="Redo">↪</button>
+  <button onclick="undo()" title="Undo">↩ Undo</button>
+  <button onclick="redo()" title="Redo">↪ Redo</button>
   <button onclick="copyActiveCell()">📋 Copy</button>
   <button onclick="pasteActiveCell()">📋 Paste</button>
   <button class="btn-danger" onclick="clearCellCompletely()">🗑️ Del</button>
@@ -689,7 +695,6 @@
   
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
-  let isRemoteSync = false;
 
   let plantData = [];
   let currentPhaseFilter = 'ALL';
@@ -702,8 +707,32 @@
   let redoStack = [];
   const MAX_HISTORY = 50;
 
-  function syncToCloud() {
-    if (isRemoteSync) return;
+  // Granular Sync: Menggunakan Multi-Path Update hanya pada cell spesifik
+  function syncCellTargets(targets) {
+    let updates = {};
+    targets.forEach(t => {
+      let gIdx = plantData.findIndex(g => g && g.groupId === t.groupId);
+      if (gIdx !== -1) {
+        let cIdx = plantData[gIdx].cells.findIndex(c => c && c.cellNum === t.cellNum);
+        if (cIdx !== -1) {
+          let cell = plantData[gIdx].cells[cIdx];
+          updates[`tankhouseData/${gIdx}/cells/${cIdx}/anodeStatus`] = cell.anodeStatus;
+          updates[`tankhouseData/${gIdx}/cells/${cIdx}/cathodeStatus`] = cell.cathodeStatus;
+          updates[`tankhouseData/${gIdx}/cells/${cIdx}/pcs`] = cell.pcs;
+        }
+      }
+    });
+    db.ref().update(updates);
+  }
+
+  function syncGroupCrop(groupId, cropStatus) {
+    let gIdx = plantData.findIndex(g => g && g.groupId === groupId);
+    if (gIdx !== -1) {
+      db.ref(`tankhouseData/${gIdx}/cropStatus`).set(cropStatus);
+    }
+  }
+
+  function syncBulkData() {
     db.ref('tankhouseData').set(plantData);
   }
 
@@ -725,7 +754,7 @@
     if (activeSelectedCell) {
       selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
     }
-    syncToCloud();
+    syncBulkData();
     showToast("Undo");
   }
 
@@ -741,7 +770,7 @@
     if (activeSelectedCell) {
       selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
     }
-    syncToCloud();
+    syncBulkData();
     showToast("Redo");
   }
 
@@ -749,8 +778,8 @@
     let targets = getActiveTargets();
     if (targets.length > 0) {
       let first = targets[0];
-      let grp = plantData.find(g => g.groupId === first.groupId);
-      let cell = grp.cells.find(c => c.cellNum === first.cellNum);
+      let grp = plantData.find(g => g && g.groupId === first.groupId);
+      let cell = grp.cells.find(c => c && c.cellNum === first.cellNum);
       copiedCellData = {
         anodeStatus: cell.anodeStatus,
         cathodeStatus: cell.cathodeStatus,
@@ -767,9 +796,9 @@
     if (targets.length > 0 && copiedCellData) {
       saveState();
       targets.forEach(t => {
-        let grp = plantData.find(g => g.groupId === t.groupId);
+        let grp = plantData.find(g => g && g.groupId === t.groupId);
         if (grp) {
-          let cell = grp.cells.find(c => c.cellNum === t.cellNum);
+          let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
           if (cell) {
             cell.anodeStatus = copiedCellData.anodeStatus;
             cell.cathodeStatus = copiedCellData.cathodeStatus;
@@ -779,7 +808,7 @@
       });
       renderMatrix();
       showToast(`Pasted to ${targets.length} Cell`);
-      syncToCloud();
+      syncCellTargets(targets);
     } else if (targets.length === 0) {
       showToast("Select a cell first");
     } else {
@@ -821,10 +850,8 @@
     setTimeout(() => { toast.style.opacity = '0'; }, 1500);
   }
 
-  function initPlantData() {
-    plantData = [];
-    undoStack = [];
-    redoStack = [];
+  function generateDefaultPlantData() {
+    let data = [];
     for (let g = 1; g <= 48; g++) {
       let phase = g <= 16 ? 1 : (g <= 32 ? 2 : 3);
       let cellCount = (g >= 13 && g <= 20) ? 28 : 26;
@@ -850,24 +877,45 @@
           isEW0: isEW0
         });
       }
-      plantData.push(groupObj);
+      data.push(groupObj);
     }
-    populateGroupSelect();
-    recalculateStats();
-    renderMatrix();
+    return data;
   }
 
+  // Listener Realtime Firebase yang aman terhadap konversi objek/array otomatis
   db.ref('tankhouseData').on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
-      isRemoteSync = true;
-      plantData = data;
+      let parsedData = Array.isArray(data) ? data : Object.values(data);
+      plantData = parsedData.map(g => {
+        if (!g) return g;
+        let cellsArray = g.cells ? (Array.isArray(g.cells) ? g.cells : Object.values(g.cells)) : [];
+        return { ...g, cells: cellsArray };
+      }).filter(Boolean);
+
+      populateGroupSelect();
       recalculateStats();
       renderMatrix();
+      
       if (activeSelectedCell) {
-        selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
+        let grp = plantData.find(g => g && g.groupId === activeSelectedCell.groupId);
+        if (grp && grp.cells) {
+          let cell = grp.cells.find(c => c && c.cellNum === activeSelectedCell.cellNum);
+          if (cell && selectedCellsList.length <= 1) {
+            let isBlank = cell.anodeStatus === 'NONE' && cell.cathodeStatus === 'NONE';
+            document.getElementById('inspectorContent').innerHTML = `
+              <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
+              <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
+              <div class="detail-row"><span class="detail-label">Anode:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
+              <div class="detail-row"><span class="detail-label">Cathode:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
+              <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-val" style="color:${isBlank?'var(--error)':'var(--positive)'};">${isBlank ? 'COMPLETELY EMPTY' : 'FILLED'}</span></div>
+            `;
+          }
+        }
       }
-      isRemoteSync = false;
+    } else {
+      plantData = generateDefaultPlantData();
+      db.ref('tankhouseData').set(plantData);
     }
   });
 
@@ -892,26 +940,30 @@
     });
 
     if (activeSelectedCell) {
-      let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
-      if (targetPhase === 'ALL' || grp.phase === targetPhase) {
+      let grp = plantData.find(g => g && g.groupId === activeSelectedCell.groupId);
+      if (targetPhase === 'ALL' || (grp && grp.phase === targetPhase)) {
         selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
       }
     }
 
     recalculateStats();
     renderMatrix();
-    syncToCloud();
+    syncBulkData();
   }
 
   function populateGroupSelect() {
     const sel = document.getElementById('groupSelect');
-    if (sel) sel.innerHTML = '<option value="ALL">All Groups</option>';
+    if (!sel) return;
+    const currentVal = sel.value;
+    sel.innerHTML = '<option value="ALL">All Groups</option>';
     plantData.forEach(g => {
+      if (!g) return;
       let opt = document.createElement('option');
       opt.value = g.groupId;
       opt.textContent = `G${g.groupId} (P${g.phase}-${g.zone})`;
       sel.appendChild(opt);
     });
+    sel.value = currentVal || "ALL";
   }
 
   function setPhaseFilter(p, btn) {
@@ -932,6 +984,7 @@
     container.innerHTML = '';
 
     let filteredGroups = plantData.filter(g => {
+      if (!g) return false;
       if (currentPhaseFilter !== 'ALL' && g.phase !== currentPhaseFilter) return false;
       if (selZone !== 'ALL' && g.zone !== selZone) return false;
       if (selG !== 'ALL' && g.groupId != selG) return false;
@@ -942,6 +995,7 @@
 
     filteredGroups.forEach(g => {
       let visibleCells = g.cells.filter(c => {
+        if (!c) return false;
         let isBlank = (c.anodeStatus === 'NONE' || !c.anodeStatus) && (c.cathodeStatus === 'NONE' || !c.cathodeStatus);
         
         if (selContent === 'FILLED' && isBlank) return false;
@@ -1052,8 +1106,8 @@
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'flex';
 
-    let grp = plantData.find(g => g.groupId === targetGId);
-    let cell = grp.cells.find(c => c.cellNum === targetCNum);
+    let grp = plantData.find(g => g && g.groupId === targetGId);
+    let cell = grp.cells.find(c => c && c.cellNum === targetCNum);
     
     document.getElementById('inspectorContent').innerHTML = `
       <div class="detail-row"><span class="detail-label">Selection:</span><span class="detail-val" style="color:var(--primary);">${selectedCellsList.length} Cell Marked</span></div>
@@ -1074,8 +1128,8 @@
     activeSelectedCell = { groupId: gId, cellNum: cNum };
     selectedCellsList = [{ groupId: gId, cellNum: cNum }];
 
-    let grp = plantData.find(g => g.groupId === gId);
-    let cell = grp.cells.find(c => c.cellNum === cNum);
+    let grp = plantData.find(g => g && g.groupId === gId);
+    let cell = grp.cells.find(c => c && c.cellNum === cNum);
 
     document.getElementById('inspectorControls').style.display = 'flex';
     let mb = document.getElementById('mobileQuickBar');
@@ -1097,15 +1151,23 @@
     if(targets.length === 0) return;
     saveState();
     targets.forEach(t => {
-      let cell = plantData.find(g => g.groupId === t.groupId).cells.find(c => c.cellNum === t.cellNum);
-      cell.anodeStatus = val;
-      cell.pcs = val === '63 FL' ? 63 : (val === '62 KU' || val === '62 KS' ? 62 : 0);
+      let grp = plantData.find(g => g && g.groupId === t.groupId);
+      if (grp) {
+        let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+        if (cell) {
+          cell.anodeStatus = val;
+          cell.pcs = val === '63 FL' ? 63 : (val === '62 KU' || val === '62 KS' ? 62 : 0);
+        }
+      }
     });
     let last = targets[targets.length - 1];
-    let cell = plantData.find(g => g.groupId === last.groupId).cells.find(c => c.cellNum === last.cellNum);
-    copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
+    let grp = plantData.find(g => g && g.groupId === last.groupId);
+    if (grp) {
+      let cell = grp.cells.find(c => c && c.cellNum === last.cellNum);
+      if (cell) copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
+    }
     renderMatrix();
-    syncToCloud();
+    syncCellTargets(targets);
   }
 
   function updateActiveCellCathode(val) {
@@ -1113,14 +1175,20 @@
     if(targets.length === 0) return;
     saveState();
     targets.forEach(t => {
-      let cell = plantData.find(g => g.groupId === t.groupId).cells.find(c => c.cellNum === t.cellNum);
-      cell.cathodeStatus = val;
+      let grp = plantData.find(g => g && g.groupId === t.groupId);
+      if (grp) {
+        let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+        if (cell) cell.cathodeStatus = val;
+      }
     });
     let last = targets[targets.length - 1];
-    let cell = plantData.find(g => g.groupId === last.groupId).cells.find(c => c.cellNum === last.cellNum);
-    copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
+    let grp = plantData.find(g => g && g.groupId === last.groupId);
+    if (grp) {
+      let cell = grp.cells.find(c => c && c.cellNum === last.cellNum);
+      if (cell) copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
+    }
     renderMatrix();
-    syncToCloud();
+    syncCellTargets(targets);
   }
 
   function clearCellCompletely() {
@@ -1128,36 +1196,44 @@
     if(targets.length === 0) return;
     saveState();
     targets.forEach(t => {
-      let cell = plantData.find(g => g.groupId === t.groupId).cells.find(c => c.cellNum === t.cellNum);
-      cell.anodeStatus = 'NONE';
-      cell.cathodeStatus = 'NONE';
-      cell.pcs = 0;
+      let grp = plantData.find(g => g && g.groupId === t.groupId);
+      if (grp) {
+        let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+        if (cell) {
+          cell.anodeStatus = 'NONE';
+          cell.cathodeStatus = 'NONE';
+          cell.pcs = 0;
+        }
+      }
     });
     copiedCellData = { anodeStatus: 'NONE', cathodeStatus: 'NONE', pcs: 0 };
     renderMatrix();
     showToast(`Cleared (${targets.length} Cell)`);
-    syncToCloud();
+    syncCellTargets(targets);
   }
 
   function updateActiveGroupCrop(val) {
     if(!activeSelectedCell) return;
     saveState();
-    let grp = plantData.find(g => g.groupId === activeSelectedCell.groupId);
-    grp.cropStatus = val;
-    renderMatrix();
-    syncToCloud();
+    let grp = plantData.find(g => g && g.groupId === activeSelectedCell.groupId);
+    if (grp) {
+      grp.cropStatus = val;
+      renderMatrix();
+      syncGroupCrop(grp.groupId, val);
+    }
   }
 
   function toggleCrop(gId) {
     saveState();
-    let grp = plantData.find(g => g.groupId === gId);
-    let crops = ['-', 'Crop 1', 'Crop 2', 'Crop 3'];
-    grp.cropStatus = crops[(crops.indexOf(grp.cropStatus) + 1) % crops.length];
-    renderMatrix();
-    syncToCloud();
+    let grp = plantData.find(g => g && g.groupId === gId);
+    if (grp) {
+      let crops = ['-', 'Crop 1', 'Crop 2', 'Crop 3'];
+      grp.cropStatus = crops[(crops.indexOf(grp.cropStatus) + 1) % crops.length];
+      renderMatrix();
+      syncGroupCrop(grp.groupId, grp.cropStatus);
+    }
   }
 
-  // Format deretan angka cell menjadi rentang angka seperti 1-7 & 15, 18, 19
   function formatCellNumbers(nums) {
     if (!nums || nums.length === 0) return '';
     nums = [...nums].sort((a, b) => a - b);
@@ -1205,42 +1281,38 @@
     };
 
     plantData.forEach(g => {
+      if (!g) return;
       const isNorth = (g.zone === 'North' || g.zone === 'Utara');
       g.cells.forEach(c => {
-        // Total Anode (Pcs)
+        if (!c) return;
         stats.tA += c.pcs;
         if (isNorth) stats.tAN += c.pcs;
         else stats.tAS += c.pcs;
 
-        // Anode 63 FL
         if (c.anodeStatus === '63 FL') {
           stats.c63++;
           if (isNorth) stats.c63N++;
           else stats.c63S++;
         }
 
-        // Anode 62 KU (Kosong Utara)
         if (c.anodeStatus === '62 KU') {
           stats.c62ku++;
           if (isNorth) stats.c62kuN++;
           else stats.c62kuS++;
         }
 
-        // Anode 62 KS (Kosong Selatan)
         if (c.anodeStatus === '62 KS') {
           stats.c62ks++;
           if (isNorth) stats.c62ksN++;
           else stats.c62ksS++;
         }
 
-        // Cathode (CATH)
         if (c.cathodeStatus === 'CATH') {
           stats.cCA++;
           if (isNorth) stats.cCAN++;
           else stats.cCAS++;
         }
         
-        // SS Blank
         if (c.cathodeStatus === 'SS') {
           stats.cSS++;
           if (isNorth) stats.cSSN++;
@@ -1249,31 +1321,24 @@
       });
     });
 
-    // Update KPI Card 1: Total Anodes
     document.getElementById('kpiTotalAnode').textContent = stats.tA.toLocaleString('en-US');
     document.getElementById('kpiTotalAnodeNS').textContent = `N: ${stats.tAN.toLocaleString('en-US')} • S: ${stats.tAS.toLocaleString('en-US')}`;
 
-    // Update KPI Card 2: Anode 63 FL
     document.getElementById('kpiCount63').textContent = stats.c63.toLocaleString('en-US');
     document.getElementById('kpiCount63NS').textContent = `N: ${stats.c63N.toLocaleString('en-US')} • S: ${stats.c63S.toLocaleString('en-US')}`;
 
-    // Update KPI Card 3: Anode 62 KU
     document.getElementById('kpiCount62KU').textContent = stats.c62ku.toLocaleString('en-US');
     document.getElementById('kpiCount62KUNS').textContent = `N: ${stats.c62kuN.toLocaleString('en-US')} • S: ${stats.c62kuS.toLocaleString('en-US')}`;
 
-    // Update KPI Card 4: Anode 62 KS
     document.getElementById('kpiCount62KS').textContent = stats.c62ks.toLocaleString('en-US');
     document.getElementById('kpiCount62KSNS').textContent = `N: ${stats.c62ksN.toLocaleString('en-US')} • S: ${stats.c62ksS.toLocaleString('en-US')}`;
 
-    // Update KPI Card 5: Cathodes (CATH)
     document.getElementById('kpiCathodeCount').textContent = stats.cCA.toLocaleString('en-US');
     document.getElementById('kpiCathodeNS').textContent = `N: ${stats.cCAN.toLocaleString('en-US')} • S: ${stats.cCAS.toLocaleString('en-US')}`;
 
-    // Update KPI Card 6: SS Blanks
     document.getElementById('kpiSSCount').textContent = stats.cSS.toLocaleString('en-US');
     document.getElementById('kpiSSNS').textContent = `N: ${stats.cSSN.toLocaleString('en-US')} • S: ${stats.cSSS.toLocaleString('en-US')}`;
 
-    // Generate WA Laporan Terstruktur
     let categories = [
       {
         categoryName: 'Anode',
@@ -1312,12 +1377,12 @@
         let blockLines = [];
 
         cat.types.forEach(t => {
-          let groups = plantData.filter(g => (g.zone === z.key || (z.key === 'North' && g.zone === 'Utara') || (z.key === 'South' && g.zone === 'Selatan')));
+          let groups = plantData.filter(g => g && (g.zone === z.key || (z.key === 'North' && g.zone === 'Utara') || (z.key === 'South' && g.zone === 'Selatan')));
           let typeGroupLines = [];
           let totalTypeCount = 0;
 
           groups.forEach(g => {
-            let matchedCells = g.cells.filter(c => c[cat.field] === t.id).map(c => c.cellNum);
+            let matchedCells = g.cells.filter(c => c && c[cat.field] === t.id).map(c => c.cellNum);
             if (matchedCells.length > 0) {
               let formattedCells = formatCellNumbers(matchedCells);
               typeGroupLines.push(`- Group ${g.groupId} Cell ${formattedCells} = ${matchedCells.length} Cell`);
@@ -1359,7 +1424,6 @@
     setTimeout(() => { btn.textContent = oldText; }, 1500);
   }
 
-  // Cari cell terdekat secara visual berdasarkan posisi Bounding Box (Visual Grid Position)
   function getVisualNeighborCell(direction) {
     const currentEl = document.querySelector('.cell-card.selected');
     if (!currentEl) return null;
@@ -1456,15 +1520,15 @@
         if (curC > 1) {
           targetC = curC - 1;
         } else if (curG > 1) {
-          let prevGroup = plantData.find(g => g.groupId === curG - 1);
+          let prevGroup = plantData.find(g => g && g.groupId === curG - 1);
           if (prevGroup) {
             targetG = curG - 1;
             targetC = prevGroup.cellCount;
           }
         }
       } else if (e.key === 'ArrowRight') {
-        let grp = plantData.find(g => g.groupId === curG);
-        if (curC < grp.cellCount) {
+        let grp = plantData.find(g => g && g.groupId === curG);
+        if (grp && curC < grp.cellCount) {
           targetC = curC + 1;
         } else if (curG < 48) {
           targetG = curG + 1;
@@ -1518,8 +1582,6 @@
     
     document.getElementById('liveClock').textContent = `${dateStr} • ${timeStr}`;
   }, 1000);
-
-  initPlantData();
 </script>
 </body>
 </html>
