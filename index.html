@@ -573,8 +573,8 @@
       <div class="control-group">
         <label>Cell View</label>
         <select class="lumi-select" id="contentSelect" onchange="renderMatrix()">
-          <option value="ALL">All Cells</option>
-          <option value="FILLED" selected>Filled Cells Only</option>
+          <option value="ALL" selected>All Cells</option>
+          <option value="FILLED">Filled Cells Only</option>
           <option value="EMPTY">Empty Cells Only</option>
         </select>
       </div>
@@ -707,7 +707,41 @@
   let redoStack = [];
   const MAX_HISTORY = 50;
 
-  // Granular Sync: Menggunakan Multi-Path Update hanya pada cell spesifik
+  function generateDefaultPlantData() {
+    let data = [];
+    for (let g = 1; g <= 48; g++) {
+      let phase = g <= 16 ? 1 : (g <= 32 ? 2 : 3);
+      let cellCount = (g >= 13 && g <= 20) ? 28 : 26;
+      let zoneValue = (g - 1) % 4;
+      let zone = (zoneValue === 0 || zoneValue === 1) ? 'North' : 'South';
+      
+      let groupObj = {
+        groupId: g, phase: phase, zone: zone, cellCount: cellCount,
+        cropStatus: '-', cells: []
+      };
+
+      for (let c = 1; c <= cellCount; c++) {
+        let isEW0 = false;
+        if (g === 33 && ((c >= 1 && c <= 8) || (c >= 14 && c <= 21))) isEW0 = true;
+        let cFormatted = c < 10 ? '0' + c : c;
+
+        groupObj.cells.push({
+          cellNum: c, 
+          cellId: `C${cFormatted}`,
+          anodeStatus: 'NONE', 
+          cathodeStatus: 'NONE',
+          pcs: 0, 
+          isEW0: isEW0
+        });
+      }
+      data.push(groupObj);
+    }
+    return data;
+  }
+
+  // Inisialisasi awal secara instan secara lokal agar UI tidak pernah kosong saat loading
+  plantData = generateDefaultPlantData();
+
   function syncCellTargets(targets) {
     let updates = {};
     targets.forEach(t => {
@@ -850,39 +884,7 @@
     setTimeout(() => { toast.style.opacity = '0'; }, 1500);
   }
 
-  function generateDefaultPlantData() {
-    let data = [];
-    for (let g = 1; g <= 48; g++) {
-      let phase = g <= 16 ? 1 : (g <= 32 ? 2 : 3);
-      let cellCount = (g >= 13 && g <= 20) ? 28 : 26;
-      let zoneValue = (g - 1) % 4;
-      let zone = (zoneValue === 0 || zoneValue === 1) ? 'North' : 'South';
-      
-      let groupObj = {
-        groupId: g, phase: phase, zone: zone, cellCount: cellCount,
-        cropStatus: '-', cells: []
-      };
-
-      for (let c = 1; c <= cellCount; c++) {
-        let isEW0 = false;
-        if (g === 33 && ((c >= 1 && c <= 8) || (c >= 14 && c <= 21))) isEW0 = true;
-        let cFormatted = c < 10 ? '0' + c : c;
-
-        groupObj.cells.push({
-          cellNum: c, 
-          cellId: `C${cFormatted}`,
-          anodeStatus: 'NONE', 
-          cathodeStatus: 'NONE',
-          pcs: 0, 
-          isEW0: isEW0
-        });
-      }
-      data.push(groupObj);
-    }
-    return data;
-  }
-
-  // Listener Realtime Firebase yang aman terhadap konversi objek/array otomatis
+  // Listener Realtime Firebase yang fleksibel menerima struktur data apapun
   db.ref('tankhouseData').on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
@@ -1060,7 +1062,13 @@
     });
 
     if (renderedCount === 0) {
-      container.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">No filled cells found (Select "All Cells" filter to view empty cells).</div>';
+      if (selContent === 'FILLED') {
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">Tidak ada cell yang terisi (Pilih "All Cells" untuk menampilkan semua cell).</div>';
+      } else if (selContent === 'EMPTY') {
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">Tidak ada cell yang kosong.</div>';
+      } else {
+        container.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">Tidak ada cell yang cocok dengan filter yang dipilih.</div>';
+      }
     }
 
     recalculateStats();
@@ -1582,6 +1590,11 @@
     
     document.getElementById('liveClock').textContent = `${dateStr} • ${timeStr}`;
   }, 1000);
+
+  // Render awal secara instan begitu script dimuat
+  populateGroupSelect();
+  recalculateStats();
+  renderMatrix();
 </script>
 </body>
 </html>
