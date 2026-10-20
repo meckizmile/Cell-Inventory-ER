@@ -522,6 +522,7 @@
         <p>North & South Zone • Anode & Cathode Setting</p>
       </div>
       <div class="header-actions">
+        <div class="update-badge" id="dbStatus" style="color: var(--positive);">🟢 Checking...</div>
         <div class="update-badge" id="liveClock">00:00:00</div>
       </div>
     </div>
@@ -689,6 +690,7 @@
 </div>
 
 <script>
+  // PASTIKAN databaseURL DIBAWAH INI ADALAH URL REALTIME DATABASE FIREBASE ANDA
   const firebaseConfig = {
     databaseURL: "https://NAMA-PROJECT-KAMU-default-rtdb.firebaseio.com"
   };
@@ -707,6 +709,7 @@
   let redoStack = [];
   const MAX_HISTORY = 50;
 
+  // Pembuat Template Default 48 Group secara lokal
   function generateDefaultPlantData() {
     let data = [];
     for (let g = 1; g <= 48; g++) {
@@ -739,9 +742,42 @@
     return data;
   }
 
-  // Inisialisasi awal secara instan secara lokal agar UI tidak pernah kosong saat loading
+  // Inisialisasi awal struktur data lokal
   plantData = generateDefaultPlantData();
 
+  // Penggabungan aman (Safe Merge) antara Data Firebase dengan Template Lokal
+  function mergeFirebaseData(fbData) {
+    let defaultData = generateDefaultPlantData();
+    if (!fbData) return defaultData;
+
+    let fbGroups = Array.isArray(fbData) ? fbData : Object.values(fbData);
+
+    fbGroups.forEach(fbGroup => {
+      if (!fbGroup || fbGroup.groupId === undefined) return;
+      let localGroup = defaultData.find(g => g.groupId === fbGroup.groupId);
+      if (localGroup) {
+        if (fbGroup.cropStatus !== undefined) {
+          localGroup.cropStatus = fbGroup.cropStatus;
+        }
+        if (fbGroup.cells) {
+          let fbCells = Array.isArray(fbGroup.cells) ? fbGroup.cells : Object.values(fbGroup.cells);
+          fbCells.forEach(fbCell => {
+            if (!fbCell || fbCell.cellNum === undefined) return;
+            let localCell = localGroup.cells.find(c => c.cellNum === fbCell.cellNum);
+            if (localCell) {
+              if (fbCell.anodeStatus !== undefined) localCell.anodeStatus = fbCell.anodeStatus;
+              if (fbCell.cathodeStatus !== undefined) localCell.cathodeStatus = fbCell.cathodeStatus;
+              if (fbCell.pcs !== undefined) localCell.pcs = fbCell.pcs;
+            }
+          });
+        }
+      }
+    });
+
+    return defaultData;
+  }
+
+  // Pembaruan Sel Utuh (Whole-Cell Update) ke Firebase untuk mencegah korupsi array
   function syncCellTargets(targets) {
     let updates = {};
     targets.forEach(t => {
@@ -750,24 +786,39 @@
         let cIdx = plantData[gIdx].cells.findIndex(c => c && c.cellNum === t.cellNum);
         if (cIdx !== -1) {
           let cell = plantData[gIdx].cells[cIdx];
-          updates[`tankhouseData/${gIdx}/cells/${cIdx}/anodeStatus`] = cell.anodeStatus;
-          updates[`tankhouseData/${gIdx}/cells/${cIdx}/cathodeStatus`] = cell.cathodeStatus;
-          updates[`tankhouseData/${gIdx}/cells/${cIdx}/pcs`] = cell.pcs;
+          updates[`tankhouseData/${gIdx}/cells/${cIdx}`] = {
+            cellNum: cell.cellNum,
+            cellId: cell.cellId,
+            anodeStatus: cell.anodeStatus,
+            cathodeStatus: cell.cathodeStatus,
+            pcs: cell.pcs,
+            isEW0: cell.isEW0
+          };
         }
       }
     });
-    db.ref().update(updates);
+
+    db.ref().update(updates).catch(err => {
+      showToast("⚠️ Firebase Error: Save Failed!");
+      console.error("Firebase update failed:", err);
+    });
   }
 
   function syncGroupCrop(groupId, cropStatus) {
     let gIdx = plantData.findIndex(g => g && g.groupId === groupId);
     if (gIdx !== -1) {
-      db.ref(`tankhouseData/${gIdx}/cropStatus`).set(cropStatus);
+      db.ref(`tankhouseData/${gIdx}/cropStatus`).set(cropStatus).catch(err => {
+        showToast("⚠️ Firebase Error: Harvest Status Failed!");
+        console.error("Group crop update failed:", err);
+      });
     }
   }
 
   function syncBulkData() {
-    db.ref('tankhouseData').set(plantData);
+    db.ref('tankhouseData').set(plantData).catch(err => {
+      showToast("⚠️ Firebase Error: Bulk Save Failed!");
+      console.error("Bulk sync failed:", err);
+    });
   }
 
   function saveState() {
@@ -881,43 +932,52 @@
     }
     toast.textContent = msg;
     toast.style.opacity = '1';
-    setTimeout(() => { toast.style.opacity = '0'; }, 1500);
+    setTimeout(() => { toast.style.opacity = '0'; }, 2000);
   }
 
-  // Listener Realtime Firebase yang fleksibel menerima struktur data apapun
+  // Listener Realtime Firebase dengan Penggabungan Otomatis
   db.ref('tankhouseData').on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
-      let parsedData = Array.isArray(data) ? data : Object.values(data);
-      plantData = parsedData.map(g => {
-        if (!g) return g;
-        let cellsArray = g.cells ? (Array.isArray(g.cells) ? g.cells : Object.values(g.cells)) : [];
-        return { ...g, cells: cellsArray };
-      }).filter(Boolean);
-
-      populateGroupSelect();
-      recalculateStats();
-      renderMatrix();
-      
-      if (activeSelectedCell) {
-        let grp = plantData.find(g => g && g.groupId === activeSelectedCell.groupId);
-        if (grp && grp.cells) {
-          let cell = grp.cells.find(c => c && c.cellNum === activeSelectedCell.cellNum);
-          if (cell && selectedCellsList.length <= 1) {
-            let isBlank = cell.anodeStatus === 'NONE' && cell.cathodeStatus === 'NONE';
-            document.getElementById('inspectorContent').innerHTML = `
-              <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
-              <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
-              <div class="detail-row"><span class="detail-label">Anode:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
-              <div class="detail-row"><span class="detail-label">Cathode:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
-              <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-val" style="color:${isBlank?'var(--error)':'var(--positive)'};">${isBlank ? 'COMPLETELY EMPTY' : 'FILLED'}</span></div>
-            `;
-          }
-        }
-      }
+      plantData = mergeFirebaseData(data);
     } else {
       plantData = generateDefaultPlantData();
       db.ref('tankhouseData').set(plantData);
+    }
+
+    populateGroupSelect();
+    recalculateStats();
+    renderMatrix();
+
+    if (activeSelectedCell) {
+      let grp = plantData.find(g => g && g.groupId === activeSelectedCell.groupId);
+      if (grp && grp.cells) {
+        let cell = grp.cells.find(c => c && c.cellNum === activeSelectedCell.cellNum);
+        if (cell && selectedCellsList.length <= 1) {
+          let isBlank = cell.anodeStatus === 'NONE' && cell.cathodeStatus === 'NONE';
+          document.getElementById('inspectorContent').innerHTML = `
+            <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
+            <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
+            <div class="detail-row"><span class="detail-label">Anode:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
+            <div class="detail-row"><span class="detail-label">Cathode:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
+            <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-val" style="color:${isBlank?'var(--error)':'var(--positive)'};">${isBlank ? 'COMPLETELY EMPTY' : 'FILLED'}</span></div>
+          `;
+        }
+      }
+    }
+  });
+
+  // Pemantau Status Koneksi Firebase
+  db.ref('.info/connected').on('value', (snap) => {
+    const statusEl = document.getElementById('dbStatus');
+    if (statusEl) {
+      if (snap.val() === true) {
+        statusEl.textContent = '🟢 Online';
+        statusEl.style.color = 'var(--positive)';
+      } else {
+        statusEl.textContent = '🔴 Offline / Connecting...';
+        statusEl.style.color = 'var(--error)';
+      }
     }
   });
 
@@ -1591,7 +1651,7 @@
     document.getElementById('liveClock').textContent = `${dateStr} • ${timeStr}`;
   }, 1000);
 
-  // Render awal secara instan begitu script dimuat
+  // Render awal secara instan
   populateGroupSelect();
   recalculateStats();
   renderMatrix();
