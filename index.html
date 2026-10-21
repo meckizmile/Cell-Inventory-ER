@@ -11,49 +11,49 @@
 
 <style>
   :root {
-    --body-bg: #0f0f0f;
-    --surface: #141414;
-    --surface-dim: #1c1c1c;
-    --surface-container-high: #2c2f38;
-    --on-surface: #e0e0e0;
-    --on-surface-variant: rgba(255, 255, 255, 0.6);
-    --primary: #9dd2ff;
-    --primary-container: #192967;
-    --positive: #0ebc5f;
-    --positive-container: #002220;
-    --error: #ff4c45;
-    --error-container: #3c0202;
-    --stroke-default: #2d2f38;
-    --chart-8: #f5d77f;
-    --copper: #d97724;
-    --copper-border: #f39c63;
-    --stainless: #90a4ae;
-    --stainless-border: #b0bec5;
-    --ff-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    --ff-mono: monospace;
-    --r-s: 6px;
-    --r-m: 10px;
-    --r-full: 999px;
+    --body-bg: #090a0f;
+    --surface: #111319;
+    --surface-dim: #181b24;
+    --surface-container-high: #242836;
+    --on-surface: #f8fafc;
+    --on-surface-variant: #94a3b8;
+    --primary: #38bdf8;
+    --primary-container: rgba(56, 189, 248, 0.12);
+    --positive: #22c55e;
+    --positive-container: rgba(34, 197, 94, 0.12);
+    --error: #f43f5e;
+    --error-container: rgba(244, 63, 94, 0.12);
+    --stroke-default: #2a303f;
+    --chart-8: #a855f7; /* Royal Violet untuk 62KS */
+    --copper: #ea580c; /* Warm Copper untuk CATH */
+    --copper-border: #f97316;
+    --stainless: #64748b;
+    --stainless-border: #94a3b8;
+    --ff-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+    --ff-mono: "JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --r-s: 8px;
+    --r-m: 14px;
+    --r-full: 9999px;
   }
 
-  /* Light Theme Variables */
+  /* Modern Light Theme Variables */
   [data-theme="light"] {
-    --body-bg: #f0f2f5;
+    --body-bg: #f1f5f9;
     --surface: #ffffff;
-    --surface-dim: #f8f9fa;
-    --surface-container-high: #e4e7eb;
-    --on-surface: #111827;
-    --on-surface-variant: #4b5563;
+    --surface-dim: #f8fafc;
+    --surface-container-high: #e2e8f0;
+    --on-surface: #0f172a;
+    --on-surface-variant: #475569;
     --primary: #0284c7;
     --primary-container: #e0f2fe;
     --positive: #16a34a;
     --positive-container: #dcfce7;
-    --error: #dc2626;
-    --error-container: #fee2e2;
-    --stroke-default: #d1d5db;
-    --chart-8: #d97706;
+    --error: #e11d48;
+    --error-container: #ffe4e6;
+    --stroke-default: #cbd5e1;
+    --chart-8: #7e22ce;
     --copper: #c2410c;
-    --copper-border: #f97316;
+    --copper-border: #ea580c;
     --stainless: #475569;
     --stainless-border: #64748b;
   }
@@ -63,6 +63,7 @@
     margin: 0;
     padding: 0;
     font-family: var(--ff-sans);
+    -webkit-font-smoothing: antialiased;
   }
 
   html, body {
@@ -72,65 +73,69 @@
     color: var(--on-surface);
     font-size: 11px;
     overflow: hidden;
-    transition: background 0.2s ease, color 0.2s ease;
+    transition: background 0.25s ease, color 0.25s ease;
   }
 
   .widget-container {
     width: 100%;
     height: 100vh;
-    padding: 8px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
   }
 
   .app-card {
     background: var(--surface);
     border-radius: var(--r-m);
-    padding: 10px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     border: 1px solid var(--stroke-default);
     height: 100%;
     overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   }
 
   .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 6px;
+    padding-bottom: 8px;
     border-bottom: 1px solid var(--stroke-default);
     flex-wrap: wrap;
-    gap: 6px;
+    gap: 8px;
   }
   
   .title-area h1 {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.3px;
     color: var(--on-surface);
   }
   
   .title-area p {
     color: var(--on-surface-variant);
     font-size: 11px;
+    font-weight: 500;
   }
   
   .header-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
     flex-wrap: wrap;
   }
 
   .update-badge {
     background: var(--surface-dim);
     border: 1px solid var(--stroke-default);
-    padding: 3px 8px;
+    padding: 4px 10px;
     border-radius: var(--r-full);
     font-size: 10px;
     font-family: var(--ff-mono);
+    font-weight: 600;
     color: var(--on-surface-variant);
     white-space: nowrap;
   }
@@ -139,70 +144,79 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    min-height: 26px;
-    padding: 2px 10px;
+    min-height: 28px;
+    padding: 2px 12px;
     font-size: 11px;
-    font-weight: 500;
+    font-weight: 600;
     color: var(--on-surface);
     background-color: var(--surface-dim);
     border: 1px solid var(--stroke-default);
     border-radius: var(--r-full);
     cursor: pointer;
-    transition: all 0.15s ease;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    outline: none;
   }
   button:hover {
     background-color: var(--surface-container-high);
+    transform: translateY(-1px);
+  }
+  button:active {
+    transform: translateY(0);
   }
 
   .btn-primary {
     background-color: var(--primary);
     color: #ffffff;
     border-color: transparent;
-    font-weight: 600;
+    font-weight: 700;
   }
   [data-theme="dark"] .btn-primary {
-    color: #192967;
+    color: #032b45;
   }
 
   .btn-danger {
     background-color: var(--error);
     color: #ffffff;
     border-color: transparent;
-    font-weight: 600;
-  }
-  [data-theme="dark"] .btn-danger {
-    background-color: var(--error-container);
-    color: var(--error);
+    font-weight: 700;
   }
 
   .kpi-grid {
     display: grid;
     grid-template-columns: repeat(6, 1fr);
-    gap: 6px;
+    gap: 8px;
   }
   
   .kpi-card {
     background: var(--surface-dim);
     border-radius: var(--r-s);
-    padding: 6px 8px;
+    padding: 8px 10px;
     border: 1px solid var(--stroke-default);
+    transition: border-color 0.2s ease;
+  }
+  .kpi-card:hover {
+    border-color: rgba(255, 255, 255, 0.15);
   }
   
   .kpi-label {
-    font-size: 10px;
+    font-size: 9.5px;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
     color: var(--on-surface-variant);
-    font-weight: 600;
+    font-weight: 700;
   }
   
   .kpi-value {
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 16px;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    margin: 2px 0;
     color: var(--on-surface);
   }
   
   .kpi-sub {
-    font-size: 10px;
+    font-size: 9.5px;
+    font-family: var(--ff-mono);
     color: var(--on-surface-variant);
   }
 
@@ -210,64 +224,73 @@
     background: var(--surface-dim);
     border-radius: var(--r-s);
     border: 1px solid var(--stroke-default);
-    padding: 6px;
+    padding: 8px;
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
+    gap: 8px;
     align-items: flex-end;
   }
 
   .control-group {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: 4px;
   }
   
   .control-group label {
-    font-size: 10px;
+    font-size: 9.5px;
     color: var(--on-surface-variant);
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 0.4px;
   }
   
   .segmented-pills {
     display: flex;
-    gap: 2px;
+    gap: 3px;
   }
 
   .lumi-chip {
-    padding: 0 6px;
-    min-height: 24px;
+    padding: 0 8px;
+    min-height: 26px;
     font-size: 10px;
     background: var(--surface);
     border: 1px solid var(--stroke-default);
     border-radius: var(--r-full);
-    color: var(--on-surface);
+    color: var(--on-surface-variant);
     cursor: pointer;
   }
   .lumi-chip.is-active {
-    background: var(--primary-container);
-    color: var(--primary);
+    background: var(--primary);
+    color: #ffffff;
     border-color: transparent;
     font-weight: 700;
+  }
+  [data-theme="dark"] .lumi-chip.is-active {
+    color: #032b45;
   }
 
   select.lumi-select {
     width: 100%;
-    padding: 4px 6px;
+    padding: 5px 8px;
     border: 1px solid var(--stroke-default);
     border-radius: var(--r-full);
     background-color: var(--surface);
     color: var(--on-surface);
     font-size: 11px;
+    font-weight: 600;
     cursor: pointer;
     outline: none;
+    transition: border-color 0.2s ease;
+  }
+  select.lumi-select:focus {
+    border-color: var(--primary);
   }
 
   .main-content {
     display: grid;
     grid-template-columns: 1fr 310px;
-    gap: 8px;
+    gap: 10px;
     flex: 1;
     min-height: 0;
   }
@@ -276,212 +299,296 @@
     background: var(--surface-dim);
     border-radius: var(--r-s);
     border: 1px solid var(--stroke-default);
-    padding: 8px;
+    padding: 10px;
     height: 100%;
     overflow-y: auto;
   }
 
   .group-section {
-    margin-bottom: 12px;
+    margin-bottom: 14px;
   }
 
   .group-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 4px;
-    margin-bottom: 6px;
+    padding-bottom: 5px;
+    margin-bottom: 8px;
     border-bottom: 1px dashed var(--stroke-default);
   }
 
   .group-title {
-    font-weight: 700;
-    font-size: 11px;
+    font-weight: 800;
+    font-size: 11.5px;
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 6px;
   }
 
   .crop-tag {
-    padding: 1px 6px;
+    padding: 2px 8px;
     border-radius: var(--r-full);
-    font-size: 10px;
-    font-weight: 600;
+    font-size: 9.5px;
+    font-weight: 700;
     cursor: pointer;
+    transition: opacity 0.2s;
   }
-  .crop-c1 { background: var(--positive-container); color: var(--positive); }
-  .crop-c2 { background: var(--primary-container); color: var(--primary); }
-  .crop-c3 { background: var(--error-container); color: var(--error); }
-  .crop-none { background: var(--surface); color: var(--on-surface-variant); }
+  .crop-tag:hover { opacity: 0.85; }
+  .crop-c1 { background: var(--positive-container); color: var(--positive); border: 1px solid var(--positive); }
+  .crop-c2 { background: var(--primary-container); color: var(--primary); border: 1px solid var(--primary); }
+  .crop-c3 { background: var(--error-container); color: var(--error); border: 1px solid var(--error); }
+  .crop-none { background: var(--surface); color: var(--on-surface-variant); border: 1px solid var(--stroke-default); }
 
-  /* Structured Grid Row Layout */
+  /* Grid Layout Row */
   .group-grid-wrapper {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     overflow-x: auto;
     padding-bottom: 4px;
   }
 
   .cell-row {
     display: grid;
-    gap: 4px;
+    gap: 5px;
     min-width: max-content;
   }
 
   .cell-row-26 {
-    grid-template-columns: repeat(13, minmax(46px, 1fr));
+    grid-template-columns: repeat(13, minmax(48px, 1fr));
   }
 
   .cell-row-28 {
-    grid-template-columns: repeat(14, minmax(46px, 1fr));
+    grid-template-columns: repeat(14, minmax(48px, 1fr));
   }
 
+  /* Base Cell Card Container */
   .cell-card {
-    background: var(--surface);
-    border: 1px solid var(--stroke-default);
     border-radius: var(--r-s);
-    padding: 2px;
+    padding: 4px 3px;
     text-align: center;
     cursor: pointer;
     position: relative;
-    min-height: 42px;
+    min-height: 54px;
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
-    transition: all 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease;
     user-select: none;
-  }
-  .cell-card:hover {
-    background: var(--surface-container-high);
+    outline: none !important;
   }
 
-  .cell-glow {
-    background: #132247 !important;
-    border: 1.5px solid #80c8ff !important;
-    box-shadow: 0 0 8px #3b82f6, inset 0 0 4px rgba(128, 200, 255, 0.4) !important;
+  /* 1. KOTAK CELL KOSONG */
+  .cell-blank {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1.5px dashed rgba(148, 163, 184, 0.35);
+    opacity: 1;
+  }
+  [data-theme="light"] .cell-blank {
+    background: rgba(255, 255, 255, 0.8);
+    border: 1.5px dashed #94a3b8;
+  }
+  .cell-blank .cell-id {
+    color: var(--on-surface-variant);
+  }
+
+  /* 2. KOTAK CELL TERISI */
+  .cell-filled {
+    background: var(--surface-container-high);
+    border: 1.5px solid var(--stroke-default);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     opacity: 1 !important;
   }
-  [data-theme="light"] .cell-glow {
-    background: #e0f2fe !important;
-    border: 1.5px solid #0284c7 !important;
-    box-shadow: 0 0 8px rgba(2, 132, 199, 0.3), inset 0 0 4px rgba(2, 132, 199, 0.2) !important;
-  }
-
-  .cell-card.selected {
-    border-color: #ffffff !important;
-    box-shadow: 0 0 10px #ffffff, 0 0 4px var(--primary) !important;
-  }
-  [data-theme="light"] .cell-card.selected {
-    border-color: #111827 !important;
-    box-shadow: 0 0 10px #111827, 0 0 4px var(--primary) !important;
-  }
-
-  .cell-id {
-    font-size: 10px;
-    font-family: var(--ff-mono);
-    font-weight: 700;
+  .cell-filled .cell-id {
     color: var(--on-surface);
   }
 
-  .cell-status {
-    font-size: 10px;
-    font-weight: 700;
+  /* Variant Border & Tint Cell Terisi */
+  .cell-63 { 
+    border-color: rgba(16, 185, 129, 0.6) !important; 
+    background: rgba(16, 185, 129, 0.08) !important; 
+  }
+  .cell-62ku { 
+    border-color: rgba(2, 132, 199, 0.6) !important; 
+    background: rgba(2, 132, 199, 0.08) !important; 
+  }
+  .cell-62ks { 
+    border-color: rgba(168, 85, 247, 0.6) !important; 
+    background: rgba(168, 85, 247, 0.08) !important; 
+  }
+  .cell-cath-only { 
+    border-color: rgba(234, 88, 12, 0.6) !important; 
+    background: rgba(234, 88, 12, 0.08) !important; 
+  }
+  .cell-ss-only { 
+    border-color: rgba(100, 116, 139, 0.6) !important; 
+    background: rgba(100, 116, 139, 0.08) !important; 
   }
 
-  .cathode-tag {
-    font-size: 9px;
+  /* Hover State Presisi 1:1 Tanpa Tonjolan / Pergeseran Posisi */
+  .cell-card:hover {
+    border-style: solid !important;
+    border-color: var(--primary) !important;
+    background: var(--surface-container-high) !important;
+    box-shadow: none !important;
+    transform: none !important;
+    opacity: 1 !important;
+  }
+
+  /* Cell Terpilih / Active Selection Flat Presisi */
+  .cell-card.selected {
+    border-style: solid !important;
+    border-color: var(--primary) !important;
+    background: var(--surface-container-high) !important;
+    box-shadow: none !important;
+    transform: none !important;
+    z-index: 2;
+    opacity: 1 !important;
+  }
+
+  /* High-Contrast Cell ID Typography */
+  .cell-id {
+    font-size: 10px;
+    font-family: var(--ff-mono);
     font-weight: 800;
-    padding: 1px 4px;
-    border-radius: 3px;
+    letter-spacing: -0.1px;
+    line-height: 1;
     margin-top: 2px;
-    letter-spacing: 0.2px;
+  }
+
+  /* Tags Stack Container */
+  .tags-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    align-items: center;
+    width: 100%;
+    margin-top: 2px;
+  }
+
+  /* Refined Micro Pill Badge Tags */
+  .anode-tag, .cathode-tag {
+    font-size: 8.5px;
+    font-weight: 800;
+    padding: 2.5px 0;
+    border-radius: 4px;
+    width: 100%;
+    text-align: center;
+    letter-spacing: 0.3px;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+
+  /* Anode Tag Styles */
+  .tag-63 {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.5);
+  }
+  [data-theme="light"] .tag-63 {
+    background: #d1fae5;
+    color: #047857;
+    border-color: #059669;
+  }
+
+  .tag-62ku {
+    background: rgba(2, 132, 199, 0.2);
+    color: #0284c7;
+    border: 1px solid rgba(2, 132, 199, 0.5);
+  }
+  [data-theme="light"] .tag-62ku {
+    background: #e0f2fe;
+    color: #0369a1;
+    border-color: #0284c7;
+  }
+
+  .tag-62ks {
+    background: rgba(168, 85, 247, 0.2);
+    color: #c084fc;
+    border: 1px solid rgba(168, 85, 247, 0.5);
+  }
+  [data-theme="light"] .tag-62ks {
+    background: #f3e8ff;
+    color: #7e22ce;
+    border-color: #a855f7;
   }
   
+  /* Cathode Tag Styles */
   .tag-cath { 
-    background: var(--copper); 
-    color: #ffffff; 
-    border: 1px solid var(--copper-border);
-    box-shadow: 0 0 5px rgba(217, 119, 36, 0.4);
+    background: rgba(234, 88, 12, 0.2); 
+    color: #f97316; 
+    border: 1px solid rgba(234, 88, 12, 0.5);
   }
-  [data-theme="dark"] .tag-cath {
-    color: #1a0800;
+  [data-theme="light"] .tag-cath {
+    background: #ffedd5;
+    color: #c2410c;
+    border-color: #ea580c;
   }
 
   .tag-ss { 
-    background: var(--stainless); 
-    color: #ffffff; 
-    border: 1px solid var(--stainless-border);
-    box-shadow: 0 0 5px rgba(144, 164, 174, 0.4);
+    background: rgba(100, 116, 139, 0.2); 
+    color: #cbd5e1; 
+    border: 1px solid rgba(100, 116, 139, 0.5);
   }
-  [data-theme="dark"] .tag-ss {
-    color: #0f172a;
-  }
-
-  .cell-63 { border-color: var(--positive); }
-  .cell-63 .cell-status { color: var(--positive); }
-  .cell-62ku { border-color: var(--primary); }
-  .cell-62ku .cell-status { color: var(--primary); }
-  .cell-62ks { border-color: var(--chart-8); }
-  .cell-62ks .cell-status { color: var(--chart-8); }
-  
-  .cell-blank {
-    background: rgba(128, 128, 128, 0.04);
-    border: 1px dashed var(--stroke-default);
-    opacity: 0.6;
+  [data-theme="light"] .tag-ss {
+    background: #f1f5f9;
+    color: #334155;
+    border-color: #64748b;
   }
 
   .inspector-panel {
     background: var(--surface-dim);
     border-radius: var(--r-s);
     border: 1px solid var(--stroke-default);
-    padding: 8px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 10px;
     height: 100%;
     overflow-y: auto;
   }
 
   .inspector-title {
     font-size: 10px;
-    font-weight: 700;
+    font-weight: 800;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
     color: var(--on-surface-variant);
     border-bottom: 1px solid var(--stroke-default);
-    padding-bottom: 4px;
+    padding-bottom: 6px;
   }
 
   .detail-row {
     display: flex;
     justify-content: space-between;
     font-size: 11px;
-    margin-bottom: 2px;
+    margin-bottom: 3px;
   }
   .detail-label { color: var(--on-surface-variant); }
-  .detail-val { font-weight: 600; color: var(--on-surface); }
+  .detail-val { font-weight: 700; color: var(--on-surface); }
 
   .action-box {
     background: var(--surface);
-    padding: 6px;
+    padding: 8px;
     border-radius: var(--r-s);
     border: 1px solid var(--stroke-default);
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
   }
   .action-box h4 {
-    font-size: 10px;
+    font-size: 9.5px;
     text-transform: uppercase;
+    letter-spacing: 0.4px;
     color: var(--on-surface-variant);
-    font-weight: 600;
+    font-weight: 700;
   }
 
   .status-btn-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 4px;
+    gap: 5px;
   }
 
   .wa-textarea {
@@ -492,14 +599,14 @@
     color: var(--on-surface);
     font-family: var(--ff-mono);
     font-size: 10px;
-    padding: 6px;
+    padding: 8px;
     border-radius: var(--r-s);
     resize: none;
     outline: none;
     line-height: 1.4;
   }
 
-  /* Mobile Quick Action Floating Bar */
+  /* Ultra Modern Mobile Floating Quick Dock */
   .mobile-quick-bar {
     display: none;
   }
@@ -515,14 +622,14 @@
     .widget-container {
       height: auto;
       min-height: 100vh;
-      padding: 4px;
-      padding-bottom: 75px;
+      padding: 6px;
+      padding-bottom: 85px;
     }
 
     .app-card {
       height: auto;
       overflow: visible;
-      padding: 8px;
+      padding: 10px;
     }
 
     .kpi-grid {
@@ -549,38 +656,48 @@
       max-height: none;
     }
 
+    /* Modern Glassmorphic Floating Toolbar */
     .mobile-quick-bar {
       position: fixed;
-      bottom: 10px;
+      bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
-      background: var(--surface);
-      border: 1px solid var(--stroke-default);
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-      padding: 6px 10px;
-      border-radius: 16px;
+      background: rgba(17, 19, 25, 0.88);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
+      padding: 6px 12px;
+      border-radius: 24px;
       display: none;
       flex-direction: column;
-      gap: 5px;
+      gap: 6px;
       z-index: 10000;
-      max-width: 96vw;
+      max-width: 95vw;
       width: max-content;
+    }
+    
+    [data-theme="light"] .mobile-quick-bar {
+      background: rgba(255, 255, 255, 0.88);
+      border-color: rgba(0, 0, 0, 0.1);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
     }
 
     .mobile-quick-row {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
+      gap: 5px;
       flex-wrap: nowrap;
     }
 
     .mobile-quick-bar button {
-      padding: 4px 8px;
-      font-size: 10px;
+      padding: 5px 10px;
+      font-size: 10.5px;
       font-weight: 700;
       white-space: nowrap;
-      min-height: 24px;
+      min-height: 28px;
+      border-radius: 12px;
     }
   }
 </style>
@@ -596,7 +713,7 @@
         <p>North & South Zone • Anode & Cathode Setting</p>
       </div>
       <div class="header-actions">
-        <button class="lumi-chip" id="themeToggleBtn" onclick="toggleTheme()" style="min-height:22px; font-weight:600;">🌙 Dark</button>
+        <button class="lumi-chip" id="themeToggleBtn" onclick="toggleTheme()" style="min-height:24px; font-weight:700;">🌙 Dark</button>
         <div class="update-badge" id="dbStatus" style="color: var(--positive);">🟢 Checking...</div>
         <div class="update-badge" id="liveClock">Oct 20, 2026 • 00:00:00 AM</div>
       </div>
@@ -709,7 +826,7 @@
         <div class="inspector-title">Cell Settings</div>
         
         <div id="inspectorContent">
-          <div style="text-align: center; color: var(--on-surface-variant); padding: 6px 0; font-size: 11px;">
+          <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11px;">
             Click a cell in the grid to configure status.
           </div>
         </div>
@@ -717,9 +834,9 @@
         <div class="action-box" id="inspectorControls" style="display: none;">
           <h4>1. Cell Anode Status:</h4>
           <div class="status-btn-grid">
-            <button onclick="updateActiveCellAnode('63 FL')">63 FL [1]</button>
-            <button onclick="updateActiveCellAnode('62 KU')">62 KU [2]</button>
-            <button onclick="updateActiveCellAnode('62 KS')">62 KS [3]</button>
+            <button style="border-color: rgba(16, 185, 129, 0.5); color: #10b981;" onclick="updateActiveCellAnode('63 FL')">63 FL [1]</button>
+            <button style="border-color: rgba(2, 132, 199, 0.5); color: #0284c7;" onclick="updateActiveCellAnode('62 KU')">62 KU [2]</button>
+            <button style="border-color: rgba(168, 85, 247, 0.5); color: var(--chart-8);" onclick="updateActiveCellAnode('62 KS')">62 KS [3]</button>
             <button onclick="updateActiveCellAnode('NONE')">Clear Anode</button>
           </div>
 
@@ -743,9 +860,9 @@
         </div>
 
         <div>
-          <div class="inspector-title" style="margin-bottom: 4px;">WA Report</div>
+          <div class="inspector-title" style="margin-bottom: 6px;">WA Report</div>
           <textarea class="wa-textarea" id="waText" readonly></textarea>
-          <button class="btn-primary" style="width: 100%; margin-top: 4px;" id="btnCopy" onclick="copyWAReport()">Copy WA Text</button>
+          <button class="btn-primary" style="width: 100%; margin-top: 6px;" id="btnCopy" onclick="copyWAReport()">Copy WA Text</button>
         </div>
       </div>
     </div>
@@ -753,13 +870,13 @@
   </div>
 </div>
 
-<!-- Floating Action Bar for Mobile Quick Fill -->
+<!-- Modern Floating Action Bar for Mobile Quick Fill -->
 <div class="mobile-quick-bar" id="mobileQuickBar">
   <!-- Row 1: Fast Status Fill Buttons -->
   <div class="mobile-quick-row">
-    <button style="border-color: var(--positive); color: var(--positive);" onclick="updateActiveCellAnode('63 FL')">63 FL</button>
-    <button style="border-color: var(--primary); color: var(--primary);" onclick="updateActiveCellAnode('62 KU')">62 KU</button>
-    <button style="border-color: var(--chart-8); color: var(--chart-8);" onclick="updateActiveCellAnode('62 KS')">62 KS</button>
+    <button style="background: rgba(16, 185, 129, 0.2); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.5);" onclick="updateActiveCellAnode('63 FL')">63 FL</button>
+    <button style="background: rgba(2, 132, 199, 0.2); color: #0284c7; border: 1px solid rgba(2, 132, 199, 0.5);" onclick="updateActiveCellAnode('62 KU')">62 KU</button>
+    <button style="background: rgba(168, 85, 247, 0.2); color: #a855f7; border: 1px solid rgba(168, 85, 247, 0.5);" onclick="updateActiveCellAnode('62 KS')">62 KS</button>
     <button style="background: var(--copper); color: #ffffff; font-weight: bold; border-color: var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH</button>
     <button style="background: var(--stainless); color: #ffffff; font-weight: bold; border-color: var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS</button>
   </div>
@@ -770,7 +887,7 @@
     <button onclick="copyActiveCell()">📋 Copy</button>
     <button onclick="pasteActiveCell()">📋 Paste</button>
     <button class="btn-danger" onclick="clearCellCompletely()">🗑️ Del</button>
-    <button style="background:var(--surface);" onclick="deselectCell()">✕</button>
+    <button style="background:var(--surface-dim);" onclick="deselectCell()">✕</button>
   </div>
 </div>
 
@@ -1018,7 +1135,7 @@
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'none';
     document.getElementById('inspectorContent').innerHTML = `
-      <div style="text-align: center; color: var(--on-surface-variant); padding: 6px 0; font-size: 11px;">
+      <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11px;">
         Click a cell in the grid to configure status.
       </div>
     `;
@@ -1036,7 +1153,7 @@
     if (!toast) {
       toast = document.createElement('div');
       toast.id = 'toastMsg';
-      toast.style.cssText = 'position:fixed; bottom:16px; right:16px; background:#192967; color:#9dd2ff; padding:8px 14px; border-radius:20px; border:1px solid #9dd2ff; font-size:11px; z-index:99999; transition:opacity 0.2s; pointer-events:none; font-weight:600; box-shadow:0 4px 12px rgba(0,0,0,0.5);';
+      toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:var(--surface-dim); color:var(--primary); padding:8px 16px; border-radius:20px; border:1px solid var(--primary); font-size:11px; z-index:99999; transition:opacity 0.2s; pointer-events:none; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,0.3);';
       document.body.appendChild(toast);
     }
     toast.textContent = msg;
@@ -1060,7 +1177,7 @@
       if (grp && grp.cells) {
         let cell = grp.cells.find(c => c && c.cellNum === activeSelectedCell.cellNum);
         if (cell && selectedCellsList.length <= 1) {
-          let isBlank = cell.anodeStatus === 'NONE' && cell.cathodeStatus === 'NONE';
+          let isBlank = (cell.anodeStatus === 'NONE' || !cell.anodeStatus) && (cell.cathodeStatus === 'NONE' || !cell.cathodeStatus);
           document.getElementById('inspectorContent').innerHTML = `
             <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
             <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
@@ -1195,8 +1312,8 @@
         <div class="group-header">
           <div class="group-title">
             <span>Group ${g.groupId}</span> 
-            <span style="font-size:9px; background:var(--primary-container); color:var(--primary); padding:1px 4px; border-radius:3px;">${g.zone}</span>
-            <span style="font-size:9px; background:var(--surface); padding:1px 4px; border:1px solid var(--stroke-default); border-radius:3px; color:var(--on-surface-variant);">${tagSpecial}</span>
+            <span style="font-size:9px; background:var(--primary-container); color:var(--primary); padding:1px 5px; border-radius:4px;">${g.zone}</span>
+            <span style="font-size:9px; background:var(--surface); padding:1px 5px; border:1px solid var(--stroke-default); border-radius:4px; color:var(--on-surface-variant); font-family:var(--ff-mono);">${tagSpecial}</span>
           </div>
           <div class="crop-tag ${cropClass}" onclick="toggleCrop(${g.groupId})">${cropLabel}</div>
         </div>
@@ -1212,24 +1329,42 @@
 
       function createCellElement(c) {
         let cellDiv = document.createElement('div');
-        let isBlank = (c.anodeStatus === 'NONE' || !c.anodeStatus) && (c.cathodeStatus === 'NONE' || !c.cathodeStatus);
         
-        let statusClass = isBlank ? 'cell-blank' : (c.anodeStatus === '63 FL' ? 'cell-63' : (c.anodeStatus === '62 KU' ? 'cell-62ku' : (c.anodeStatus === '62 KS' ? 'cell-62ks' : 'cell-blank')));
+        let hasAnode = c.anodeStatus && c.anodeStatus !== 'NONE';
+        let hasCathode = c.cathodeStatus && c.cathodeStatus !== 'NONE';
+        let isBlank = !hasAnode && !hasCathode;
+        
+        let statusClass = 'cell-blank';
+        if (!isBlank) {
+          statusClass = 'cell-filled';
+          if (c.anodeStatus === '63 FL') statusClass += ' cell-63';
+          else if (c.anodeStatus === '62 KU') statusClass += ' cell-62ku';
+          else if (c.anodeStatus === '62 KS') statusClass += ' cell-62ks';
+          else if (c.cathodeStatus === 'CATH') statusClass += ' cell-cath-only';
+          else if (c.cathodeStatus === 'SS') statusClass += ' cell-ss-only';
+        }
+
         let shortA = c.anodeStatus === '63 FL' ? '63' : (c.anodeStatus === '62 KU' ? '62KU' : (c.anodeStatus === '62 KS' ? '62KS' : ''));
+        let anodeClass = c.anodeStatus === '63 FL' ? 'tag-63' : (c.anodeStatus === '62 KU' ? 'tag-62ku' : 'tag-62ks');
         let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
 
-        let hasCathodeGlow = (c.cathodeStatus === 'CATH' || c.cathodeStatus === 'SS') ? 'cell-glow' : '';
         let isSelected = selectedCellsList.some(sc => sc.groupId === g.groupId && sc.cellNum === c.cellNum) || (activeSelectedCell && activeSelectedCell.groupId === g.groupId && activeSelectedCell.cellNum === c.cellNum);
 
-        cellDiv.className = `cell-card ${statusClass} ${hasCathodeGlow} ${isSelected ? 'selected' : ''}`;
+        cellDiv.className = `cell-card ${statusClass} ${isSelected ? 'selected' : ''}`;
         cellDiv.setAttribute('data-group', g.groupId);
         cellDiv.setAttribute('data-cell', c.cellNum);
         cellDiv.onclick = (e) => selectCell(g.groupId, c.cellNum, e);
 
         let html = `<div class="cell-id">${c.cellId}</div>`;
         if (!isBlank) {
-          if (shortA) html += `<div class="cell-status">${shortA}</div>`;
-          if (c.cathodeStatus && c.cathodeStatus !== 'NONE') html += `<div class="cathode-tag ${cathClass}">${c.cathodeStatus}</div>`;
+          html += `<div class="tags-wrapper">`;
+          if (shortA) {
+            html += `<div class="anode-tag ${anodeClass}">${shortA}</div>`;
+          }
+          if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
+            html += `<div class="cathode-tag ${cathClass}">${c.cathodeStatus}</div>`;
+          }
+          html += `</div>`;
         }
 
         cellDiv.innerHTML = html;
@@ -1325,7 +1460,7 @@
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'flex';
     
-    let isBlank = cell.anodeStatus === 'NONE' && cell.cathodeStatus === 'NONE';
+    let isBlank = (cell.anodeStatus === 'NONE' || !cell.anodeStatus) && (cell.cathodeStatus === 'NONE' || !cell.cathodeStatus);
     document.getElementById('inspectorContent').innerHTML = `
       <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
       <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
