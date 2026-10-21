@@ -153,15 +153,11 @@
     border: 1px solid var(--stroke-default);
     border-radius: var(--r-full);
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: background 0.15s ease, border-color 0.15s ease;
     outline: none;
   }
   button:hover {
     background-color: var(--surface-container-high);
-    transform: translateY(-1px);
-  }
-  button:active {
-    transform: translateY(0);
   }
 
   .btn-primary {
@@ -192,10 +188,6 @@
     border-radius: var(--r-s);
     padding: 8px 10px;
     border: 1px solid var(--stroke-default);
-    transition: border-color 0.2s ease;
-  }
-  .kpi-card:hover {
-    border-color: rgba(255, 255, 255, 0.15);
   }
   
   .kpi-label {
@@ -281,10 +273,6 @@
     font-weight: 600;
     cursor: pointer;
     outline: none;
-    transition: border-color 0.2s ease;
-  }
-  select.lumi-select:focus {
-    border-color: var(--primary);
   }
 
   .main-content {
@@ -302,10 +290,13 @@
     padding: 10px;
     height: 100%;
     overflow-y: auto;
+    contain: strict;
   }
 
   .group-section {
     margin-bottom: 14px;
+    content-visibility: auto;
+    contain-intrinsic-size: 100px 180px;
   }
 
   .group-header {
@@ -331,9 +322,7 @@
     font-size: 9.5px;
     font-weight: 700;
     cursor: pointer;
-    transition: opacity 0.2s;
   }
-  .crop-tag:hover { opacity: 0.85; }
   .crop-c1 { background: var(--positive-container); color: var(--positive); border: 1px solid var(--positive); }
   .crop-c2 { background: var(--primary-container); color: var(--primary); border: 1px solid var(--primary); }
   .crop-c3 { background: var(--error-container); color: var(--error); border: 1px solid var(--error); }
@@ -374,9 +363,10 @@
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: background 0.12s ease, border-color 0.12s ease;
     user-select: none;
     outline: none !important;
+    contain: content;
   }
 
   /* 1. KOTAK CELL KOSONG */
@@ -397,7 +387,6 @@
   .cell-filled {
     background: var(--surface-container-high);
     border: 1.5px solid var(--stroke-default);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
     opacity: 1 !important;
   }
   .cell-filled .cell-id {
@@ -426,7 +415,7 @@
     background: rgba(100, 116, 139, 0.08) !important; 
   }
 
-  /* Hover State Presisi 1:1 Tanpa Tonjolan / Pergeseran Posisi */
+  /* Hover State Presisi 1:1 */
   .cell-card:hover {
     border-style: solid !important;
     border-color: var(--primary) !important;
@@ -656,15 +645,12 @@
       max-height: none;
     }
 
-    /* Modern Glassmorphic Floating Toolbar */
     .mobile-quick-bar {
       position: fixed;
       bottom: 14px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(17, 19, 25, 0.88);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      background: rgba(17, 19, 25, 0.92);
       border: 1px solid rgba(255, 255, 255, 0.12);
       box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
       padding: 6px 12px;
@@ -678,7 +664,7 @@
     }
     
     [data-theme="light"] .mobile-quick-bar {
-      background: rgba(255, 255, 255, 0.88);
+      background: rgba(255, 255, 255, 0.92);
       border-color: rgba(0, 0, 0, 0.1);
       box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
     }
@@ -1063,7 +1049,7 @@
     recalculateStats();
     renderMatrix();
     if (activeSelectedCell) {
-      selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
+      updateSelectionUI();
     }
     syncBulkData();
     showToast("Undo");
@@ -1079,7 +1065,7 @@
     recalculateStats();
     renderMatrix();
     if (activeSelectedCell) {
-      selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
+      updateSelectionUI();
     }
     syncBulkData();
     showToast("Redo");
@@ -1114,10 +1100,11 @@
             cell.anodeStatus = copiedCellData.anodeStatus;
             cell.cathodeStatus = copiedCellData.cathodeStatus;
             cell.pcs = copiedCellData.pcs;
+            updateCellDOM(t.groupId, t.cellNum);
           }
         }
       });
-      renderMatrix();
+      recalculateStats();
       showToast(`Pasted to ${targets.length} Cell`);
       syncCellTargets(targets);
     } else if (targets.length === 0) {
@@ -1139,7 +1126,7 @@
         Click a cell in the grid to configure status.
       </div>
     `;
-    renderMatrix();
+    updateSelectionUI();
   }
 
   function getActiveTargets() {
@@ -1171,23 +1158,6 @@
     populateGroupSelect();
     recalculateStats();
     renderMatrix();
-
-    if (activeSelectedCell) {
-      let grp = plantData.find(g => g && g.groupId === activeSelectedCell.groupId);
-      if (grp && grp.cells) {
-        let cell = grp.cells.find(c => c && c.cellNum === activeSelectedCell.cellNum);
-        if (cell && selectedCellsList.length <= 1) {
-          let isBlank = (cell.anodeStatus === 'NONE' || !cell.anodeStatus) && (cell.cathodeStatus === 'NONE' || !cell.cathodeStatus);
-          document.getElementById('inspectorContent').innerHTML = `
-            <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
-            <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
-            <div class="detail-row"><span class="detail-label">Anode:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
-            <div class="detail-row"><span class="detail-label">Cathode:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
-            <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-val" style="color:${isBlank?'var(--error)':'var(--positive)'};">${isBlank ? 'COMPLETELY EMPTY' : 'FILLED'}</span></div>
-          `;
-        }
-      }
-    }
   });
 
   db.ref('.info/connected').on('value', (snap) => {
@@ -1221,13 +1191,6 @@
       }
     });
 
-    if (activeSelectedCell) {
-      let grp = plantData.find(g => g && g.groupId === activeSelectedCell.groupId);
-      if (grp && grp.phase === targetPhase) {
-        selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
-      }
-    }
-
     recalculateStats();
     renderMatrix();
     syncBulkData();
@@ -1255,6 +1218,98 @@
     renderMatrix();
   }
 
+  // --- OPTIMIZED TARGETED CELL DOM UPDATE ---
+  function updateCellDOM(gId, cNum) {
+    let grp = plantData.find(g => g && g.groupId === gId);
+    if (!grp) return;
+    let c = grp.cells.find(cell => cell && cell.cellNum === cNum);
+    if (!c) return;
+
+    let cellEl = document.querySelector(`.cell-card[data-group="${gId}"][data-cell="${cNum}"]`);
+    if (!cellEl) return;
+
+    let hasAnode = c.anodeStatus && c.anodeStatus !== 'NONE';
+    let hasCathode = c.cathodeStatus && c.cathodeStatus !== 'NONE';
+    let isBlank = !hasAnode && !hasCathode;
+
+    let statusClass = 'cell-blank';
+    if (!isBlank) {
+      statusClass = 'cell-filled';
+      if (c.anodeStatus === '63 FL') statusClass += ' cell-63';
+      else if (c.anodeStatus === '62 KU') statusClass += ' cell-62ku';
+      else if (c.anodeStatus === '62 KS') statusClass += ' cell-62ks';
+      else if (c.cathodeStatus === 'CATH') statusClass += ' cell-cath-only';
+      else if (c.cathodeStatus === 'SS') statusClass += ' cell-ss-only';
+    }
+
+    let isSelected = selectedCellsList.some(sc => sc.groupId === gId && sc.cellNum === cNum) || (activeSelectedCell && activeSelectedCell.groupId === gId && activeSelectedCell.cellNum === cNum);
+
+    cellEl.className = `cell-card ${statusClass} ${isSelected ? 'selected' : ''}`;
+
+    let shortA = c.anodeStatus === '63 FL' ? '63' : (c.anodeStatus === '62 KU' ? '62KU' : (c.anodeStatus === '62 KS' ? '62KS' : ''));
+    let anodeClass = c.anodeStatus === '63 FL' ? 'tag-63' : (c.anodeStatus === '62 KU' ? 'tag-62ku' : 'tag-62ks');
+    let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
+
+    let html = `<div class="cell-id">${c.cellId}</div>`;
+    if (!isBlank) {
+      html += `<div class="tags-wrapper">`;
+      if (shortA) {
+        html += `<div class="anode-tag ${anodeClass}">${shortA}</div>`;
+      }
+      if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
+        html += `<div class="cathode-tag ${cathClass}">${c.cathodeStatus}</div>`;
+      }
+      html += `</div>`;
+    }
+
+    cellEl.innerHTML = html;
+  }
+
+  // --- INSTANT SELECTION UPDATE (NO MATRIX RE-RENDER) ---
+  function updateSelectionUI() {
+    const prevSelected = document.querySelectorAll('.cell-card.selected');
+    for (let i = 0; i < prevSelected.length; i++) {
+      prevSelected[i].classList.remove('selected');
+    }
+
+    const targets = getActiveTargets();
+    targets.forEach(t => {
+      let el = document.querySelector(`.cell-card[data-group="${t.groupId}"][data-cell="${t.cellNum}"]`);
+      if (el) el.classList.add('selected');
+    });
+
+    if (activeSelectedCell) {
+      let grp = plantData.find(g => g && g.groupId === activeSelectedCell.groupId);
+      if (grp) {
+        let cell = grp.cells.find(c => c && c.cellNum === activeSelectedCell.cellNum);
+        if (cell) {
+          let isBlank = (cell.anodeStatus === 'NONE' || !cell.anodeStatus) && (cell.cathodeStatus === 'NONE' || !cell.cathodeStatus);
+          let insContent = document.getElementById('inspectorContent');
+          if (selectedCellsList.length > 1) {
+            insContent.innerHTML = `
+              <div class="detail-row"><span class="detail-label">Selection:</span><span class="detail-val" style="color:var(--primary);">${selectedCellsList.length} Cell Marked</span></div>
+              <div class="detail-row"><span class="detail-label">Focus Cell:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
+              <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
+            `;
+          } else {
+            insContent.innerHTML = `
+              <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
+              <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
+              <div class="detail-row"><span class="detail-label">Anode:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
+              <div class="detail-row"><span class="detail-label">Cathode:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
+              <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-val" style="color:${isBlank?'var(--error)':'var(--positive)'};">${isBlank ? 'COMPLETELY EMPTY' : 'FILLED'}</span></div>
+            `;
+          }
+        }
+      }
+
+      let activeEl = document.querySelector(`.cell-card[data-group="${activeSelectedCell.groupId}"][data-cell="${activeSelectedCell.cellNum}"]`);
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+      }
+    }
+  }
+
   /* Render Grid Cell 2 Baris per Group */
   function renderMatrix() {
     const container = document.getElementById('matrixContainer');
@@ -1264,8 +1319,6 @@
     const selC = document.getElementById('cathSelect').value;
     const selContent = document.getElementById('contentSelect').value;
 
-    container.innerHTML = '';
-
     let filteredGroups = plantData.filter(g => {
       if (!g) return false;
       if (currentPhaseFilter !== 'ALL' && g.phase !== currentPhaseFilter) return false;
@@ -1274,6 +1327,7 @@
       return true;
     });
 
+    let fragment = document.createDocumentFragment();
     let renderedCount = 0;
 
     filteredGroups.forEach(g => {
@@ -1300,7 +1354,6 @@
       let cropLabel = g.cropStatus !== '-' ? `Harvest: ${g.cropStatus}` : 'No Harvest';
       let tagSpecial = g.groupId === 33 ? 'EW0' : `${g.cellCount} Cells`;
 
-      // Pembagian Baris (Special Group 13-20: Cutoff 14; Lainnya Cutoff 13)
       let isSpecialGroup = (g.groupId >= 13 && g.groupId <= 20);
       let splitCutoff = isSpecialGroup ? 14 : 13;
       let rowClass = isSpecialGroup ? 'cell-row-28' : 'cell-row-26';
@@ -1322,7 +1375,6 @@
           <div class="cell-row ${rowClass}" id="grid-g-${g.groupId}-r2"></div>
         </div>
       `;
-      container.appendChild(grpSec);
 
       const gridBox1 = grpSec.querySelector(`#grid-g-${g.groupId}-r1`);
       const gridBox2 = grpSec.querySelector(`#grid-g-${g.groupId}-r2`);
@@ -1376,8 +1428,11 @@
 
       if (row1Cells.length === 0) gridBox1.style.display = 'none';
       if (row2Cells.length === 0) gridBox2.style.display = 'none';
+
+      fragment.appendChild(grpSec);
     });
 
+    container.innerHTML = '';
     if (renderedCount === 0) {
       if (selContent === 'FILLED') {
         container.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">Tidak ada cell yang terisi (Pilih "All Cells" untuk menampilkan semua cell).</div>';
@@ -1386,16 +1441,11 @@
       } else {
         container.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">Tidak ada cell yang cocok dengan filter yang dipilih.</div>';
       }
+    } else {
+      container.appendChild(fragment);
     }
 
     recalculateStats();
-
-    setTimeout(() => {
-      let selEl = document.querySelector('.cell-card.selected');
-      if (selEl) {
-        selEl.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
-      }
-    }, 40);
   }
 
   function selectRangeTo(targetGId, targetCNum) {
@@ -1431,16 +1481,7 @@
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'flex';
 
-    let grp = plantData.find(g => g && g.groupId === targetGId);
-    let cell = grp.cells.find(c => c && c.cellNum === targetCNum);
-    
-    document.getElementById('inspectorContent').innerHTML = `
-      <div class="detail-row"><span class="detail-label">Selection:</span><span class="detail-val" style="color:var(--primary);">${selectedCellsList.length} Cell Marked</span></div>
-      <div class="detail-row"><span class="detail-label">Focus Cell:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
-      <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
-    `;
-
-    renderMatrix();
+    updateSelectionUI();
   }
 
   function selectCell(gId, cNum, event, skipRangeLogic = false) {
@@ -1453,22 +1494,11 @@
     activeSelectedCell = { groupId: gId, cellNum: cNum };
     selectedCellsList = [{ groupId: gId, cellNum: cNum }];
 
-    let grp = plantData.find(g => g && g.groupId === gId);
-    let cell = grp.cells.find(c => c && c.cellNum === cNum);
-
     document.getElementById('inspectorControls').style.display = 'flex';
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'flex';
-    
-    let isBlank = (cell.anodeStatus === 'NONE' || !cell.anodeStatus) && (cell.cathodeStatus === 'NONE' || !cell.cathodeStatus);
-    document.getElementById('inspectorContent').innerHTML = `
-      <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
-      <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
-      <div class="detail-row"><span class="detail-label">Anode:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
-      <div class="detail-row"><span class="detail-label">Cathode:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
-      <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-val" style="color:${isBlank?'var(--error)':'var(--positive)'};">${isBlank ? 'COMPLETELY EMPTY' : 'FILLED'}</span></div>
-    `;
-    renderMatrix();
+
+    updateSelectionUI();
   }
 
   function updateActiveCellAnode(val) {
@@ -1482,6 +1512,7 @@
         if (cell) {
           cell.anodeStatus = val;
           cell.pcs = val === '63 FL' ? 63 : (val === '62 KU' || val === '62 KS' ? 62 : 0);
+          updateCellDOM(t.groupId, t.cellNum);
         }
       }
     });
@@ -1491,7 +1522,7 @@
       let cell = grp.cells.find(c => c && c.cellNum === last.cellNum);
       if (cell) copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
     }
-    renderMatrix();
+    recalculateStats();
     syncCellTargets(targets);
   }
 
@@ -1503,7 +1534,10 @@
       let grp = plantData.find(g => g && g.groupId === t.groupId);
       if (grp) {
         let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
-        if (cell) cell.cathodeStatus = val;
+        if (cell) {
+          cell.cathodeStatus = val;
+          updateCellDOM(t.groupId, t.cellNum);
+        }
       }
     });
     let last = targets[targets.length - 1];
@@ -1512,7 +1546,7 @@
       let cell = grp.cells.find(c => c && c.cellNum === last.cellNum);
       if (cell) copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
     }
-    renderMatrix();
+    recalculateStats();
     syncCellTargets(targets);
   }
 
@@ -1528,11 +1562,12 @@
           cell.anodeStatus = 'NONE';
           cell.cathodeStatus = 'NONE';
           cell.pcs = 0;
+          updateCellDOM(t.groupId, t.cellNum);
         }
       }
     });
     copiedCellData = { anodeStatus: 'NONE', cathodeStatus: 'NONE', pcs: 0 };
-    renderMatrix();
+    recalculateStats();
     showToast(`Cleared (${targets.length} Cell)`);
     syncCellTargets(targets);
   }
@@ -1782,47 +1817,52 @@
     setTimeout(() => { btn.textContent = oldText; }, 1500);
   }
 
+  // --- MATHEMATICAL GRID NAVIGATION FOR ARROW KEYS ---
   function getVisualNeighborCell(direction) {
-    const currentEl = document.querySelector('.cell-card.selected');
-    if (!currentEl) return null;
-    
-    const currentRect = currentEl.getBoundingClientRect();
-    const currentX = currentRect.left + currentRect.width / 2;
-    const currentY = currentRect.top + currentRect.height / 2;
-    
-    const allCells = Array.from(document.querySelectorAll('.cell-card'));
-    let candidates = [];
-    
-    allCells.forEach(el => {
-      if (el === currentEl) return;
-      const rect = el.getBoundingClientRect();
-      const x = rect.left + rect.width / 2;
-      const y = rect.top + rect.height / 2;
-      
-      if (direction === 'down' && y > currentY + 10) {
-        candidates.push({
-          gId: parseInt(el.getAttribute('data-group')),
-          cNum: parseInt(el.getAttribute('data-cell')),
-          dy: y - currentY,
-          dx: Math.abs(x - currentX)
-        });
-      } else if (direction === 'up' && y < currentY - 10) {
-        candidates.push({
-          gId: parseInt(el.getAttribute('data-group')),
-          cNum: parseInt(el.getAttribute('data-cell')),
-          dy: currentY - y,
-          dx: Math.abs(x - currentX)
-        });
+    if (!activeSelectedCell) return null;
+
+    let curG = activeSelectedCell.groupId;
+    let curC = activeSelectedCell.cellNum;
+
+    let isSpecialGroup = (curG >= 13 && curG <= 20);
+    let splitCutoff = isSpecialGroup ? 14 : 13;
+    let cellCount = (isSpecialGroup) ? 28 : 26;
+
+    let isRow1 = curC <= splitCutoff;
+    let rowIdx = isRow1 ? (curC - 1) : (curC - splitCutoff - 1);
+
+    if (direction === 'down') {
+      if (isRow1) {
+        let targetC = splitCutoff + 1 + rowIdx;
+        if (targetC > cellCount) targetC = cellCount;
+        return { groupId: curG, cellNum: targetC };
+      } else {
+        if (curG < 48) {
+          let nextG = curG + 1;
+          let nextSpecial = (nextG >= 13 && nextG <= 20);
+          let nextCutoff = nextSpecial ? 14 : 13;
+          let targetC = 1 + Math.min(rowIdx, nextCutoff - 1);
+          return { groupId: nextG, cellNum: targetC };
+        }
       }
-    });
-    
-    if (candidates.length === 0) return null;
-    
-    const minDy = Math.min(...candidates.map(c => c.dy));
-    const rowCandidates = candidates.filter(c => c.dy <= minDy + 15);
-    rowCandidates.sort((a, b) => a.dx - b.dx);
-    
-    return { groupId: rowCandidates[0].gId, cellNum: rowCandidates[0].cNum };
+    } else if (direction === 'up') {
+      if (!isRow1) {
+        let targetC = 1 + rowIdx;
+        return { groupId: curG, cellNum: targetC };
+      } else {
+        if (curG > 1) {
+          let prevG = curG - 1;
+          let prevSpecial = (prevG >= 13 && prevG <= 20);
+          let prevCutoff = prevSpecial ? 14 : 13;
+          let prevCount = prevSpecial ? 28 : 26;
+          let prevRow2Count = prevCount - prevCutoff;
+          let targetC = prevCutoff + 1 + Math.min(rowIdx, prevRow2Count - 1);
+          return { groupId: prevG, cellNum: targetC };
+        }
+      }
+    }
+
+    return null;
   }
 
   document.addEventListener('keydown', function(e) {
@@ -1941,7 +1981,7 @@
     document.getElementById('liveClock').textContent = `${dateStr} • ${timeStr}`;
   }, 1000);
 
-  // Inisialisasi tampilan awal
+  // Inisialisasi awal
   populateGroupSelect();
   recalculateStats();
   renderMatrix();
