@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,6 +36,28 @@
     --r-full: 999px;
   }
 
+  /* Light Theme Variables */
+  [data-theme="light"] {
+    --body-bg: #f0f2f5;
+    --surface: #ffffff;
+    --surface-dim: #f8f9fa;
+    --surface-container-high: #e4e7eb;
+    --on-surface: #111827;
+    --on-surface-variant: #4b5563;
+    --primary: #0284c7;
+    --primary-container: #e0f2fe;
+    --positive: #16a34a;
+    --positive-container: #dcfce7;
+    --error: #dc2626;
+    --error-container: #fee2e2;
+    --stroke-default: #d1d5db;
+    --chart-8: #d97706;
+    --copper: #c2410c;
+    --copper-border: #f97316;
+    --stainless: #475569;
+    --stainless-border: #64748b;
+  }
+
   * {
     box-sizing: border-box;
     margin: 0;
@@ -50,6 +72,7 @@
     color: var(--on-surface);
     font-size: 11px;
     overflow: hidden;
+    transition: background 0.2s ease, color 0.2s ease;
   }
 
   .widget-container {
@@ -125,6 +148,7 @@
     border: 1px solid var(--stroke-default);
     border-radius: var(--r-full);
     cursor: pointer;
+    transition: all 0.15s ease;
   }
   button:hover {
     background-color: var(--surface-container-high);
@@ -132,16 +156,23 @@
 
   .btn-primary {
     background-color: var(--primary);
-    color: #192967;
+    color: #ffffff;
     border-color: transparent;
     font-weight: 600;
   }
+  [data-theme="dark"] .btn-primary {
+    color: #192967;
+  }
 
   .btn-danger {
-    background-color: var(--error-container);
-    color: var(--error);
+    background-color: var(--error);
+    color: #ffffff;
     border-color: transparent;
     font-weight: 600;
+  }
+  [data-theme="dark"] .btn-danger {
+    background-color: var(--error-container);
+    color: var(--error);
   }
 
   .kpi-grid {
@@ -218,7 +249,7 @@
     background: var(--primary-container);
     color: var(--primary);
     border-color: transparent;
-    font-weight: 600;
+    font-weight: 700;
   }
 
   select.lumi-select {
@@ -251,7 +282,7 @@
   }
 
   .group-section {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
   }
 
   .group-header {
@@ -283,10 +314,27 @@
   .crop-c3 { background: var(--error-container); color: var(--error); }
   .crop-none { background: var(--surface); color: var(--on-surface-variant); }
 
-  .cell-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  /* Structured Grid Row Layout */
+  .group-grid-wrapper {
+    display: flex;
+    flex-direction: column;
     gap: 4px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+  }
+
+  .cell-row {
+    display: grid;
+    gap: 4px;
+    min-width: max-content;
+  }
+
+  .cell-row-26 {
+    grid-template-columns: repeat(13, minmax(46px, 1fr));
+  }
+
+  .cell-row-28 {
+    grid-template-columns: repeat(14, minmax(46px, 1fr));
   }
 
   .cell-card {
@@ -315,10 +363,19 @@
     box-shadow: 0 0 8px #3b82f6, inset 0 0 4px rgba(128, 200, 255, 0.4) !important;
     opacity: 1 !important;
   }
+  [data-theme="light"] .cell-glow {
+    background: #e0f2fe !important;
+    border: 1.5px solid #0284c7 !important;
+    box-shadow: 0 0 8px rgba(2, 132, 199, 0.3), inset 0 0 4px rgba(2, 132, 199, 0.2) !important;
+  }
 
   .cell-card.selected {
     border-color: #ffffff !important;
     box-shadow: 0 0 10px #ffffff, 0 0 4px var(--primary) !important;
+  }
+  [data-theme="light"] .cell-card.selected {
+    border-color: #111827 !important;
+    box-shadow: 0 0 10px #111827, 0 0 4px var(--primary) !important;
   }
 
   .cell-id {
@@ -344,16 +401,22 @@
   
   .tag-cath { 
     background: var(--copper); 
-    color: #1a0800; 
+    color: #ffffff; 
     border: 1px solid var(--copper-border);
-    box-shadow: 0 0 5px rgba(217, 119, 36, 0.5);
+    box-shadow: 0 0 5px rgba(217, 119, 36, 0.4);
+  }
+  [data-theme="dark"] .tag-cath {
+    color: #1a0800;
   }
 
   .tag-ss { 
     background: var(--stainless); 
-    color: #0f172a; 
+    color: #ffffff; 
     border: 1px solid var(--stainless-border);
-    box-shadow: 0 0 5px rgba(144, 164, 174, 0.5);
+    box-shadow: 0 0 5px rgba(144, 164, 174, 0.4);
+  }
+  [data-theme="dark"] .tag-ss {
+    color: #0f172a;
   }
 
   .cell-63 { border-color: var(--positive); }
@@ -364,9 +427,9 @@
   .cell-62ks .cell-status { color: var(--chart-8); }
   
   .cell-blank {
-    background: rgba(255, 255, 255, 0.02);
-    border: 1px dashed rgba(255, 255, 255, 0.15);
-    opacity: 0.5;
+    background: rgba(128, 128, 128, 0.04);
+    border: 1px dashed var(--stroke-default);
+    opacity: 0.6;
   }
 
   .inspector-panel {
@@ -453,7 +516,7 @@
       height: auto;
       min-height: 100vh;
       padding: 4px;
-      padding-bottom: 60px;
+      padding-bottom: 75px;
     }
 
     .app-card {
@@ -477,7 +540,7 @@
     }
 
     .matrix-box {
-      max-height: 55vh;
+      max-height: 60vh;
       height: auto;
     }
 
@@ -486,31 +549,38 @@
       max-height: none;
     }
 
-    .cell-grid {
-      grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
-    }
-
     .mobile-quick-bar {
       position: fixed;
-      bottom: 12px;
+      bottom: 10px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(28, 28, 28, 0.95);
-      backdrop-filter: blur(8px);
+      background: var(--surface);
       border: 1px solid var(--stroke-default);
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
       padding: 6px 10px;
-      border-radius: var(--r-full);
-      gap: 4px;
+      border-radius: 16px;
+      display: none;
+      flex-direction: column;
+      gap: 5px;
       z-index: 10000;
+      max-width: 96vw;
+      width: max-content;
+    }
+
+    .mobile-quick-row {
+      display: flex;
       align-items: center;
       justify-content: center;
-      max-width: 95vw;
+      gap: 4px;
+      flex-wrap: nowrap;
     }
 
     .mobile-quick-bar button {
-      padding: 2px 8px;
+      padding: 4px 8px;
       font-size: 10px;
+      font-weight: 700;
+      white-space: nowrap;
+      min-height: 24px;
     }
   }
 </style>
@@ -526,6 +596,7 @@
         <p>North & South Zone • Anode & Cathode Setting</p>
       </div>
       <div class="header-actions">
+        <button class="lumi-chip" id="themeToggleBtn" onclick="toggleTheme()" style="min-height:22px; font-weight:600;">🌙 Dark</button>
         <div class="update-badge" id="dbStatus" style="color: var(--positive);">🟢 Checking...</div>
         <div class="update-badge" id="liveClock">Oct 20, 2026 • 00:00:00 AM</div>
       </div>
@@ -654,8 +725,8 @@
 
           <h4>2. Cell Cathode Status:</h4>
           <div class="status-btn-grid">
-            <button style="background:var(--copper); color:#1a0800; font-weight:bold; border-color:var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH [C]</button>
-            <button style="background:var(--stainless); color:#0f172a; font-weight:bold; border-color:var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS Blank [S]</button>
+            <button style="background:var(--copper); color:#ffffff; font-weight:bold; border-color:var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH [C]</button>
+            <button style="background:var(--stainless); color:#ffffff; font-weight:bold; border-color:var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS Blank [S]</button>
             <button style="grid-column: span 2;" onclick="updateActiveCellCathode('NONE')">Clear Cathode</button>
           </div>
 
@@ -682,17 +753,53 @@
   </div>
 </div>
 
-<!-- Floating Action Bar for Mobile -->
+<!-- Floating Action Bar for Mobile Quick Fill -->
 <div class="mobile-quick-bar" id="mobileQuickBar">
-  <button onclick="undo()" title="Undo">↩ Undo</button>
-  <button onclick="redo()" title="Redo">↪ Redo</button>
-  <button onclick="copyActiveCell()">📋 Copy</button>
-  <button onclick="pasteActiveCell()">📋 Paste</button>
-  <button class="btn-danger" onclick="clearCellCompletely()">🗑️ Del</button>
-  <button style="background:var(--surface);" onclick="deselectCell()">✕</button>
+  <!-- Row 1: Fast Status Fill Buttons -->
+  <div class="mobile-quick-row">
+    <button style="border-color: var(--positive); color: var(--positive);" onclick="updateActiveCellAnode('63 FL')">63 FL</button>
+    <button style="border-color: var(--primary); color: var(--primary);" onclick="updateActiveCellAnode('62 KU')">62 KU</button>
+    <button style="border-color: var(--chart-8); color: var(--chart-8);" onclick="updateActiveCellAnode('62 KS')">62 KS</button>
+    <button style="background: var(--copper); color: #ffffff; font-weight: bold; border-color: var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH</button>
+    <button style="background: var(--stainless); color: #ffffff; font-weight: bold; border-color: var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS</button>
+  </div>
+  <!-- Row 2: Control & Navigation Actions -->
+  <div class="mobile-quick-row">
+    <button onclick="undo()" title="Undo">↩</button>
+    <button onclick="redo()" title="Redo">↪</button>
+    <button onclick="copyActiveCell()">📋 Copy</button>
+    <button onclick="pasteActiveCell()">📋 Paste</button>
+    <button class="btn-danger" onclick="clearCellCompletely()">🗑️ Del</button>
+    <button style="background:var(--surface);" onclick="deselectCell()">✕</button>
+  </div>
 </div>
 
 <script>
+  // --- MANAGEMENT TEMA LIGHT / DARK ---
+  function initTheme() {
+    const savedTheme = localStorage.getItem('tankhouse_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeButtonLabel(savedTheme);
+  }
+
+  function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('tankhouse_theme', newTheme);
+    updateThemeButtonLabel(newTheme);
+  }
+
+  function updateThemeButtonLabel(theme) {
+    const btn = document.getElementById('themeToggleBtn');
+    if (btn) {
+      btn.textContent = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
+    }
+  }
+
+  initTheme();
+
+  // --- FIREBASE REALTIME DATABASE ---
   const firebaseConfig = {
     databaseURL: "https://cell-inventory-er-default-rtdb.asia-southeast1.firebasedatabase.app/"
   };
@@ -1031,6 +1138,7 @@
     renderMatrix();
   }
 
+  /* Render Grid Cell 2 Baris per Group */
   function renderMatrix() {
     const container = document.getElementById('matrixContainer');
     const selZone = document.getElementById('zoneSelect').value;
@@ -1075,6 +1183,14 @@
       let cropLabel = g.cropStatus !== '-' ? `Harvest: ${g.cropStatus}` : 'No Harvest';
       let tagSpecial = g.groupId === 33 ? 'EW0' : `${g.cellCount} Cells`;
 
+      // Pembagian Baris (Special Group 13-20: Cutoff 14; Lainnya Cutoff 13)
+      let isSpecialGroup = (g.groupId >= 13 && g.groupId <= 20);
+      let splitCutoff = isSpecialGroup ? 14 : 13;
+      let rowClass = isSpecialGroup ? 'cell-row-28' : 'cell-row-26';
+
+      let row1Cells = visibleCells.filter(c => c.cellNum <= splitCutoff);
+      let row2Cells = visibleCells.filter(c => c.cellNum > splitCutoff);
+
       grpSec.innerHTML = `
         <div class="group-header">
           <div class="group-title">
@@ -1084,13 +1200,17 @@
           </div>
           <div class="crop-tag ${cropClass}" onclick="toggleCrop(${g.groupId})">${cropLabel}</div>
         </div>
-        <div class="cell-grid" id="grid-g-${g.groupId}"></div>
+        <div class="group-grid-wrapper">
+          <div class="cell-row ${rowClass}" id="grid-g-${g.groupId}-r1"></div>
+          <div class="cell-row ${rowClass}" id="grid-g-${g.groupId}-r2"></div>
+        </div>
       `;
       container.appendChild(grpSec);
 
-      const gridBox = grpSec.querySelector(`#grid-g-${g.groupId}`);
+      const gridBox1 = grpSec.querySelector(`#grid-g-${g.groupId}-r1`);
+      const gridBox2 = grpSec.querySelector(`#grid-g-${g.groupId}-r2`);
 
-      visibleCells.forEach(c => {
+      function createCellElement(c) {
         let cellDiv = document.createElement('div');
         let isBlank = (c.anodeStatus === 'NONE' || !c.anodeStatus) && (c.cathodeStatus === 'NONE' || !c.cathodeStatus);
         
@@ -1113,8 +1233,14 @@
         }
 
         cellDiv.innerHTML = html;
-        gridBox.appendChild(cellDiv);
-      });
+        return cellDiv;
+      }
+
+      row1Cells.forEach(c => gridBox1.appendChild(createCellElement(c)));
+      row2Cells.forEach(c => gridBox2.appendChild(createCellElement(c)));
+
+      if (row1Cells.length === 0) gridBox1.style.display = 'none';
+      if (row2Cells.length === 0) gridBox2.style.display = 'none';
     });
 
     if (renderedCount === 0) {
