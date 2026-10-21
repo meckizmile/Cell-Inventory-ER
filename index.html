@@ -64,6 +64,7 @@
     padding: 0;
     font-family: var(--ff-sans);
     -webkit-font-smoothing: antialiased;
+    touch-action: manipulation;
   }
 
   html, body {
@@ -283,6 +284,7 @@
     min-height: 0;
   }
 
+  /* Fixed Matrix Box Layout Clipping */
   .matrix-box {
     background: var(--surface-dim);
     border-radius: var(--r-s);
@@ -290,38 +292,40 @@
     padding: 10px;
     height: 100%;
     overflow-y: auto;
-    contain: strict;
+    contain: layout paint;
   }
 
   .group-section {
-    margin-bottom: 14px;
-    content-visibility: auto;
-    contain-intrinsic-size: 100px 180px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
   }
 
   .group-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 5px;
+    padding-bottom: 6px;
     margin-bottom: 8px;
     border-bottom: 1px dashed var(--stroke-default);
+    min-height: 28px;
   }
 
   .group-title {
     font-weight: 800;
-    font-size: 11.5px;
+    font-size: 12px;
     display: flex;
     align-items: center;
     gap: 6px;
   }
 
   .crop-tag {
-    padding: 2px 8px;
+    padding: 3px 10px;
     border-radius: var(--r-full);
-    font-size: 9.5px;
+    font-size: 10px;
     font-weight: 700;
     cursor: pointer;
+    white-space: nowrap;
   }
   .crop-c1 { background: var(--positive-container); color: var(--positive); border: 1px solid var(--positive); }
   .crop-c2 { background: var(--primary-container); color: var(--primary); border: 1px solid var(--primary); }
@@ -334,21 +338,22 @@
     flex-direction: column;
     gap: 6px;
     overflow-x: auto;
-    padding-bottom: 4px;
+    padding-bottom: 6px;
+    -webkit-overflow-scrolling: touch;
   }
 
   .cell-row {
     display: grid;
-    gap: 5px;
+    gap: 6px;
     min-width: max-content;
   }
 
   .cell-row-26 {
-    grid-template-columns: repeat(13, minmax(48px, 1fr));
+    grid-template-columns: repeat(13, minmax(52px, 1fr));
   }
 
   .cell-row-28 {
-    grid-template-columns: repeat(14, minmax(48px, 1fr));
+    grid-template-columns: repeat(14, minmax(52px, 1fr));
   }
 
   /* Base Cell Card Container */
@@ -366,7 +371,6 @@
     transition: background 0.12s ease, border-color 0.12s ease;
     user-select: none;
     outline: none !important;
-    contain: content;
   }
 
   /* 1. KOTAK CELL KOSONG */
@@ -415,7 +419,7 @@
     background: rgba(100, 116, 139, 0.08) !important; 
   }
 
-  /* Hover State Presisi 1:1 */
+  /* Hover State */
   .cell-card:hover {
     border-style: solid !important;
     border-color: var(--primary) !important;
@@ -430,7 +434,7 @@
     border-style: solid !important;
     border-color: var(--primary) !important;
     background: var(--surface-container-high) !important;
-    box-shadow: none !important;
+    box-shadow: 0 0 0 1px var(--primary) !important;
     transform: none !important;
     z-index: 2;
     opacity: 1 !important;
@@ -600,6 +604,7 @@
     display: none;
   }
 
+  /* OPTIMISASI UTAMA TAMPILAN MOBILE (MENCEGAH GEPEK & CELL LEBIH BESAR) */
   @media (max-width: 900px) {
     html, body {
       height: auto;
@@ -612,7 +617,7 @@
       height: auto;
       min-height: 100vh;
       padding: 6px;
-      padding-bottom: 85px;
+      padding-bottom: 90px;
     }
 
     .app-card {
@@ -636,8 +641,47 @@
     }
 
     .matrix-box {
-      max-height: 60vh;
+      max-height: 65vh;
       height: auto;
+      padding: 8px;
+    }
+
+    .group-header {
+      min-height: 32px;
+      padding-bottom: 4px;
+      margin-bottom: 8px;
+    }
+
+    .group-title {
+      font-size: 13px;
+    }
+
+    /* Ukuran Cell Diperbesar & Dipertegas untuk Layar Sentuh Mobile */
+    .cell-row-26 {
+      grid-template-columns: repeat(13, minmax(58px, 1fr));
+      gap: 6px;
+    }
+
+    .cell-row-28 {
+      grid-template-columns: repeat(14, minmax(58px, 1fr));
+      gap: 6px;
+    }
+
+    .cell-card {
+      min-height: 58px;
+      padding: 5px 3px;
+      border-radius: 8px;
+    }
+
+    .cell-id {
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .anode-tag, .cathode-tag {
+      font-size: 9.5px;
+      padding: 3px 0;
+      border-radius: 4px;
     }
 
     .inspector-panel {
@@ -647,14 +691,14 @@
 
     .mobile-quick-bar {
       position: fixed;
-      bottom: 14px;
+      bottom: 12px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(17, 19, 25, 0.92);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45);
-      padding: 6px 12px;
-      border-radius: 24px;
+      background: rgba(17, 19, 25, 0.96);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+      padding: 8px 12px;
+      border-radius: 20px;
       display: none;
       flex-direction: column;
       gap: 6px;
@@ -664,26 +708,26 @@
     }
     
     [data-theme="light"] .mobile-quick-bar {
-      background: rgba(255, 255, 255, 0.92);
-      border-color: rgba(0, 0, 0, 0.1);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.15);
+      background: rgba(255, 255, 255, 0.96);
+      border-color: rgba(0, 0, 0, 0.15);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
     }
 
     .mobile-quick-row {
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 5px;
+      gap: 6px;
       flex-wrap: nowrap;
     }
 
     .mobile-quick-bar button {
-      padding: 5px 10px;
-      font-size: 10.5px;
-      font-weight: 700;
+      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 800;
       white-space: nowrap;
-      min-height: 28px;
-      border-radius: 12px;
+      min-height: 32px;
+      border-radius: 10px;
     }
   }
 </style>
