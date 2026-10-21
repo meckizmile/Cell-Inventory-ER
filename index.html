@@ -79,6 +79,8 @@
     align-items: center;
     padding-bottom: 6px;
     border-bottom: 1px solid var(--stroke-default);
+    flex-wrap: wrap;
+    gap: 6px;
   }
   
   .title-area h1 {
@@ -96,16 +98,18 @@
     display: flex;
     align-items: center;
     gap: 6px;
+    flex-wrap: wrap;
   }
 
   .update-badge {
     background: var(--surface-dim);
     border: 1px solid var(--stroke-default);
-    padding: 2px 8px;
+    padding: 3px 8px;
     border-radius: var(--r-full);
-    font-size: 11px;
+    font-size: 10px;
     font-family: var(--ff-mono);
     color: var(--on-surface-variant);
+    white-space: nowrap;
   }
 
   button {
@@ -523,7 +527,7 @@
       </div>
       <div class="header-actions">
         <div class="update-badge" id="dbStatus" style="color: var(--positive);">🟢 Checking...</div>
-        <div class="update-badge" id="liveClock">00:00:00</div>
+        <div class="update-badge" id="liveClock">Oct 20, 2026 • 00:00:00 AM</div>
       </div>
     </div>
 
@@ -623,7 +627,6 @@
           <button onclick="kosongkanIsianPhase(1)">Clear P1</button>
           <button onclick="kosongkanIsianPhase(2)">Clear P2</button>
           <button onclick="kosongkanIsianPhase(3)">Clear P3</button>
-          <button class="btn-danger" onclick="kosongkanIsianPhase('ALL')">Clear All</button>
         </div>
       </div>
     </div>
@@ -690,13 +693,14 @@
 </div>
 
 <script>
-  // PASTIKAN databaseURL DIBAWAH INI ADALAH URL REALTIME DATABASE FIREBASE ANDA
   const firebaseConfig = {
     databaseURL: "https://cell-inventory-er-default-rtdb.asia-southeast1.firebasedatabase.app/"
   };
   
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+
+  const LOCAL_STORAGE_KEY = 'tankhouse_plant_data_v2';
 
   let plantData = [];
   let currentPhaseFilter = 'ALL';
@@ -709,7 +713,6 @@
   let redoStack = [];
   const MAX_HISTORY = 50;
 
-  // Pembuat Template Default 48 Group secara lokal
   function generateDefaultPlantData() {
     let data = [];
     for (let g = 1; g <= 48; g++) {
@@ -742,19 +745,23 @@
     return data;
   }
 
-  // Inisialisasi awal struktur data lokal
+  function saveLocalData() {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(plantData));
+    } catch(e) {}
+  }
+
   plantData = generateDefaultPlantData();
 
-  // Penggabungan aman (Safe Merge) antara Data Firebase dengan Template Lokal
   function mergeFirebaseData(fbData) {
-    let defaultData = generateDefaultPlantData();
-    if (!fbData) return defaultData;
+    let baseData = generateDefaultPlantData();
+    if (!fbData) return baseData;
 
     let fbGroups = Array.isArray(fbData) ? fbData : Object.values(fbData);
 
     fbGroups.forEach(fbGroup => {
       if (!fbGroup || fbGroup.groupId === undefined) return;
-      let localGroup = defaultData.find(g => g.groupId === fbGroup.groupId);
+      let localGroup = baseData.find(g => g.groupId === fbGroup.groupId);
       if (localGroup) {
         if (fbGroup.cropStatus !== undefined) {
           localGroup.cropStatus = fbGroup.cropStatus;
@@ -774,11 +781,11 @@
       }
     });
 
-    return defaultData;
+    return baseData;
   }
 
-  // Pembaruan Sel Utuh (Whole-Cell Update) ke Firebase untuk mencegah korupsi array
   function syncCellTargets(targets) {
+    saveLocalData();
     let updates = {};
     targets.forEach(t => {
       let gIdx = plantData.findIndex(g => g && g.groupId === t.groupId);
@@ -799,26 +806,21 @@
     });
 
     db.ref().update(updates).catch(err => {
-      showToast("⚠️ Firebase Error: Save Failed!");
-      console.error("Firebase update failed:", err);
+      showToast("⚠️ Firebase Offline (Saved Locally)");
     });
   }
 
   function syncGroupCrop(groupId, cropStatus) {
+    saveLocalData();
     let gIdx = plantData.findIndex(g => g && g.groupId === groupId);
     if (gIdx !== -1) {
-      db.ref(`tankhouseData/${gIdx}/cropStatus`).set(cropStatus).catch(err => {
-        showToast("⚠️ Firebase Error: Harvest Status Failed!");
-        console.error("Group crop update failed:", err);
-      });
+      db.ref(`tankhouseData/${gIdx}/cropStatus`).set(cropStatus).catch(err => {});
     }
   }
 
   function syncBulkData() {
-    db.ref('tankhouseData').set(plantData).catch(err => {
-      showToast("⚠️ Firebase Error: Bulk Save Failed!");
-      console.error("Bulk sync failed:", err);
-    });
+    saveLocalData();
+    db.ref('tankhouseData').set(plantData).catch(err => {});
   }
 
   function saveState() {
@@ -935,14 +937,11 @@
     setTimeout(() => { toast.style.opacity = '0'; }, 2000);
   }
 
-  // Listener Realtime Firebase dengan Penggabungan Otomatis
   db.ref('tankhouseData').on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
       plantData = mergeFirebaseData(data);
-    } else {
-      plantData = generateDefaultPlantData();
-      db.ref('tankhouseData').set(plantData);
+      saveLocalData();
     }
 
     populateGroupSelect();
@@ -967,7 +966,6 @@
     }
   });
 
-  // Pemantau Status Koneksi Firebase
   db.ref('.info/connected').on('value', (snap) => {
     const statusEl = document.getElementById('dbStatus');
     if (statusEl) {
@@ -975,23 +973,21 @@
         statusEl.textContent = '🟢 Online';
         statusEl.style.color = 'var(--positive)';
       } else {
-        statusEl.textContent = '🔴 Offline / Connecting...';
+        statusEl.textContent = '🔴 Offline / Local';
         statusEl.style.color = 'var(--error)';
       }
     }
   });
 
   function kosongkanIsianPhase(targetPhase) {
-    let confirmMsg = targetPhase === 'ALL' 
-      ? 'TOTAL erase all Anode, Cathode, and SS Blank entries across ALL Phases?' 
-      : `TOTAL erase all Anode, Cathode, and SS Blank entries in Phase ${targetPhase}?`;
+    let confirmMsg = `TOTAL erase all Anode, Cathode, and SS Blank entries in Phase ${targetPhase}?`;
       
     if (!confirm(confirmMsg)) return;
 
     saveState();
 
     plantData.forEach(g => {
-      if (targetPhase === 'ALL' || g.phase === targetPhase) {
+      if (g.phase === targetPhase) {
         g.cropStatus = '-';
         g.cells.forEach(c => {
           c.anodeStatus = 'NONE';
@@ -1003,7 +999,7 @@
 
     if (activeSelectedCell) {
       let grp = plantData.find(g => g && g.groupId === activeSelectedCell.groupId);
-      if (targetPhase === 'ALL' || (grp && grp.phase === targetPhase)) {
+      if (grp && grp.phase === targetPhase) {
         selectCell(activeSelectedCell.groupId, activeSelectedCell.cellNum, null, true);
       }
     }
@@ -1407,77 +1403,110 @@
     document.getElementById('kpiSSCount').textContent = stats.cSS.toLocaleString('en-US');
     document.getElementById('kpiSSNS').textContent = `N: ${stats.cSSN.toLocaleString('en-US')} • S: ${stats.cSSS.toLocaleString('en-US')}`;
 
-    let categories = [
-      {
-        categoryName: 'Anode',
-        types: [
-          { id: '63 FL', label: 'Anode 63' },
-          { id: '62 KU', label: 'Anode 62 Kosong Utara' },
-          { id: '62 KS', label: 'Anode 62 Kosong Selatan' }
-        ],
-        field: 'anodeStatus'
-      },
-      {
-        categoryName: 'Cathode',
-        types: [
-          { id: 'CATH', label: 'Cathode' }
-        ],
-        field: 'cathodeStatus'
-      },
-      {
-        categoryName: 'SS Blank',
-        types: [
-          { id: 'SS', label: 'SS Blank' }
-        ],
-        field: 'cathodeStatus'
-      }
-    ];
-
+    // --- FORMAL WA REPORT FORMAT GENERATION ---
     let zones = [
       { key: 'North', name: 'Utara' },
       { key: 'South', name: 'Selatan' }
     ];
 
-    let reportBlocks = [];
+    let reportSections = [];
 
-    categories.forEach(cat => {
-      zones.forEach(z => {
-        let blockLines = [];
+    // 1. ANODE MAPPING
+    let anodeTypes = [
+      { id: '63 FL', label: 'Anode 63' },
+      { id: '62 KU', label: 'Anode 62 Kosong Utara' },
+      { id: '62 KS', label: 'Anode 62 Kosong Selatan' }
+    ];
 
-        cat.types.forEach(t => {
-          let groups = plantData.filter(g => g && (g.zone === z.key || (z.key === 'North' && g.zone === 'Utara') || (z.key === 'South' && g.zone === 'Selatan')));
-          let typeGroupLines = [];
-          let totalTypeCount = 0;
+    let anodeBlocks = [];
+    zones.forEach(z => {
+      let zoneLines = [];
+      anodeTypes.forEach(t => {
+        let groups = plantData.filter(g => g && (g.zone === z.key || (z.key === 'North' && g.zone === 'Utara') || (z.key === 'South' && g.zone === 'Selatan')));
+        let typeLines = [];
+        let totalCount = 0;
 
-          groups.forEach(g => {
-            let matchedCells = g.cells.filter(c => c && c[cat.field] === t.id).map(c => c.cellNum);
-            if (matchedCells.length > 0) {
-              let formattedCells = formatCellNumbers(matchedCells);
-              typeGroupLines.push(`- Group ${g.groupId} Cell ${formattedCells} = ${matchedCells.length} Cell`);
-              totalTypeCount += matchedCells.length;
-            }
-          });
-
-          if (typeGroupLines.length > 0) {
-            blockLines.push(`${t.label}`);
-            blockLines.push(...typeGroupLines);
-            blockLines.push(`- Total = ${totalTypeCount} Cell\n`);
+        groups.forEach(g => {
+          let matched = g.cells.filter(c => c && c.anodeStatus === t.id).map(c => c.cellNum);
+          if (matched.length > 0) {
+            let fmt = formatCellNumbers(matched);
+            typeLines.push(`- Group ${g.groupId} (Cell ${fmt}) = ${matched.length} Cell`);
+            totalCount += matched.length;
           }
         });
 
-        if (blockLines.length > 0) {
-          reportBlocks.push(`*${cat.categoryName} Sisi ${z.name}*\n` + blockLines.join('\n'));
+        if (typeLines.length > 0) {
+          zoneLines.push(`*${t.label}*\n` + typeLines.join('\n') + `\n- Total = ${totalCount} Cell`);
         }
       });
+
+      if (zoneLines.length > 0) {
+        anodeBlocks.push(`*Anode Sisi ${z.name}*\n` + zoneLines.join('\n\n'));
+      }
     });
 
-    let text = `*TANKHOUSE UPDATE*\n\n`;
-    if (reportBlocks.length === 0) {
-      text += `• All cells are completely empty (Blank)\n`;
-    } else {
-      text += reportBlocks.join('\n');
+    if (anodeBlocks.length > 0) {
+      reportSections.push(`*Anode Mapping*\n\n` + anodeBlocks.join('\n\n'));
     }
 
+    // 2. CATHODE MAPPING
+    let cathodeBlocks = [];
+    zones.forEach(z => {
+      let groups = plantData.filter(g => g && (g.zone === z.key || (z.key === 'North' && g.zone === 'Utara') || (z.key === 'South' && g.zone === 'Selatan')));
+      let typeLines = [];
+      let totalCount = 0;
+
+      groups.forEach(g => {
+        let matched = g.cells.filter(c => c && c.cathodeStatus === 'CATH').map(c => c.cellNum);
+        if (matched.length > 0) {
+          let fmt = formatCellNumbers(matched);
+          typeLines.push(`- Group ${g.groupId} (Cell ${fmt}) = ${matched.length} Cell`);
+          totalCount += matched.length;
+        }
+      });
+
+      if (typeLines.length > 0) {
+        cathodeBlocks.push(`*Cathode Sisi ${z.name}*\n` + typeLines.join('\n') + `\n- Total = ${totalCount} Cell`);
+      }
+    });
+
+    if (cathodeBlocks.length > 0) {
+      reportSections.push(`*Cathode Mapping*\n\n` + cathodeBlocks.join('\n\n'));
+    }
+
+    // 3. SS BLANK MAPPING
+    let ssBlocks = [];
+    zones.forEach(z => {
+      let groups = plantData.filter(g => g && (g.zone === z.key || (z.key === 'North' && g.zone === 'Utara') || (z.key === 'South' && g.zone === 'Selatan')));
+      let typeLines = [];
+      let totalCount = 0;
+
+      groups.forEach(g => {
+        let matched = g.cells.filter(c => c && c.cathodeStatus === 'SS').map(c => c.cellNum);
+        if (matched.length > 0) {
+          let fmt = formatCellNumbers(matched);
+          typeLines.push(`- Group ${g.groupId} (Cell ${fmt}) = ${matched.length} Cell`);
+          totalCount += matched.length;
+        }
+      });
+
+      if (typeLines.length > 0) {
+        ssBlocks.push(`*SS Blank Sisi ${z.name}*\n` + typeLines.join('\n') + `\n- Total = ${totalCount} Cell`);
+      }
+    });
+
+    if (ssBlocks.length > 0) {
+      reportSections.push(`*SS Blank Mapping*\n\n` + ssBlocks.join('\n\n'));
+    }
+
+    // 4. REKAP TOTAL ANODE, CATHODE, DAN SS BLANK
+    let rekapBlocks = [];
+    rekapBlocks.push(`*Anode, Cathode, dan SS Blank Utara*\n- Anode 63 = ${stats.c63N} Cell\n- Anode 62 Kosong Utara = ${stats.c62kuN} Cell\n- Anode 62 Kosong Selatan = ${stats.c62ksN} Cell\n- Cathode = ${stats.cCAN} Cell\n- SS Blank = ${stats.cSSN} Cell`);
+    rekapBlocks.push(`*Anode, Cathode, dan SS Blank Selatan*\n- Anode 63 = ${stats.c63S} Cell\n- Anode 62 Kosong Utara = ${stats.c62kuS} Cell\n- Anode 62 Kosong Selatan = ${stats.c62ksS} Cell\n- Cathode = ${stats.cCAS} Cell\n- SS Blank = ${stats.cSSS} Cell`);
+
+    reportSections.push(`*Rekap Total Anode, Cathode, dan SS Blank*\n\n` + rekapBlocks.join('\n\n'));
+
+    let text = reportSections.join('\n\n');
     document.getElementById('waText').value = text.trim();
   }
 
@@ -1651,7 +1680,7 @@
     document.getElementById('liveClock').textContent = `${dateStr} • ${timeStr}`;
   }, 1000);
 
-  // Render awal secara instan
+  // Inisialisasi tampilan awal
   populateGroupSelect();
   recalculateStats();
   renderMatrix();
