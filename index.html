@@ -180,7 +180,7 @@
 
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(5, 1fr);
     gap: 8px;
   }
   
@@ -429,12 +429,11 @@
     opacity: 1 !important;
   }
 
-  /* Cell Terpilih / Active Selection Flat Presisi */
+  /* Cell Terpilih / Active Selection Ultra Presisi */
   .cell-card.selected {
-    border-style: solid !important;
-    border-color: var(--primary) !important;
+    border: 2px solid var(--primary) !important;
     background: var(--surface-container-high) !important;
-    box-shadow: 0 0 0 1px var(--primary) !important;
+    box-shadow: inset 0 0 0 1px var(--primary) !important;
     transform: none !important;
     z-index: 2;
     opacity: 1 !important;
@@ -604,7 +603,7 @@
     display: none;
   }
 
-  /* OPTIMISASI UTAMA TAMPILAN MOBILE (MENCEGAH GEPEK & CELL LEBIH BESAR) */
+  /* OPTIMISASI UTAMA TAMPILAN MOBILE */
   @media (max-width: 900px) {
     html, body {
       height: auto;
@@ -656,7 +655,6 @@
       font-size: 13px;
     }
 
-    /* Ukuran Cell Diperbesar & Dipertegas untuk Layar Sentuh Mobile */
     .cell-row-26 {
       grid-template-columns: repeat(13, minmax(58px, 1fr));
       gap: 6px;
@@ -750,11 +748,6 @@
     </div>
 
     <div class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Total Anodes</div>
-        <div class="kpi-value" id="kpiTotalAnode" style="color: var(--primary);">0</div>
-        <div class="kpi-sub" id="kpiTotalAnodeNS">N: 0 • S: 0</div>
-      </div>
       <div class="kpi-card">
         <div class="kpi-label">Anode 63 FL</div>
         <div class="kpi-value" id="kpiCount63" style="color: var(--positive);">0</div>
@@ -1262,7 +1255,6 @@
     renderMatrix();
   }
 
-  // --- OPTIMIZED TARGETED CELL DOM UPDATE ---
   function updateCellDOM(gId, cNum) {
     let grp = plantData.find(g => g && g.groupId === gId);
     if (!grp) return;
@@ -1309,7 +1301,6 @@
     cellEl.innerHTML = html;
   }
 
-  // --- INSTANT SELECTION UPDATE (NO MATRIX RE-RENDER) ---
   function updateSelectionUI() {
     const prevSelected = document.querySelectorAll('.cell-card.selected');
     for (let i = 0; i < prevSelected.length; i++) {
@@ -1354,7 +1345,6 @@
     }
   }
 
-  /* Render Grid Cell 2 Baris per Group */
   function renderMatrix() {
     const container = document.getElementById('matrixContainer');
     const selZone = document.getElementById('zoneSelect').value;
@@ -1725,9 +1715,6 @@
       });
     });
 
-    document.getElementById('kpiTotalAnode').textContent = stats.tA.toLocaleString('en-US');
-    document.getElementById('kpiTotalAnodeNS').textContent = `N: ${stats.tAN.toLocaleString('en-US')} • S: ${stats.tAS.toLocaleString('en-US')}`;
-
     document.getElementById('kpiCount63').textContent = stats.c63.toLocaleString('en-US');
     document.getElementById('kpiCount63NS').textContent = `N: ${stats.c63N.toLocaleString('en-US')} • S: ${stats.c63S.toLocaleString('en-US')}`;
 
@@ -1861,7 +1848,6 @@
     setTimeout(() => { btn.textContent = oldText; }, 1500);
   }
 
-  // --- MATHEMATICAL GRID NAVIGATION FOR ARROW KEYS ---
   function getVisualNeighborCell(direction) {
     if (!activeSelectedCell) return null;
 
