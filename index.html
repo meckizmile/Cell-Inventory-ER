@@ -1353,6 +1353,22 @@
     const selC = document.getElementById('cathSelect').value;
     const selContent = document.getElementById('contentSelect').value;
 
+    // --- CATAT & SIMPAN POSISI SCROLL SEBELUM DOM DI-RESET ---
+    const matrixScrollTop = container ? container.scrollTop : 0;
+    const groupScrollLeftMap = {};
+    if (container) {
+      container.querySelectorAll('.group-section').forEach(sec => {
+        const wrapper = sec.querySelector('.group-grid-wrapper');
+        const firstCell = sec.querySelector('.cell-card');
+        if (wrapper && firstCell) {
+          const gId = firstCell.getAttribute('data-group');
+          if (gId) {
+            groupScrollLeftMap[gId] = wrapper.scrollLeft;
+          }
+        }
+      });
+    }
+
     let filteredGroups = plantData.filter(g => {
       if (!g) return false;
       if (currentPhaseFilter !== 'ALL' && g.phase !== currentPhaseFilter) return false;
@@ -1477,6 +1493,19 @@
       }
     } else {
       container.appendChild(fragment);
+
+      // --- KEMBALIKAN (RESTORE) POSISI SCROLL HORIZONTAL & VERTIKAL ---
+      container.scrollTop = matrixScrollTop;
+      container.querySelectorAll('.group-section').forEach(sec => {
+        const wrapper = sec.querySelector('.group-grid-wrapper');
+        const firstCell = sec.querySelector('.cell-card');
+        if (wrapper && firstCell) {
+          const gId = firstCell.getAttribute('data-group');
+          if (gId && groupScrollLeftMap[gId] !== undefined) {
+            wrapper.scrollLeft = groupScrollLeftMap[gId];
+          }
+        }
+      });
     }
 
     recalculateStats();
