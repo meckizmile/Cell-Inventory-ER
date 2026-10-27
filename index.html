@@ -1683,11 +1683,7 @@
       ranges.push(`${start}–${prev}`);
     }
 
-    if (ranges.length === 2) {
-      return ranges.join(' & ');
-    } else {
-      return ranges.join(', ');
-    }
+    return ranges.join(', ');
   }
 
   function recalculateStats() {
@@ -1757,86 +1753,99 @@
     document.getElementById('kpiSSNS').textContent = `N: ${stats.cSSN.toLocaleString('en-US')} • S: ${stats.cSSS.toLocaleString('en-US')}`;
 
     // --- FORMAL WA REPORT FORMAT GENERATION ---
-    let reportSections = ['*🔄 ANODE / CATHODE / SS BLANK MAPPING*'];
+    const now = new Date();
+    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
+    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+    
+    const dayName = days[now.getDay()];
+    const dateNum = now.getDate();
+    const monthName = months[now.getMonth()];
+    const yearNum = now.getFullYear();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    
+    const timeHeader = `*📅 ${dayName}, ${dateNum} ${monthName} ${yearNum} | ${hours}:${minutes}*`;
 
-    let zoneDefs = [
-      { key: 'North', name: 'NORTH SIDE', icon: '🔵' },
-      { key: 'South', name: 'SOUTH SIDE', icon: '🟠' }
+    let summaryLines = [
+      `- Cathode: *(Utara: ${stats.cCAN} Cell | Selatan: ${stats.cCAS} Cell)*`,
+      `- Anode 63: *(Utara: ${stats.c63N} Cell | Selatan: ${stats.c63S} Cell)*`
     ];
+    if (stats.c62ku > 0) {
+      summaryLines.push(`- Anode 62 KU: *(Utara: ${stats.c62kuN} Cell | Selatan: ${stats.c62kuS} Cell)*`);
+    }
+    if (stats.c62ks > 0) {
+      summaryLines.push(`- Anode 62 KS: *(Utara: ${stats.c62ksN} Cell | Selatan: ${stats.c62ksS} Cell)*`);
+    }
+    summaryLines.push(`- SS Blank: *(Utara: ${stats.cSSN} Cell | Selatan: ${stats.cSSS} Cell)*`);
 
-    zoneDefs.forEach(z => {
-      let zoneGroups = plantData.filter(g => g && (g.zone === z.key || (z.key === 'North' && g.zone === 'Utara') || (z.key === 'South' && g.zone === 'Selatan')));
-      let zoneLines = [];
+    let reportBlocks = [];
+    reportBlocks.push(`*🔄 ANODE / CATHODE / SS BLANK MAPPING*\n${timeHeader}\n\n` + summaryLines.join('\n'));
 
-      // A. ANODE TYPES
-      let anodeTypes = [
-        { id: '63 FL', label: 'ANODE 63' },
-        { id: '62 KU', label: 'ANODE 62 KU' },
-        { id: '62 KS', label: 'ANODE 62 KS' }
-      ];
+    const divider = `─────────────────`;
 
-      anodeTypes.forEach(t => {
-        let lines = [];
-        let totalCount = 0;
-        zoneGroups.forEach(g => {
-          let matched = g.cells.filter(c => c && c.anodeStatus === t.id).map(c => c.cellNum);
-          if (matched.length > 0) {
-            let fmt = formatCellNumbers(matched);
-            lines.push(`- G${g.groupId} | Cell ${fmt} | ${matched.length} Cell`);
-            totalCount += matched.length;
+    function buildZoneSection(title, totalCount, itemsNorth, itemsSouth, formatType) {
+      let block = `*${title} (Total: ${totalCount} Cell)*\n\n`;
+      
+      block += `*UTARA (${itemsNorth.total} Cell)*`;
+      if (itemsNorth.lines.length > 0) {
+        block += `\n` + itemsNorth.lines.join('\n');
+      }
+      
+      block += `\n\n*SELATAN (${itemsSouth.total} Cell)*`;
+      if (itemsSouth.lines.length > 0) {
+        block += `\n` + itemsSouth.lines.join('\n');
+      }
+
+      return block;
+    }
+
+    function getItemsForCategory(filterFn, formatType) {
+      let north = { total: 0, lines: [] };
+      let south = { total: 0, lines: [] };
+
+      plantData.forEach(g => {
+        if (!g) return;
+        const isNorth = (g.zone === 'North' || g.zone === 'Utara');
+        let matched = g.cells.filter(c => c && filterFn(c)).map(c => c.cellNum);
+        if (matched.length > 0) {
+          let fmt = formatCellNumbers(matched);
+          let target = isNorth ? north : south;
+          target.total += matched.length;
+          
+          if (formatType === 'cath') {
+            target.lines.push(`- *Group ${g.groupId}* (${matched.length} Cell) ➡️ Cell ${fmt}`);
+          } else {
+            target.lines.push(`- *Group ${g.groupId}* ➡️ Cell ${fmt} (${matched.length} Cell)`);
           }
-        });
-
-        if (lines.length > 0) {
-          zoneLines.push(`*${t.label}*\n` + lines.join('\n') + `\n*Total Anode: ${totalCount} Cell*`);
         }
       });
 
-      // B. CATHODE
-      let cathLines = [];
-      let totalCath = 0;
-      zoneGroups.forEach(g => {
-        let matched = g.cells.filter(c => c && c.cathodeStatus === 'CATH').map(c => c.cellNum);
-        if (matched.length > 0) {
-          let fmt = formatCellNumbers(matched);
-          cathLines.push(`- G${g.groupId} | Cell ${fmt} | ${matched.length} Cell`);
-          totalCath += matched.length;
-        }
-      });
+      return { north, south };
+    }
 
-      if (cathLines.length > 0) {
-        zoneLines.push(`*CATHODE*\n` + cathLines.join('\n') + `\n*Total Cathode: ${totalCath} Cell*`);
-      }
+    // 1. CATHODE
+    let cathData = getItemsForCategory(c => c.cathodeStatus === 'CATH', 'cath');
+    reportBlocks.push(buildZoneSection('CATHODE', stats.cCA, cathData.north, cathData.south, 'cath'));
 
-      // C. SS BLANK
-      let ssLines = [];
-      let totalSS = 0;
-      zoneGroups.forEach(g => {
-        let matched = g.cells.filter(c => c && c.cathodeStatus === 'SS').map(c => c.cellNum);
-        if (matched.length > 0) {
-          let fmt = formatCellNumbers(matched);
-          ssLines.push(`- G${g.groupId} | Cell ${fmt} | ${matched.length} Cell`);
-          totalSS += matched.length;
-        }
-      });
+    // 2. ANODE 63
+    let a63Data = getItemsForCategory(c => c.anodeStatus === '63 FL', 'anode');
+    reportBlocks.push(buildZoneSection('ANODE 63', stats.c63, a63Data.north, a63Data.south, 'anode'));
 
-      if (ssLines.length > 0) {
-        zoneLines.push(`*SS BLANK*\n` + ssLines.join('\n') + `\n*Total SS Blank: ${totalSS} Cell*`);
-      }
+    if (stats.c62ku > 0) {
+      let a62kuData = getItemsForCategory(c => c.anodeStatus === '62 KU', 'anode');
+      reportBlocks.push(buildZoneSection('ANODE 62 KU', stats.c62ku, a62kuData.north, a62kuData.south, 'anode'));
+    }
 
-      if (zoneLines.length > 0) {
-        reportSections.push(`${z.icon} *${z.name}*\n \n` + zoneLines.join('\n \n'));
-      }
-    });
+    if (stats.c62ks > 0) {
+      let a62ksData = getItemsForCategory(c => c.anodeStatus === '62 KS', 'anode');
+      reportBlocks.push(buildZoneSection('ANODE 62 KS', stats.c62ks, a62ksData.north, a62ksData.south, 'anode'));
+    }
 
-    // D. REKAP TOTAL UTARA DAN SELATAN
-    let rekapText = `*Rekap Total Utara dan Selatan*\n` +
-      `- Utara: Anode 63 ${stats.c63N} Cell | Anode 62KU ${stats.c62kuN} Cell | Anode 62KS ${stats.c62ksN} Cell | Cathode ${stats.cCAN} Cell | SS Blank ${stats.cSSN} Cell\n` +
-      `- Selatan: Anode 63 ${stats.c63S} Cell | Anode 62KU ${stats.c62kuS} Cell | Anode 62KS ${stats.c62ksS} Cell | Cathode ${stats.cCAS} Cell | SS Blank ${stats.cSSS} Cell`;
+    // 3. SS BLANK
+    let ssData = getItemsForCategory(c => c.cathodeStatus === 'SS', 'anode');
+    reportBlocks.push(buildZoneSection('SS BLANK', stats.cSS, ssData.north, ssData.south, 'anode'));
 
-    reportSections.push(rekapText);
-
-    let text = reportSections.join('\n \n');
+    let text = reportBlocks.join(`\n\n${divider}\n\n`);
     document.getElementById('waText').value = text.trim();
   }
 
