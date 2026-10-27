@@ -743,6 +743,7 @@
       <div class="header-actions">
         <button class="lumi-chip" id="themeToggleBtn" onclick="toggleTheme()" style="min-height:24px; font-weight:700;">🌙 Dark</button>
         <div class="update-badge" id="dbStatus" style="color: var(--positive);">🟢 Checking...</div>
+        <div class="update-badge" id="lastUpdatedBadge" style="color: var(--primary);">Last Update: -</div>
         <div class="update-badge" id="liveClock">Oct 20, 2026 • 00:00:00 AM</div>
       </div>
     </div>
@@ -948,6 +949,7 @@
   const db = firebase.database();
 
   const LOCAL_STORAGE_KEY = 'tankhouse_plant_data_v2';
+  const LOCAL_STORAGE_LAST_UPDATED = 'tankhouse_last_updated';
 
   let plantData = [];
   let currentPhaseFilter = 'ALL';
@@ -959,6 +961,29 @@
   let undoStack = [];
   let redoStack = [];
   const MAX_HISTORY = 50;
+
+  function updateLastUpdatedUI(ts) {
+    const badge = document.getElementById('lastUpdatedBadge');
+    if (!badge) return;
+    if (!ts) {
+      badge.textContent = 'Last Update: -';
+      return;
+    }
+    const d = new Date(Number(ts) || ts);
+    if (isNaN(d.getTime())) {
+      badge.textContent = `Last Update: ${ts}`;
+      return;
+    }
+    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    badge.textContent = `Last Update: ${dateStr} • ${timeStr}`;
+  }
+
+  // Set tampilan awal dari cache lokal jika ada
+  const cachedLastUpdated = localStorage.getItem(LOCAL_STORAGE_LAST_UPDATED);
+  if (cachedLastUpdated) {
+    updateLastUpdatedUI(cachedLastUpdated);
+  }
 
   function generateDefaultPlantData() {
     let data = [];
@@ -1033,7 +1058,10 @@
 
   function syncCellTargets(targets) {
     saveLocalData();
+    const ts = Date.now();
     let updates = {};
+    updates['lastUpdated'] = ts;
+    localStorage.setItem(LOCAL_STORAGE_LAST_UPDATED, ts);
     targets.forEach(t => {
       let gIdx = plantData.findIndex(g => g && g.groupId === t.groupId);
       if (gIdx !== -1) {
@@ -1055,19 +1083,32 @@
     db.ref().update(updates).catch(err => {
       showToast("⚠️ Firebase Offline (Saved Locally)");
     });
+    updateLastUpdatedUI(ts);
   }
 
   function syncGroupCrop(groupId, cropStatus) {
     saveLocalData();
     let gIdx = plantData.findIndex(g => g && g.groupId === groupId);
     if (gIdx !== -1) {
-      db.ref(`tankhouseData/${gIdx}/cropStatus`).set(cropStatus).catch(err => {});
+      const ts = Date.now();
+      let updates = {};
+      updates[`tankhouseData/${gIdx}/cropStatus`] = cropStatus;
+      updates['lastUpdated'] = ts;
+      localStorage.setItem(LOCAL_STORAGE_LAST_UPDATED, ts);
+      db.ref().update(updates).catch(err => {});
+      updateLastUpdatedUI(ts);
     }
   }
 
   function syncBulkData() {
     saveLocalData();
-    db.ref('tankhouseData').set(plantData).catch(err => {});
+    const ts = Date.now();
+    let updates = {};
+    updates['tankhouseData'] = plantData;
+    updates['lastUpdated'] = ts;
+    localStorage.setItem(LOCAL_STORAGE_LAST_UPDATED, ts);
+    db.ref().update(updates).catch(err => {});
+    updateLastUpdatedUI(ts);
   }
 
   function saveState() {
@@ -1195,6 +1236,15 @@
     populateGroupSelect();
     recalculateStats();
     renderMatrix();
+  });
+
+  // Listener real-time untuk waktu update terakhir dari siapapun
+  db.ref('lastUpdated').on('value', (snapshot) => {
+    const ts = snapshot.val();
+    if (ts) {
+      localStorage.setItem(LOCAL_STORAGE_LAST_UPDATED, ts);
+      updateLastUpdatedUI(ts);
+    }
   });
 
   db.ref('.info/connected').on('value', (snap) => {
