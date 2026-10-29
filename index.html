@@ -1424,6 +1424,26 @@
       if (currentPhaseFilter !== 'ALL' && g.phase !== currentPhaseFilter) return false;
       if (selZone !== 'ALL' && g.zone !== selZone) return false;
       if (selG !== 'ALL' && g.groupId != selG) return false;
+
+      // Filter kriteria pada tingkat Group agar grid layout sel tetap fix 26/28
+      if (selContent === 'FILLED') {
+        let hasFilled = g.cells.some(c => c && ((c.anodeStatus && c.anodeStatus !== 'NONE') || (c.cathodeStatus && c.cathodeStatus !== 'NONE')));
+        if (!hasFilled) return false;
+      } else if (selContent === 'EMPTY') {
+        let hasEmpty = g.cells.some(c => c && ((!c.anodeStatus || c.anodeStatus === 'NONE') && (!c.cathodeStatus || c.cathodeStatus === 'NONE')));
+        if (!hasEmpty) return false;
+      }
+
+      if (selA !== 'ALL') {
+        let hasAnode = g.cells.some(c => c && c.anodeStatus === selA);
+        if (!hasAnode) return false;
+      }
+
+      if (selC !== 'ALL') {
+        let hasCathode = g.cells.some(c => c && c.cathodeStatus === selC);
+        if (!hasCathode) return false;
+      }
+
       return true;
     });
 
@@ -1431,19 +1451,10 @@
     let renderedCount = 0;
 
     filteredGroups.forEach(g => {
-      let visibleCells = g.cells.filter(c => {
-        if (!c) return false;
-        let isBlank = (c.anodeStatus === 'NONE' || !c.anodeStatus) && (c.cathodeStatus === 'NONE' || !c.cathodeStatus);
-        
-        if (selContent === 'FILLED' && isBlank) return false;
-        if (selContent === 'EMPTY' && !isBlank) return false;
-        if (selA !== 'ALL' && c.anodeStatus !== selA) return false;
-        if (selC !== 'ALL' && c.cathodeStatus !== selC) return false;
-        
-        return true;
-      });
+      // Menampilkan seluruh cell di dalam Group secara lengkap untuk mempertahankan struktur grid fix
+      let visibleCells = g.cells;
 
-      if (visibleCells.length === 0) return;
+      if (!visibleCells || visibleCells.length === 0) return;
 
       renderedCount++;
 
