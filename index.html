@@ -1425,7 +1425,7 @@
       if (selZone !== 'ALL' && g.zone !== selZone) return false;
       if (selG !== 'ALL' && g.groupId != selG) return false;
 
-      // Filter kriteria pada tingkat Group agar grid layout sel tetap fix 26/28
+      // Filter kriteria pada tingkat Group
       if (selContent === 'FILLED') {
         let hasFilled = g.cells.some(c => c && ((c.anodeStatus && c.anodeStatus !== 'NONE') || (c.cathodeStatus && c.cathodeStatus !== 'NONE')));
         if (!hasFilled) return false;
@@ -1451,8 +1451,22 @@
     let renderedCount = 0;
 
     filteredGroups.forEach(g => {
-      // Menampilkan seluruh cell di dalam Group secara lengkap untuk mempertahankan struktur grid fix
-      let visibleCells = g.cells;
+      // Menyaring sel individual berdasarkan kriteria filter (Empty, Anode, Cathode)
+      let visibleCells = g.cells.filter(c => {
+        if (!c) return false;
+        let isBlank = (c.anodeStatus === 'NONE' || !c.anodeStatus) && (c.cathodeStatus === 'NONE' || !c.cathodeStatus);
+
+        // Jika filter Empty Cells Only aktif, keluarkan sel yang berisi
+        if (selContent === 'EMPTY' && !isBlank) return false;
+
+        // Filter status Anode
+        if (selA !== 'ALL' && c.anodeStatus !== selA) return false;
+
+        // Filter status Cathode
+        if (selC !== 'ALL' && c.cathodeStatus !== selC) return false;
+
+        return true;
+      });
 
       if (!visibleCells || visibleCells.length === 0) return;
 
@@ -1839,12 +1853,14 @@
     }
     summaryLines.push(`- SS Blank: *(Utara: ${stats.cSSN} Cell | Selatan: ${stats.cSSS} Cell)*`);
 
+    const subDivider = `_ _ _ _ _ _ `;
+
     let reportBlocks = [];
-    reportBlocks.push(`*🔄 ANODE / CATHODE / SS BLANK MAPPING*\n${timeHeader}\n\n` + summaryLines.join('\n'));
+    reportBlocks.push(`*🔄 ANODE / CATHODE / SS BLANK MAPPING*\n${timeHeader}\n${subDivider}\n` + summaryLines.join('\n') + `\n${subDivider}`);
 
-    const divider = `─────────────────`;
+    const divider = `_ _ _ _ _ _ `;
 
-    function buildZoneSection(title, totalCount, itemsNorth, itemsSouth, formatType) {
+    function buildZoneSection(title, totalCount, itemsNorth, itemsSouth) {
       let block = `*${title} (Total: ${totalCount} Cell)*\n\n`;
       
       block += `*UTARA (${itemsNorth.total} Cell)*`;
@@ -1860,7 +1876,7 @@
       return block;
     }
 
-    function getItemsForCategory(filterFn, formatType) {
+    function getItemsForCategory(filterFn) {
       let north = { total: 0, lines: [] };
       let south = { total: 0, lines: [] };
 
@@ -1873,11 +1889,7 @@
           let target = isNorth ? north : south;
           target.total += matched.length;
           
-          if (formatType === 'cath') {
-            target.lines.push(`- *Group ${g.groupId}* (${matched.length} Cell) ➡️ Cell ${fmt}`);
-          } else {
-            target.lines.push(`- *Group ${g.groupId}* ➡️ Cell ${fmt} (${matched.length} Cell)`);
-          }
+          target.lines.push(`- *Group ${g.groupId}* ➡️ Cell ${fmt} (${matched.length} Cell)`);
         }
       });
 
@@ -1885,26 +1897,26 @@
     }
 
     // 1. CATHODE
-    let cathData = getItemsForCategory(c => c.cathodeStatus === 'CATH', 'cath');
-    reportBlocks.push(buildZoneSection('CATHODE', stats.cCA, cathData.north, cathData.south, 'cath'));
+    let cathData = getItemsForCategory(c => c.cathodeStatus === 'CATH');
+    reportBlocks.push(buildZoneSection('CATHODE', stats.cCA, cathData.north, cathData.south));
 
     // 2. ANODE 63
-    let a63Data = getItemsForCategory(c => c.anodeStatus === '63 FL', 'anode');
-    reportBlocks.push(buildZoneSection('ANODE 63', stats.c63, a63Data.north, a63Data.south, 'anode'));
+    let a63Data = getItemsForCategory(c => c.anodeStatus === '63 FL');
+    reportBlocks.push(buildZoneSection('ANODE 63', stats.c63, a63Data.north, a63Data.south));
 
     if (stats.c62ku > 0) {
-      let a62kuData = getItemsForCategory(c => c.anodeStatus === '62 KU', 'anode');
-      reportBlocks.push(buildZoneSection('ANODE 62 KU', stats.c62ku, a62kuData.north, a62kuData.south, 'anode'));
+      let a62kuData = getItemsForCategory(c => c.anodeStatus === '62 KU');
+      reportBlocks.push(buildZoneSection('ANODE 62 KU', stats.c62ku, a62kuData.north, a62kuData.south));
     }
 
     if (stats.c62ks > 0) {
-      let a62ksData = getItemsForCategory(c => c.anodeStatus === '62 KS', 'anode');
-      reportBlocks.push(buildZoneSection('ANODE 62 KS', stats.c62ks, a62ksData.north, a62ksData.south, 'anode'));
+      let a62ksData = getItemsForCategory(c => c.anodeStatus === '62 KS');
+      reportBlocks.push(buildZoneSection('ANODE 62 KS', stats.c62ks, a62ksData.north, a62ksData.south));
     }
 
     // 3. SS BLANK
-    let ssData = getItemsForCategory(c => c.cathodeStatus === 'SS', 'anode');
-    reportBlocks.push(buildZoneSection('SS BLANK', stats.cSS, ssData.north, ssData.south, 'anode'));
+    let ssData = getItemsForCategory(c => c.cathodeStatus === 'SS');
+    reportBlocks.push(buildZoneSection('SS BLANK', stats.cSS, ssData.north, ssData.south));
 
     let text = reportBlocks.join(`\n\n${divider}\n\n`);
     document.getElementById('waText').value = text.trim();
