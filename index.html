@@ -470,6 +470,11 @@
     letter-spacing: 0.3px;
     line-height: 1;
     text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .anode-tag:hover, .cathode-tag:hover {
+    opacity: 0.8;
   }
 
   /* Anode Tag Styles */
@@ -1305,6 +1310,27 @@
     renderMatrix();
   }
 
+  function removeCellTag(e, gId, cNum, tagType) {
+    if (e) e.stopPropagation();
+    let grp = plantData.find(g => g && g.groupId === gId);
+    if (!grp) return;
+    let cell = grp.cells.find(c => c && c.cellNum === cNum);
+    if (!cell) return;
+
+    saveState();
+    if (tagType === 'anode') {
+      cell.anodeStatus = 'NONE';
+      cell.pcs = 0;
+    } else if (tagType === 'cathode') {
+      cell.cathodeStatus = 'NONE';
+    }
+
+    selectCell(gId, cNum, null, true);
+    updateCellDOM(gId, cNum);
+    recalculateStats();
+    syncCellTargets([{ groupId: gId, cellNum: cNum }]);
+  }
+
   function updateCellDOM(gId, cNum) {
     let grp = plantData.find(g => g && g.groupId === gId);
     if (!grp) return;
@@ -1340,10 +1366,10 @@
     if (!isBlank) {
       html += `<div class="tags-wrapper">`;
       if (shortA) {
-        html += `<div class="anode-tag ${anodeClass}">${shortA}</div>`;
+        html += `<div class="anode-tag ${anodeClass}" onclick="removeCellTag(event, ${gId}, ${cNum}, 'anode')">${shortA}</div>`;
       }
       if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
-        html += `<div class="cathode-tag ${cathClass}">${c.cathodeStatus}</div>`;
+        html += `<div class="cathode-tag ${cathClass}" onclick="removeCellTag(event, ${gId}, ${cNum}, 'cathode')">${c.cathodeStatus}</div>`;
       }
       html += `</div>`;
     }
@@ -1536,10 +1562,10 @@
         if (!isBlank) {
           html += `<div class="tags-wrapper">`;
           if (shortA) {
-            html += `<div class="anode-tag ${anodeClass}">${shortA}</div>`;
+            html += `<div class="anode-tag ${anodeClass}" onclick="removeCellTag(event, ${g.groupId}, ${c.cellNum}, 'anode')">${shortA}</div>`;
           }
           if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
-            html += `<div class="cathode-tag ${cathClass}">${c.cathodeStatus}</div>`;
+            html += `<div class="cathode-tag ${cathClass}" onclick="removeCellTag(event, ${g.groupId}, ${c.cellNum}, 'cathode')">${c.cathodeStatus}</div>`;
           }
           html += `</div>`;
         }
