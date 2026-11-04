@@ -634,8 +634,23 @@
       grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
     }
 
+    /* FIX NO 2: Merapikan Controls Bar Mobile */
     .controls-bar {
-      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .control-group {
+      min-width: 0;
+    }
+
+    .control-group:first-child {
+      grid-column: 1 / -1;
+    }
+
+    .segmented-pills {
+      flex-wrap: wrap;
+      gap: 4px;
     }
 
     .main-content {
@@ -692,14 +707,15 @@
       max-height: none;
     }
 
+    /* FIX NO 3: Background Mobile Toolbar Transparan */
     .mobile-quick-bar {
       position: fixed;
       bottom: 12px;
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(17, 19, 25, 0.96);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+      background: transparent;
+      border: none;
+      box-shadow: none;
       padding: 8px 12px;
       border-radius: 20px;
       display: none;
@@ -708,12 +724,14 @@
       z-index: 10000;
       max-width: 95vw;
       width: max-content;
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
     }
     
     [data-theme="light"] .mobile-quick-bar {
-      background: rgba(255, 255, 255, 0.96);
-      border-color: rgba(0, 0, 0, 0.15);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
+      background: transparent;
+      border-color: transparent;
+      box-shadow: none;
     }
 
     .mobile-quick-row {
@@ -789,6 +807,7 @@
           <button class="lumi-chip" onclick="setPhaseFilter(1, this)">P1</button>
           <button class="lumi-chip" onclick="setPhaseFilter(2, this)">P2</button>
           <button class="lumi-chip" onclick="setPhaseFilter(3, this)">P3</button>
+          <button class="lumi-chip" onclick="setPhaseFilter('Machine', this)">Machine</button>
         </div>
       </div>
 
@@ -921,6 +940,11 @@
 </div>
 
 <script>
+  // Helper fungsi pencari elemen DOM Cell yang aman untuk groupId berupa angka maupun string berspasi (Fix No 1)
+  function getCellElement(gId, cNum) {
+    return document.querySelector(`.cell-card[data-group="${String(gId).replace(/"/g, '\\"')}"][data-cell="${cNum}"]`);
+  }
+
   // --- MANAGEMENT TEMA LIGHT / DARK ---
   function initTheme() {
     const savedTheme = localStorage.getItem('tankhouse_theme') || 'dark';
@@ -1019,6 +1043,47 @@
       }
       data.push(groupObj);
     }
+
+    // Penambahan Group Rack & Station Khusus dengan Alokasi Zona North/South & Phase Machine
+    const machineConfigs = [
+      { id: 'Rack CSM 1', zone: 'North', displayName: 'Rack CSM 1', cells: ['R01', 'R02', 'R03', 'R04'] },
+      { id: 'Rack CSM 2', zone: 'South', displayName: 'Rack CSM 2', cells: ['R01', 'R02', 'R03', 'R04'] },
+      { id: 'Rack ASM 1', zone: 'North', displayName: 'Rack ASM 1', cells: ['R01', 'R02', 'R03', 'R04', 'R05', 'R06', 'R07', 'R08'] },
+      { id: 'Rack ASM 2', zone: 'South', displayName: 'Rack ASM 2', cells: ['R01', 'R02', 'R03', 'R04', 'R05', 'R06', 'R07', 'R08'] },
+
+      { id: 'CSM 1 North', zone: 'North', displayName: 'CSM 1', cells: ['US 1', 'US 2', 'LS 1', 'LS 2'] },
+      { id: 'CSM 1 South', zone: 'South', displayName: 'CSM 1', cells: ['US 3', 'US 4', 'LS 3', 'LS 4'] },
+      { id: 'ASM 1 North', zone: 'North', displayName: 'ASM 1', cells: ['Station 3', 'Station 4'] },
+      { id: 'ASM 1 South', zone: 'South', displayName: 'ASM 1', cells: ['Station 1', 'Station 2'] },
+      { id: 'APM 1 North', zone: 'North', displayName: 'APM 1', cells: ['Station 3', 'Station 4'] },
+      { id: 'APM 1 South', zone: 'South', displayName: 'APM 1', cells: ['Station 1', 'Station 2'] },
+
+      { id: 'CSM 2 North', zone: 'North', displayName: 'CSM 2', cells: ['US 1', 'US 2', 'LS 1', 'LS 2'] },
+      { id: 'CSM 2 South', zone: 'South', displayName: 'CSM 2', cells: ['US 3', 'US 4', 'LS 3', 'LS 4'] },
+      { id: 'ASM 2 North', zone: 'North', displayName: 'ASM 2', cells: ['Station 3', 'Station 4'] },
+      { id: 'ASM 2 South', zone: 'South', displayName: 'ASM 2', cells: ['Station 1', 'Station 2'] },
+      { id: 'APM 2 North', zone: 'North', displayName: 'APM 2', cells: ['Station 3', 'Station 4'] },
+      { id: 'APM 2 South', zone: 'South', displayName: 'APM 2', cells: ['Station 1', 'Station 2'] }
+    ];
+
+    machineConfigs.forEach(mc => {
+      let groupObj = {
+        groupId: mc.id, displayName: mc.displayName, phase: 'Machine', zone: mc.zone, cellCount: mc.cells.length,
+        cropStatus: '-', cells: []
+      };
+      mc.cells.forEach((cId, idx) => {
+        groupObj.cells.push({
+          cellNum: idx + 1,
+          cellId: cId,
+          anodeStatus: 'NONE',
+          cathodeStatus: 'NONE',
+          pcs: 0,
+          isEW0: false
+        });
+      });
+      data.push(groupObj);
+    });
+
     return data;
   }
 
@@ -1036,9 +1101,32 @@
 
     let fbGroups = Array.isArray(fbData) ? fbData : Object.values(fbData);
 
-    fbGroups.forEach(fbGroup => {
-      if (!fbGroup || fbGroup.groupId === undefined) return;
-      let localGroup = baseData.find(g => g.groupId === fbGroup.groupId);
+    fbGroups.forEach((fbGroup, index) => {
+      if (!fbGroup) return;
+      let localGroup = null;
+
+      if (fbGroup.groupId !== undefined) {
+        localGroup = baseData.find(g => 
+          String(g.groupId) === String(fbGroup.groupId) ||
+          (fbGroup.groupId === 'CSM 1 (Utara)' && g.groupId === 'CSM 1 North') ||
+          (fbGroup.groupId === 'CSM 1 (Selatan)' && g.groupId === 'CSM 1 South') ||
+          (fbGroup.groupId === 'ASM 1 (Utara)' && g.groupId === 'ASM 1 North') ||
+          (fbGroup.groupId === 'ASM 1 (Selatan)' && g.groupId === 'ASM 1 South') ||
+          (fbGroup.groupId === 'APM 1 (Utara)' && g.groupId === 'APM 1 North') ||
+          (fbGroup.groupId === 'APM 1 (Selatan)' && g.groupId === 'APM 1 South') ||
+          (fbGroup.groupId === 'CSM 2 (Utara)' && g.groupId === 'CSM 2 North') ||
+          (fbGroup.groupId === 'CSM 2 (Selatan)' && g.groupId === 'CSM 2 South') ||
+          (fbGroup.groupId === 'ASM 2 (Utara)' && g.groupId === 'ASM 2 North') ||
+          (fbGroup.groupId === 'ASM 2 (Selatan)' && g.groupId === 'ASM 2 South') ||
+          (fbGroup.groupId === 'APM 2 (Utara)' && g.groupId === 'APM 2 North') ||
+          (fbGroup.groupId === 'APM 2 (Selatan)' && g.groupId === 'APM 2 South')
+        );
+      }
+
+      if (!localGroup && baseData[index]) {
+        localGroup = baseData[index];
+      }
+
       if (localGroup) {
         if (fbGroup.cropStatus !== undefined) {
           localGroup.cropStatus = fbGroup.cropStatus;
@@ -1068,11 +1156,12 @@
     updates['lastUpdated'] = ts;
     localStorage.setItem(LOCAL_STORAGE_LAST_UPDATED, ts);
     targets.forEach(t => {
-      let gIdx = plantData.findIndex(g => g && g.groupId === t.groupId);
+      let gIdx = plantData.findIndex(g => g && String(g.groupId) === String(t.groupId));
       if (gIdx !== -1) {
         let cIdx = plantData[gIdx].cells.findIndex(c => c && c.cellNum === t.cellNum);
         if (cIdx !== -1) {
           let cell = plantData[gIdx].cells[cIdx];
+          updates[`tankhouseData/${gIdx}/groupId`] = plantData[gIdx].groupId;
           updates[`tankhouseData/${gIdx}/cells/${cIdx}`] = {
             cellNum: cell.cellNum,
             cellId: cell.cellId,
@@ -1093,7 +1182,7 @@
 
   function syncGroupCrop(groupId, cropStatus) {
     saveLocalData();
-    let gIdx = plantData.findIndex(g => g && g.groupId === groupId);
+    let gIdx = plantData.findIndex(g => g && String(g.groupId) === String(groupId));
     if (gIdx !== -1) {
       const ts = Date.now();
       let updates = {};
@@ -1158,7 +1247,7 @@
     let targets = getActiveTargets();
     if (targets.length > 0) {
       let first = targets[0];
-      let grp = plantData.find(g => g && g.groupId === first.groupId);
+      let grp = plantData.find(g => g && String(g.groupId) === String(first.groupId));
       let cell = grp.cells.find(c => c && c.cellNum === first.cellNum);
       copiedCellData = {
         anodeStatus: cell.anodeStatus,
@@ -1176,7 +1265,7 @@
     if (targets.length > 0 && copiedCellData) {
       saveState();
       targets.forEach(t => {
-        let grp = plantData.find(g => g && g.groupId === t.groupId);
+        let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
         if (grp) {
           let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
           if (cell) {
@@ -1297,7 +1386,10 @@
       if (!g) return;
       let opt = document.createElement('option');
       opt.value = g.groupId;
-      opt.textContent = `G${g.groupId} (P${g.phase}-${g.zone})`;
+      let label = (typeof g.groupId === 'string' && isNaN(g.groupId)) 
+        ? `${g.displayName || g.groupId} (${g.zone})` 
+        : `G${g.groupId} (P${g.phase}-${g.zone})`;
+      opt.textContent = label;
       sel.appendChild(opt);
     });
     sel.value = currentVal || "ALL";
@@ -1312,7 +1404,7 @@
 
   function removeCellTag(e, gId, cNum, tagType) {
     if (e) e.stopPropagation();
-    let grp = plantData.find(g => g && g.groupId === gId);
+    let grp = plantData.find(g => g && String(g.groupId) === String(gId));
     if (!grp) return;
     let cell = grp.cells.find(c => c && c.cellNum === cNum);
     if (!cell) return;
@@ -1332,12 +1424,12 @@
   }
 
   function updateCellDOM(gId, cNum) {
-    let grp = plantData.find(g => g && g.groupId === gId);
+    let grp = plantData.find(g => g && String(g.groupId) === String(gId));
     if (!grp) return;
     let c = grp.cells.find(cell => cell && cell.cellNum === cNum);
     if (!c) return;
 
-    let cellEl = document.querySelector(`.cell-card[data-group="${gId}"][data-cell="${cNum}"]`);
+    let cellEl = getCellElement(gId, cNum);
     if (!cellEl) return;
 
     let hasAnode = c.anodeStatus && c.anodeStatus !== 'NONE';
@@ -1354,7 +1446,7 @@
       else if (c.cathodeStatus === 'SS') statusClass += ' cell-ss-only';
     }
 
-    let isSelected = selectedCellsList.some(sc => sc.groupId === gId && sc.cellNum === cNum) || (activeSelectedCell && activeSelectedCell.groupId === gId && activeSelectedCell.cellNum === cNum);
+    let isSelected = selectedCellsList.some(sc => String(sc.groupId) === String(gId) && sc.cellNum === cNum) || (activeSelectedCell && String(activeSelectedCell.groupId) === String(gId) && activeSelectedCell.cellNum === cNum);
 
     cellEl.className = `cell-card ${statusClass} ${isSelected ? 'selected' : ''}`;
 
@@ -1362,14 +1454,16 @@
     let anodeClass = c.anodeStatus === '63 FL' ? 'tag-63' : (c.anodeStatus === '62 KU' ? 'tag-62ku' : 'tag-62ks');
     let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
 
+    let safeGIdStr = String(gId).replace(/'/g, "\\'");
+
     let html = `<div class="cell-id">${c.cellId}</div>`;
     if (!isBlank) {
       html += `<div class="tags-wrapper">`;
       if (shortA) {
-        html += `<div class="anode-tag ${anodeClass}" onclick="removeCellTag(event, ${gId}, ${cNum}, 'anode')">${shortA}</div>`;
+        html += `<div class="anode-tag ${anodeClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${cNum}, 'anode')">${shortA}</div>`;
       }
       if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
-        html += `<div class="cathode-tag ${cathClass}" onclick="removeCellTag(event, ${gId}, ${cNum}, 'cathode')">${c.cathodeStatus}</div>`;
+        html += `<div class="cathode-tag ${cathClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${cNum}, 'cathode')">${c.cathodeStatus}</div>`;
       }
       html += `</div>`;
     }
@@ -1385,27 +1479,29 @@
 
     const targets = getActiveTargets();
     targets.forEach(t => {
-      let el = document.querySelector(`.cell-card[data-group="${t.groupId}"][data-cell="${t.cellNum}"]`);
+      let el = getCellElement(t.groupId, t.cellNum);
       if (el) el.classList.add('selected');
     });
 
     if (activeSelectedCell) {
-      let grp = plantData.find(g => g && g.groupId === activeSelectedCell.groupId);
+      let grp = plantData.find(g => g && String(g.groupId) === String(activeSelectedCell.groupId));
       if (grp) {
         let cell = grp.cells.find(c => c && c.cellNum === activeSelectedCell.cellNum);
         if (cell) {
           let isBlank = (cell.anodeStatus === 'NONE' || !cell.anodeStatus) && (cell.cathodeStatus === 'NONE' || !cell.cathodeStatus);
           let insContent = document.getElementById('inspectorContent');
+          let groupName = grp.displayName || ((typeof grp.groupId === 'string' && isNaN(grp.groupId)) ? grp.groupId : `G${grp.groupId}`);
+          let phaseText = (grp.phase === 'Machine') ? 'Machine' : `P${grp.phase}`;
           if (selectedCellsList.length > 1) {
             insContent.innerHTML = `
               <div class="detail-row"><span class="detail-label">Selection:</span><span class="detail-val" style="color:var(--primary);">${selectedCellsList.length} Cell Marked</span></div>
-              <div class="detail-row"><span class="detail-label">Focus Cell:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
-              <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
+              <div class="detail-row"><span class="detail-label">Focus Cell:</span><span class="detail-val">${groupName} - ${cell.cellId}</span></div>
+              <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">${phaseText} / ${grp.zone}</span></div>
             `;
           } else {
             insContent.innerHTML = `
-              <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">G${grp.groupId} - ${cell.cellId}</span></div>
-              <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">P${grp.phase} / ${grp.zone}</span></div>
+              <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">${groupName} - ${cell.cellId}</span></div>
+              <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">${phaseText} / ${grp.zone}</span></div>
               <div class="detail-row"><span class="detail-label">Anode:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
               <div class="detail-row"><span class="detail-label">Cathode:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
               <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-val" style="color:${isBlank?'var(--error)':'var(--positive)'};">${isBlank ? 'COMPLETELY EMPTY' : 'FILLED'}</span></div>
@@ -1414,7 +1510,7 @@
         }
       }
 
-      let activeEl = document.querySelector(`.cell-card[data-group="${activeSelectedCell.groupId}"][data-cell="${activeSelectedCell.cellNum}"]`);
+      let activeEl = getCellElement(activeSelectedCell.groupId, activeSelectedCell.cellNum);
       if (activeEl) {
         activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
       }
@@ -1449,7 +1545,7 @@
       if (!g) return false;
       if (currentPhaseFilter !== 'ALL' && g.phase !== currentPhaseFilter) return false;
       if (selZone !== 'ALL' && g.zone !== selZone) return false;
-      if (selG !== 'ALL' && g.groupId != selG) return false;
+      if (selG !== 'ALL' && String(g.groupId) !== String(selG)) return false;
 
       // Filter kriteria pada tingkat Group
       if (selContent === 'FILLED') {
@@ -1503,32 +1599,43 @@
 
       let cropClass = g.cropStatus === 'Crop 1' ? 'crop-c1' : (g.cropStatus === 'Crop 2' ? 'crop-c2' : (g.cropStatus === 'Crop 3' ? 'crop-c3' : 'crop-none'));
       let cropLabel = g.cropStatus !== '-' ? `Harvest: ${g.cropStatus}` : 'No Harvest';
-      let tagSpecial = g.groupId === 33 ? 'EW0' : `${g.cellCount} Cells`;
+      let isStringGroup = typeof g.groupId === 'string' && isNaN(g.groupId);
+      let isRackGroup = isStringGroup && String(g.groupId).startsWith('Rack');
+      let tagSpecial = g.groupId === 33 ? 'EW0' : `${g.cellCount} ${isRackGroup ? 'Racks' : (isStringGroup ? 'Stations' : 'Cells')}`;
 
       let isSpecialGroup = (g.groupId >= 13 && g.groupId <= 20);
       let splitCutoff = isSpecialGroup ? 14 : 13;
+      if (isStringGroup) {
+        splitCutoff = g.cellCount;
+      }
       let rowClass = isSpecialGroup ? 'cell-row-28' : 'cell-row-26';
 
       let row1Cells = visibleCells.filter(c => c.cellNum <= splitCutoff);
       let row2Cells = visibleCells.filter(c => c.cellNum > splitCutoff);
 
+      let groupDisplayName = g.displayName ? g.displayName : (isStringGroup ? g.groupId : `Group ${g.groupId}`);
+      let safeGId = String(g.groupId).replace(/[^a-zA-Z0-9_-]/g, '_');
+
+      let isMachineGroup = (g.phase === 'Machine' || isStringGroup);
+      let cropHtml = isMachineGroup ? '' : `<div class="crop-tag ${cropClass}" onclick="toggleCrop('${String(g.groupId).replace(/'/g, "\\'")}')">${cropLabel}</div>`;
+
       grpSec.innerHTML = `
         <div class="group-header">
           <div class="group-title">
-            <span>Group ${g.groupId}</span> 
+            <span>${groupDisplayName}</span> 
             <span style="font-size:9px; background:var(--primary-container); color:var(--primary); padding:1px 5px; border-radius:4px;">${g.zone}</span>
             <span style="font-size:9px; background:var(--surface); padding:1px 5px; border:1px solid var(--stroke-default); border-radius:4px; color:var(--on-surface-variant); font-family:var(--ff-mono);">${tagSpecial}</span>
           </div>
-          <div class="crop-tag ${cropClass}" onclick="toggleCrop(${g.groupId})">${cropLabel}</div>
+          ${cropHtml}
         </div>
         <div class="group-grid-wrapper">
-          <div class="cell-row ${rowClass}" id="grid-g-${g.groupId}-r1"></div>
-          <div class="cell-row ${rowClass}" id="grid-g-${g.groupId}-r2"></div>
+          <div class="cell-row ${rowClass}" id="grid-g-${safeGId}-r1"></div>
+          <div class="cell-row ${rowClass}" id="grid-g-${safeGId}-r2"></div>
         </div>
       `;
 
-      const gridBox1 = grpSec.querySelector(`#grid-g-${g.groupId}-r1`);
-      const gridBox2 = grpSec.querySelector(`#grid-g-${g.groupId}-r2`);
+      const gridBox1 = grpSec.querySelector(`#grid-g-${safeGId}-r1`);
+      const gridBox2 = grpSec.querySelector(`#grid-g-${safeGId}-r2`);
 
       function createCellElement(c) {
         let cellDiv = document.createElement('div');
@@ -1551,21 +1658,23 @@
         let anodeClass = c.anodeStatus === '63 FL' ? 'tag-63' : (c.anodeStatus === '62 KU' ? 'tag-62ku' : 'tag-62ks');
         let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
 
-        let isSelected = selectedCellsList.some(sc => sc.groupId === g.groupId && sc.cellNum === c.cellNum) || (activeSelectedCell && activeSelectedCell.groupId === g.groupId && activeSelectedCell.cellNum === c.cellNum);
+        let isSelected = selectedCellsList.some(sc => String(sc.groupId) === String(g.groupId) && sc.cellNum === c.cellNum) || (activeSelectedCell && String(activeSelectedCell.groupId) === String(g.groupId) && activeSelectedCell.cellNum === c.cellNum);
 
         cellDiv.className = `cell-card ${statusClass} ${isSelected ? 'selected' : ''}`;
         cellDiv.setAttribute('data-group', g.groupId);
         cellDiv.setAttribute('data-cell', c.cellNum);
         cellDiv.onclick = (e) => selectCell(g.groupId, c.cellNum, e);
 
+        let safeGIdStr = String(g.groupId).replace(/'/g, "\\'");
+
         let html = `<div class="cell-id">${c.cellId}</div>`;
         if (!isBlank) {
           html += `<div class="tags-wrapper">`;
           if (shortA) {
-            html += `<div class="anode-tag ${anodeClass}" onclick="removeCellTag(event, ${g.groupId}, ${c.cellNum}, 'anode')">${shortA}</div>`;
+            html += `<div class="anode-tag ${anodeClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${c.cellNum}, 'anode')">${shortA}</div>`;
           }
           if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
-            html += `<div class="cathode-tag ${cathClass}" onclick="removeCellTag(event, ${g.groupId}, ${c.cellNum}, 'cathode')">${c.cathodeStatus}</div>`;
+            html += `<div class="cathode-tag ${cathClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${c.cellNum}, 'cathode')">${c.cathodeStatus}</div>`;
           }
           html += `</div>`;
         }
@@ -1618,8 +1727,8 @@
     }
     
     let allCardEls = Array.from(document.querySelectorAll('.cell-card'));
-    let anchorEl = document.querySelector(`.cell-card[data-group="${selectionAnchor.groupId}"][data-cell="${selectionAnchor.cellNum}"]`);
-    let targetEl = document.querySelector(`.cell-card[data-group="${targetGId}"][data-cell="${targetCNum}"]`);
+    let anchorEl = getCellElement(selectionAnchor.groupId, selectionAnchor.cellNum);
+    let targetEl = getCellElement(targetGId, targetCNum);
 
     if (anchorEl && targetEl) {
       let idx1 = allCardEls.indexOf(anchorEl);
@@ -1630,8 +1739,10 @@
       selectedCellsList = [];
       for (let i = minIdx; i <= maxIdx; i++) {
         let el = allCardEls[i];
+        let gIdAttr = el.getAttribute('data-group');
+        let parsedGId = (isNaN(gIdAttr) || gIdAttr.startsWith('Rack') || gIdAttr.includes(' ')) ? gIdAttr : parseInt(gIdAttr);
         selectedCellsList.push({
-          groupId: parseInt(el.getAttribute('data-group')),
+          groupId: parsedGId,
           cellNum: parseInt(el.getAttribute('data-cell'))
         });
       }
@@ -1670,7 +1781,7 @@
     if(targets.length === 0) return;
     saveState();
     targets.forEach(t => {
-      let grp = plantData.find(g => g && g.groupId === t.groupId);
+      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
       if (grp) {
         let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
         if (cell) {
@@ -1681,7 +1792,7 @@
       }
     });
     let last = targets[targets.length - 1];
-    let grp = plantData.find(g => g && g.groupId === last.groupId);
+    let grp = plantData.find(g => g && String(g.groupId) === String(last.groupId));
     if (grp) {
       let cell = grp.cells.find(c => c && c.cellNum === last.cellNum);
       if (cell) copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
@@ -1695,7 +1806,7 @@
     if(targets.length === 0) return;
     saveState();
     targets.forEach(t => {
-      let grp = plantData.find(g => g && g.groupId === t.groupId);
+      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
       if (grp) {
         let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
         if (cell) {
@@ -1705,7 +1816,7 @@
       }
     });
     let last = targets[targets.length - 1];
-    let grp = plantData.find(g => g && g.groupId === last.groupId);
+    let grp = plantData.find(g => g && String(g.groupId) === String(last.groupId));
     if (grp) {
       let cell = grp.cells.find(c => c && c.cellNum === last.cellNum);
       if (cell) copiedCellData = { anodeStatus: cell.anodeStatus, cathodeStatus: cell.cathodeStatus, pcs: cell.pcs };
@@ -1719,7 +1830,7 @@
     if(targets.length === 0) return;
     saveState();
     targets.forEach(t => {
-      let grp = plantData.find(g => g && g.groupId === t.groupId);
+      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
       if (grp) {
         let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
         if (cell) {
@@ -1739,7 +1850,7 @@
   function updateActiveGroupCrop(val) {
     if(!activeSelectedCell) return;
     saveState();
-    let grp = plantData.find(g => g && g.groupId === activeSelectedCell.groupId);
+    let grp = plantData.find(g => g && String(g.groupId) === String(activeSelectedCell.groupId));
     if (grp) {
       grp.cropStatus = val;
       renderMatrix();
@@ -1749,7 +1860,7 @@
 
   function toggleCrop(gId) {
     saveState();
-    let grp = plantData.find(g => g && g.groupId === gId);
+    let grp = plantData.find(g => g && String(g.groupId) === String(gId));
     if (grp) {
       let crops = ['-', 'Crop 1', 'Crop 2', 'Crop 3'];
       grp.cropStatus = crops[(crops.indexOf(grp.cropStatus) + 1) % crops.length];
@@ -1882,7 +1993,7 @@
     const subDivider = `_ _ _ _ _ _ `;
 
     let reportBlocks = [];
-    reportBlocks.push(`*🔄 ANODE / CATHODE / SS BLANK MAPPING*\n${timeHeader}\n${subDivider}\n` + summaryLines.join('\n') + `\n${subDivider}`);
+    reportBlocks.push(`*🔄 ANODE / CATHODE / SS BLANK MAPPING*\n${timeHeader}\n${subDivider}\n` + summaryLines.join('\n'));
 
     const divider = `_ _ _ _ _ _ `;
 
@@ -1909,13 +2020,20 @@
       plantData.forEach(g => {
         if (!g) return;
         const isNorth = (g.zone === 'North' || g.zone === 'Utara');
-        let matched = g.cells.filter(c => c && filterFn(c)).map(c => c.cellNum);
-        if (matched.length > 0) {
-          let fmt = formatCellNumbers(matched);
+        let matchedCells = g.cells.filter(c => c && filterFn(c));
+        if (matchedCells.length > 0) {
+          let matchedNums = matchedCells.map(c => c.cellNum);
           let target = isNorth ? north : south;
-          target.total += matched.length;
-          
-          target.lines.push(`- *Group ${g.groupId}* ➡️ Cell ${fmt} (${matched.length} Cell)`);
+          target.total += matchedCells.length;
+          let isStringGroup = (typeof g.groupId === 'string' && isNaN(g.groupId));
+          let groupName = g.displayName || (isStringGroup ? g.groupId : `Group ${g.groupId}`);
+          let isRack = isStringGroup && String(g.groupId).startsWith('Rack');
+          let isStation = isStringGroup && !isRack;
+          let unitLabel = isRack ? 'Rack' : (isStation ? 'Station' : 'Cell');
+
+          let fmt = isStringGroup ? matchedCells.map(c => c.cellId).join(', ') : formatCellNumbers(matchedNums);
+
+          target.lines.push(`- *${groupName}* ➡️ ${unitLabel} ${fmt} (${matchedCells.length} ${unitLabel})`);
         }
       });
 
@@ -1965,25 +2083,35 @@
     let curG = activeSelectedCell.groupId;
     let curC = activeSelectedCell.cellNum;
 
-    let isSpecialGroup = (curG >= 13 && curG <= 20);
+    let grpIdx = plantData.findIndex(g => String(g.groupId) === String(curG));
+    if (grpIdx === -1) return null;
+    let grp = plantData[grpIdx];
+
+    let isSpecialGroup = (grp.groupId >= 13 && grp.groupId <= 20);
     let splitCutoff = isSpecialGroup ? 14 : 13;
-    let cellCount = (isSpecialGroup) ? 28 : 26;
+    if (typeof grp.groupId === 'string' && isNaN(grp.groupId)) {
+      splitCutoff = grp.cellCount;
+    }
+    let cellCount = grp.cellCount;
 
     let isRow1 = curC <= splitCutoff;
     let rowIdx = isRow1 ? (curC - 1) : (curC - splitCutoff - 1);
 
     if (direction === 'down') {
-      if (isRow1) {
+      if (isRow1 && cellCount > splitCutoff) {
         let targetC = splitCutoff + 1 + rowIdx;
         if (targetC > cellCount) targetC = cellCount;
         return { groupId: curG, cellNum: targetC };
       } else {
-        if (curG < 48) {
-          let nextG = curG + 1;
-          let nextSpecial = (nextG >= 13 && nextG <= 20);
+        if (grpIdx < plantData.length - 1) {
+          let nextGroup = plantData[grpIdx + 1];
+          let nextSpecial = (nextGroup.groupId >= 13 && nextGroup.groupId <= 20);
           let nextCutoff = nextSpecial ? 14 : 13;
+          if (typeof nextGroup.groupId === 'string' && isNaN(nextGroup.groupId)) {
+            nextCutoff = nextGroup.cellCount;
+          }
           let targetC = 1 + Math.min(rowIdx, nextCutoff - 1);
-          return { groupId: nextG, cellNum: targetC };
+          return { groupId: nextGroup.groupId, cellNum: targetC };
         }
       }
     } else if (direction === 'up') {
@@ -1991,14 +2119,17 @@
         let targetC = 1 + rowIdx;
         return { groupId: curG, cellNum: targetC };
       } else {
-        if (curG > 1) {
-          let prevG = curG - 1;
-          let prevSpecial = (prevG >= 13 && prevG <= 20);
+        if (grpIdx > 0) {
+          let prevGroup = plantData[grpIdx - 1];
+          let prevSpecial = (prevGroup.groupId >= 13 && prevGroup.groupId <= 20);
           let prevCutoff = prevSpecial ? 14 : 13;
-          let prevCount = prevSpecial ? 28 : 26;
-          let prevRow2Count = prevCount - prevCutoff;
-          let targetC = prevCutoff + 1 + Math.min(rowIdx, prevRow2Count - 1);
-          return { groupId: prevG, cellNum: targetC };
+          if (typeof prevGroup.groupId === 'string' && isNaN(prevGroup.groupId)) {
+            prevCutoff = prevGroup.cellCount;
+          }
+          let prevCount = prevGroup.cellCount;
+          let prevRow2Count = prevCount > prevCutoff ? (prevCount - prevCutoff) : prevCutoff;
+          let targetC = (prevCount > prevCutoff ? prevCutoff + 1 : 1) + Math.min(rowIdx, prevRow2Count - 1);
+          return { groupId: prevGroup.groupId, cellNum: targetC };
         }
       }
     }
@@ -2058,20 +2189,27 @@
       if (e.key === 'ArrowLeft') {
         if (curC > 1) {
           targetC = curC - 1;
-        } else if (curG > 1) {
-          let prevGroup = plantData.find(g => g && g.groupId === curG - 1);
-          if (prevGroup) {
-            targetG = curG - 1;
-            targetC = prevGroup.cellCount;
+        } else {
+          let curIdx = plantData.findIndex(g => String(g.groupId) === String(curG));
+          if (curIdx > 0) {
+            let prevGroup = plantData[curIdx - 1];
+            if (prevGroup) {
+              targetG = prevGroup.groupId;
+              targetC = prevGroup.cellCount;
+            }
           }
         }
       } else if (e.key === 'ArrowRight') {
-        let grp = plantData.find(g => g && g.groupId === curG);
+        let curIdx = plantData.findIndex(g => String(g.groupId) === String(curG));
+        let grp = plantData[curIdx];
         if (grp && curC < grp.cellCount) {
           targetC = curC + 1;
-        } else if (curG < 48) {
-          targetG = curG + 1;
-          targetC = 1;
+        } else if (curIdx < plantData.length - 1) {
+          let nextGroup = plantData[curIdx + 1];
+          if (nextGroup) {
+            targetG = nextGroup.groupId;
+            targetC = 1;
+          }
         }
       } else if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
         const dir = e.key === 'ArrowDown' ? 'down' : 'up';
