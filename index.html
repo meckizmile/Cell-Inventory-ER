@@ -633,7 +633,6 @@
     display: none;
   }
 
-  /* OPTIMISASI MOBILE TERSTRUKTUR & TANYA JELAS (TIDAK OVERLAP) */
   @media (max-width: 900px) {
     html, body {
       height: auto;
@@ -646,7 +645,7 @@
       height: auto;
       min-height: 100vh;
       padding: 6px;
-      padding-bottom: 110px; /* Padding bawah ekstra agar cell tidak tertutup dock */
+      padding-bottom: 110px;
     }
 
     .app-card {
@@ -655,7 +654,6 @@
       padding: 10px;
     }
 
-    /* KPI Grid Mobile 3 Kolom X 2 Baris yang Rapi */
     .kpi-grid {
       grid-template-columns: repeat(3, 1fr);
       gap: 6px;
@@ -712,7 +710,7 @@
       max-height: 60vh;
       height: auto;
       padding: 8px;
-      padding-bottom: 80px; /* Jarak aman scroll cell terbawah di mobile */
+      padding-bottom: 80px;
     }
 
     .group-header {
@@ -819,7 +817,6 @@
       </div>
     </div>
 
-    <!-- Summary KPI Cards dengan Judul Rapi Tanpa Terpotong (...) -->
     <div class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-label" title="Anode 63 Full (63FL)">Anode 63 FL (63FL)</div>
@@ -2006,6 +2003,7 @@
       return block;
     }
 
+    /* Penyesuaian Penamaan Item & Satuan di WA Report (Rack / Station / Cell) */
     function getItemsForCategory(filterFn) {
       let north = { total: 0, lines: [] };
       let south = { total: 0, lines: [] };
@@ -2019,11 +2017,15 @@
           let target = isNorth ? north : south;
           target.total += matchedCells.length;
           let isStringGroup = (typeof g.groupId === 'string' && isNaN(g.groupId));
+          let isRackGroup = isStringGroup && String(g.groupId).startsWith('Rack');
           let groupName = g.displayName || (isStringGroup ? g.groupId : `Group ${g.groupId}`);
 
           let fmt = isStringGroup ? matchedCells.map(c => c.cellId).join(', ') : formatCellNumbers(matchedNums);
 
-          target.lines.push(`- *${groupName}* ➡️ Cell ${fmt} (${matchedCells.length} Cell)`);
+          let itemPrefix = isRackGroup ? 'Rack ' : (isStringGroup ? 'Station ' : 'Cell ');
+          let unitLabel = isRackGroup ? 'Rack' : (isStringGroup ? 'Station' : 'Cell');
+
+          target.lines.push(`- *${groupName}* ➡️ ${itemPrefix}${fmt} (${matchedCells.length} ${unitLabel})`);
         }
       });
 
