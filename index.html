@@ -633,6 +633,40 @@
     display: none;
   }
 
+  /* MODAL CSS */
+  .modal-overlay {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0,0,0,0.6); z-index: 999999;
+    display: flex; align-items: center; justify-content: center;
+    backdrop-filter: blur(2px);
+  }
+  .modal-content {
+    background: var(--surface);
+    border: 1px solid var(--stroke-default);
+    border-radius: var(--r-m);
+    width: 90%; max-width: 500px;
+    max-height: 80vh; display: flex; flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    color: var(--on-surface);
+  }
+  .modal-header {
+    padding: 12px 16px; border-bottom: 1px solid var(--stroke-default);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .modal-header h2 { font-size: 14px; font-weight: 800; margin: 0; }
+  .modal-header button {
+    background: transparent; border: none; color: var(--error);
+    font-size: 16px; font-weight: bold; cursor: pointer; padding: 4px; outline: none;
+  }
+  .modal-body {
+    padding: 16px; overflow-y: auto; font-size: 11.5px;
+    color: var(--on-surface-variant); line-height: 1.6;
+  }
+  .modal-body b { color: var(--on-surface); }
+  
+  .desktop-only-btn { display: inline-flex !important; }
+  .mobile-only-btn { display: none !important; }
+
   @media (max-width: 900px) {
     html, body {
       height: auto;
@@ -796,6 +830,9 @@
       min-height: 34px;
       border-radius: 8px;
     }
+    
+    .desktop-only-btn { display: none !important; }
+    .mobile-only-btn { display: inline-flex !important; }
   }
 </style>
 </head>
@@ -806,45 +843,55 @@
     
     <div class="header">
       <div class="title-area">
-        <h1>Cell Inventory</h1>
-        <p>North & South Zone • Anode & Cathode Setting</p>
+        <h1 data-i18n="appTitle">Cell Inventory</h1>
+        <p data-i18n="appSubtitle">North & South Zone • Anode & Cathode Setting</p>
       </div>
       <div class="header-actions">
+        <!-- FITUR LANGUAGE DI PC (KIRI SHOW CHANGES) -->
+        <button class="lumi-chip desktop-only-btn" id="langTogglePC" onclick="toggleLanguage()" style="min-height:24px; font-weight:700; color:var(--on-surface);">🌐 English (US)</button>
+
+        <button class="lumi-chip desktop-only-btn" onclick="openModal('changesModal')" data-i18n="showChanges" style="min-height:24px; font-weight:700; color: var(--primary); border-color: var(--primary);">🔄 Show Changes</button>
+        
         <button class="lumi-chip" id="themeToggleBtn" onclick="toggleTheme()" style="min-height:24px; font-weight:700;">🌙 Dark</button>
-        <div class="update-badge" id="dbStatus" style="color: var(--positive);">🟢 Checking...</div>
+        <div class="update-badge" id="dbStatus" data-i18n="checking" style="color: var(--positive);">🟢 Checking...</div>
         <div class="update-badge" id="lastUpdatedBadge" style="color: var(--primary);">Last Update: -</div>
         <div class="update-badge" id="liveClock">Nov 5, 2026 • 00:00:00 AM</div>
+
+        <button class="lumi-chip mobile-only-btn" onclick="openModal('changesModal')" data-i18n="showChanges" style="min-height:24px; font-weight:700; color: var(--primary); border-color: var(--primary);">🔄 Show Changes</button>
+
+        <!-- FITUR LANGUAGE DI MOBILE (KANAN SHOW CHANGES) -->
+        <button class="lumi-chip mobile-only-btn" id="langToggleMobile" onclick="toggleLanguage()" style="min-height:24px; font-weight:700; color:var(--on-surface);">🌐 English (US)</button>
       </div>
     </div>
 
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label" title="Anode 63 Full (63FL)">Anode 63 FL (63FL)</div>
+        <div class="kpi-label" data-i18n="kpi63">Anode 63 FL (63FL)</div>
         <div class="kpi-value" id="kpiCount63" style="color: var(--positive);">0</div>
         <div class="kpi-sub" id="kpiCount63NS">N: 0 • S: 0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label" title="Anode 62 Kosong Utara (62KU)">Anode 62 KU (62KU)</div>
+        <div class="kpi-label" data-i18n="kpi62ku">Anode 62 KU (62KU)</div>
         <div class="kpi-value" id="kpiCount62KU" style="color: var(--primary);">0</div>
         <div class="kpi-sub" id="kpiCount62KUNS">N: 0 • S: 0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label" title="Anode 62 Kosong Selatan (62KS)">Anode 62 KS (62KS)</div>
+        <div class="kpi-label" data-i18n="kpi62ks">Anode 62 KS (62KS)</div>
         <div class="kpi-value" id="kpiCount62KS" style="color: var(--chart-8);">0</div>
         <div class="kpi-sub" id="kpiCount62KSNS">N: 0 • S: 0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label" title="Spent Anode (62SA)">Spent Anode (62SA)</div>
+        <div class="kpi-label" data-i18n="kpi62sa">Spent Anode (62SA)</div>
         <div class="kpi-value" id="kpiCount62SA" style="color: #a8a29e;">0</div>
         <div class="kpi-sub" id="kpiCount62SANS">N: 0 • S: 0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label" title="Cathodes (CATH)">Cathodes (CATH)</div>
+        <div class="kpi-label" data-i18n="kpicath">Cathodes (CATH)</div>
         <div class="kpi-value" id="kpiCathodeCount" style="color: var(--copper);">0</div>
         <div class="kpi-sub" id="kpiCathodeNS">N: 0 • S: 0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label" title="SS Blanks (SS)">SS Blanks (SS)</div>
+        <div class="kpi-label" data-i18n="kpiss">SS Blanks (SS)</div>
         <div class="kpi-value" id="kpiSSCount" style="color: var(--stainless);">0</div>
         <div class="kpi-sub" id="kpiSSNS">N: 0 • S: 0</div>
       </div>
@@ -852,70 +899,74 @@
 
     <div class="controls-bar">
       <div class="control-group">
-        <label>Phase</label>
+        <label data-i18n="phaseLabel">Phase</label>
         <div class="segmented-pills">
-          <button class="lumi-chip is-active" onclick="setPhaseFilter('ALL', this)">All</button>
+          <button class="lumi-chip is-active" onclick="setPhaseFilter('ALL', this)" data-i18n="all">All</button>
           <button class="lumi-chip" onclick="setPhaseFilter(1, this)">P1</button>
           <button class="lumi-chip" onclick="setPhaseFilter(2, this)">P2</button>
           <button class="lumi-chip" onclick="setPhaseFilter(3, this)">P3</button>
-          <button class="lumi-chip" onclick="setPhaseFilter('Machine', this)">Machine</button>
+          <button class="lumi-chip" onclick="setPhaseFilter('Machine', this)" data-i18n="machine">Machine</button>
+
+          <button class="lumi-chip mobile-only-btn" onclick="openModal('instructionModal')" data-i18n="instructions" style="background: var(--primary); color: white; border-color: transparent; font-weight: bold;">ℹ️ Instructions for Use</button>
         </div>
       </div>
 
       <div class="control-group">
-        <label>Cell View</label>
+        <label data-i18n="cellViewLabel">Cell View</label>
         <select class="lumi-select" id="contentSelect" onchange="renderMatrix()">
-          <option value="ALL" selected>All Cells</option>
-          <option value="FILLED">Filled Cells Only</option>
-          <option value="EMPTY">Empty Cells Only</option>
+          <option value="ALL" selected data-i18n="optAllCells">All Cells</option>
+          <option value="FILLED" data-i18n="optFilled">Filled Cells Only</option>
+          <option value="EMPTY" data-i18n="optEmpty">Empty Cells Only</option>
         </select>
       </div>
 
       <div class="control-group">
-        <label>Zone</label>
+        <label data-i18n="zoneLabel">Zone</label>
         <select class="lumi-select" id="zoneSelect" onchange="renderMatrix()">
-          <option value="ALL">All Zones</option>
-          <option value="North">North</option>
-          <option value="South">South</option>
+          <option value="ALL" data-i18n="optAllZones">All Zones</option>
+          <option value="North" data-i18n="optNorth">North</option>
+          <option value="South" data-i18n="optSouth">South</option>
         </select>
       </div>
 
       <div class="control-group">
-        <label>Group</label>
+        <label data-i18n="groupLabel">Group</label>
         <select class="lumi-select" id="groupSelect" onchange="renderMatrix()">
-          <option value="ALL">All Groups</option>
+          <option value="ALL" data-i18n="optAllGroups">All Groups</option>
         </select>
       </div>
 
       <div class="control-group">
-        <label>Anode Filter</label>
+        <label data-i18n="anodeFilterLabel">Anode Filter</label>
         <select class="lumi-select" id="statusSelect" onchange="renderMatrix()">
-          <option value="ALL">All Anodes</option>
+          <option value="ALL" data-i18n="optAllAnodes">All Anodes</option>
           <option value="63 FL">63FL (Anode 63 Full)</option>
           <option value="62 KU">62KU (Anode 62 Kosong Utara)</option>
           <option value="62 KS">62KS (Anode 62 Kosong Selatan)</option>
           <option value="62 SA">62SA (Spent Anode)</option>
-          <option value="NONE">Empty</option>
+          <option value="NONE" data-i18n="optEmptyAnode">Empty</option>
         </select>
       </div>
 
       <div class="control-group">
-        <label>Cathode Filter</label>
+        <label data-i18n="cathodeFilterLabel">Cathode Filter</label>
         <select class="lumi-select" id="cathSelect" onchange="renderMatrix()">
-          <option value="ALL">All Cathodes</option>
+          <option value="ALL" data-i18n="optAllCathodes">All Cathodes</option>
           <option value="CATH">CATH (Cathode)</option>
           <option value="SS">SS (SS Blank)</option>
-          <option value="NONE">Empty</option>
+          <option value="NONE" data-i18n="optEmptyCathode">Empty</option>
         </select>
       </div>
 
       <div class="control-group clear-group">
-        <label>Clear Cell Data</label>
+        <label data-i18n="clearDataLabel">Clear Cell Data</label>
         <div class="segmented-pills">
-          <button onclick="kosongkanIsianPhase(1)">Clear P1</button>
-          <button onclick="kosongkanIsianPhase(2)">Clear P2</button>
-          <button onclick="kosongkanIsianPhase(3)">Clear P3</button>
-          <button onclick="kosongkanIsianPhase('Machine')">Clear Machine</button>
+          <button onclick="kosongkanIsianPhase(1)" data-i18n="btnClrP1">Clear P1</button>
+          <button onclick="kosongkanIsianPhase(2)" data-i18n="btnClrP2">Clear P2</button>
+          <button onclick="kosongkanIsianPhase(3)" data-i18n="btnClrP3">Clear P3</button>
+          <button onclick="kosongkanIsianPhase('Machine')" data-i18n="btnClrMach">Clear Machine</button>
+
+          <button class="lumi-chip desktop-only-btn" onclick="openModal('instructionModal')" data-i18n="instructions" style="background: var(--primary); color: white; border-color: transparent; font-weight: bold;">ℹ️ Instructions for Use</button>
         </div>
       </div>
     </div>
@@ -924,47 +975,47 @@
       <div class="matrix-box" id="matrixContainer"></div>
 
       <div class="inspector-panel">
-        <div class="inspector-title">Cell Settings</div>
+        <div class="inspector-title" data-i18n="inspTitle">Cell Settings</div>
         
         <div id="inspectorContent">
-          <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11px;">
+          <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11px;" data-i18n="clickCell">
             Click a cell in the grid to configure status.
           </div>
         </div>
 
         <div class="action-box" id="inspectorControls" style="display: none;">
-          <h4>1. Cell Anode Status:</h4>
+          <h4 data-i18n="h1Anode">1. Cell Anode Status:</h4>
           <div class="status-btn-grid">
             <button style="border-color: rgba(16, 185, 129, 0.5); color: #10b981;" onclick="updateActiveCellAnode('63 FL')">63FL [1]</button>
             <button style="border-color: rgba(2, 132, 199, 0.5); color: #0284c7;" onclick="updateActiveCellAnode('62 KU')">62KU [2]</button>
             <button style="border-color: rgba(168, 85, 247, 0.5); color: var(--chart-8);" onclick="updateActiveCellAnode('62 KS')">62KS [3]</button>
             <button style="background: #57534e; color: #ffffff; font-weight: 700; border: 1px solid #78716c;" onclick="updateActiveCellAnode('62 SA')">62SA [4]</button>
-            <button style="grid-column: span 2;" onclick="updateActiveCellAnode('NONE')">Clear Anode</button>
+            <button style="grid-column: span 2;" onclick="updateActiveCellAnode('NONE')" data-i18n="btnClearAnode">Clear Anode</button>
           </div>
 
-          <h4>2. Cell Cathode Status:</h4>
+          <h4 data-i18n="h2Cathode">2. Cell Cathode Status:</h4>
           <div class="status-btn-grid">
             <button style="background:var(--copper); color:#ffffff; font-weight:bold; border-color:var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH [C]</button>
             <button style="background:var(--stainless); color:#ffffff; font-weight:bold; border-color:var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS [S]</button>
-            <button style="grid-column: span 2;" onclick="updateActiveCellCathode('NONE')">Clear Cathode</button>
+            <button style="grid-column: span 2;" onclick="updateActiveCellCathode('NONE')" data-i18n="btnClearCathode">Clear Cathode</button>
           </div>
 
-          <h4>3. Clear Options:</h4>
-          <button style="width: 100%; color: var(--error);" onclick="clearCellCompletely()">Clear / Delete Cell [Del]</button>
+          <h4 data-i18n="h3Clear">3. Clear Options:</h4>
+          <button style="width: 100%; color: var(--error);" onclick="clearCellCompletely()" data-i18n="btnClearDel">Clear / Delete Cell [Del]</button>
 
-          <h4>4. Set Group Harvest:</h4>
+          <h4 data-i18n="h4Harvest">4. Set Group Harvest:</h4>
           <div class="status-btn-grid">
             <button class="crop-c1" onclick="updateActiveGroupCrop('Crop 1')">Crop 1</button>
             <button class="crop-c2" onclick="updateActiveGroupCrop('Crop 2')">Crop 2</button>
             <button class="crop-c3" onclick="updateActiveGroupCrop('Crop 3')">Crop 3</button>
-            <button class="crop-none" onclick="updateActiveGroupCrop('-')">Reset Harvest</button>
+            <button class="crop-none" onclick="updateActiveGroupCrop('-')" data-i18n="btnResetHarvest">Reset Harvest</button>
           </div>
         </div>
 
         <div>
-          <div class="inspector-title" style="margin-bottom: 6px;">WA Report</div>
+          <div class="inspector-title" style="margin-bottom: 6px;" data-i18n="inspWA">WA Report</div>
           <textarea class="wa-textarea" id="waText" readonly></textarea>
-          <button class="btn-primary" style="width: 100%; margin-top: 6px;" id="btnCopy" onclick="copyWAReport()">Copy WA Text</button>
+          <button class="btn-primary" style="width: 100%; margin-top: 6px;" id="btnCopy" onclick="copyWAReport()" data-i18n="btnCopyWa">Copy WA Text</button>
         </div>
       </div>
     </div>
@@ -982,14 +1033,284 @@
     <button style="background: var(--stainless); color: #ffffff; font-weight: bold; border-color: var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS</button>
   </div>
   <div class="mobile-quick-row">
-    <button style="flex:1;" onclick="undo()" title="Undo">↩ Undo</button>
-    <button style="flex:1;" onclick="redo()" title="Redo">↪ Redo</button>
-    <button class="btn-danger" style="flex:1.2;" onclick="clearCellCompletely()">🗑️ Del</button>
+    <button style="flex:1;" onclick="undo()" title="Undo" data-i18n="undo">↩ Undo</button>
+    <button style="flex:1;" onclick="redo()" title="Redo" data-i18n="redo">↪ Redo</button>
+    <button class="btn-danger" style="flex:1.2;" onclick="clearCellCompletely()" data-i18n="del">🗑️ Del</button>
     <button style="background:var(--surface-dim); width: 38px;" onclick="deselectCell()">✕</button>
   </div>
 </div>
 
+<!-- MODAL INSTRUCTIONS -->
+<div id="instructionModal" class="modal-overlay" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 data-i18n="instModalTitle">📖 Panduan Penggunaan (Instructions for Use)</h2>
+      <button onclick="closeModal('instructionModal')">✕</button>
+    </div>
+    <div class="modal-body" id="instructionBody">
+      <!-- Injected from JS Dictionary -->
+    </div>
+  </div>
+</div>
+
+<!-- MODAL SHOW CHANGES -->
+<div id="changesModal" class="modal-overlay" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 data-i18n="changeModalTitle">🔄 Riwayat Perubahan (Show Changes)</h2>
+      <button onclick="closeModal('changesModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <ul id="changesLogList" style="list-style-type: disc; padding-left: 15px; margin: 0;">
+        <!-- List riwayat via JavaScript -->
+      </ul>
+    </div>
+  </div>
+</div>
+
 <script>
+  /* ====== DICTIONARY & LANGUAGE LOGIC ====== */
+  const i18n = {
+    en: {
+      appTitle: "Cell Inventory",
+      appSubtitle: "North & South Zone • Anode & Cathode Setting",
+      showChanges: "🔄 Show Changes",
+      checking: "🟢 Checking...",
+      online: "🟢 Online",
+      offline: "🔴 Offline / Local",
+      lastUpdate: "Last Update: ",
+      phaseLabel: "Phase",
+      all: "All",
+      machine: "Machine",
+      instructions: "ℹ️ Instructions for Use",
+      cellViewLabel: "Cell View",
+      optAllCells: "All Cells",
+      optFilled: "Filled Cells Only",
+      optEmpty: "Empty Cells Only",
+      zoneLabel: "Zone",
+      optAllZones: "All Zones",
+      optNorth: "North",
+      optSouth: "South",
+      groupLabel: "Group",
+      optAllGroups: "All Groups",
+      anodeFilterLabel: "Anode Filter",
+      optAllAnodes: "All Anodes",
+      optEmptyAnode: "Empty",
+      cathodeFilterLabel: "Cathode Filter",
+      optAllCathodes: "All Cathodes",
+      optEmptyCathode: "Empty",
+      clearDataLabel: "Clear Cell Data",
+      btnClrP1: "Clear P1",
+      btnClrP2: "Clear P2",
+      btnClrP3: "Clear P3",
+      btnClrMach: "Clear Machine",
+      inspTitle: "Cell Settings",
+      clickCell: "Click a cell in the grid to configure status.",
+      h1Anode: "1. Cell Anode Status:",
+      h2Cathode: "2. Cell Cathode Status:",
+      h3Clear: "3. Clear Options:",
+      h4Harvest: "4. Set Group Harvest:",
+      btnClearAnode: "Clear Anode",
+      btnClearCathode: "Clear Cathode",
+      btnClearDel: "Clear / Delete Cell [Del]",
+      btnResetHarvest: "Reset Harvest",
+      inspWA: "WA Report",
+      btnCopyWa: "Copy WA Text",
+      undo: "↩ Undo",
+      redo: "↪ Redo",
+      del: "🗑️ Del",
+      instModalTitle: "📖 Instructions for Use",
+      changeModalTitle: "🔄 Show Changes",
+      emptyLog: "No activity/changes in this session yet.",
+      waTitle: "MAPPING REPORT - ER TANKHOUSE",
+      waNorth: "NORTH",
+      waSouth: "SOUTH",
+      kpi63: "Anode 63 FL (63FL)",
+      kpi62ku: "Anode 62 KU (62KU)",
+      kpi62ks: "Anode 62 KS (62KS)",
+      kpi62sa: "Spent Anode (62SA)",
+      kpicath: "Cathodes (CATH)",
+      kpiss: "SS Blanks (SS)",
+      txtSelection: "Selection",
+      txtFocus: "Focus Cell",
+      txtArea: "Area",
+      txtMarked: "Cell Marked",
+      txtAnode: "Anode",
+      txtCathode: "Cathode",
+      txtStatus: "Status",
+      txtEmptyStr: "Empty",
+      txtFilledStr: "FILLED",
+      txtCompEmpty: "COMPLETELY EMPTY",
+      instBody: `<b>1. Filter & Navigation:</b><br>- Use <b>Phase</b>, <b>Cell View</b>, <b>Zone</b>, and <b>Group</b> menus above to filter the grid.<br><br><b>2. Selecting Cells:</b><br>- Click any cell to select it.<br>- <b>Shift + Click</b> another cell to select a range.<br>- Use <b>Arrow Keys</b> to navigate.<br><br><b>3. Changing Status:</b><br>- Use <b>Cell Settings</b> on the right (PC) or <b>Quick Bar</b> at the bottom (Mobile).<br>- Or use <b>Keyboard Shortcuts</b>:<br>  • <b>1</b> : 63 FL<br>  • <b>2</b> : 62 KU<br>  • <b>3</b> : 62 KS<br>  • <b>4</b> : 62 SA<br>  • <b>C</b> : CATH (Cathode)<br>  • <b>S</b> : SS (SS Blank)<br>  • <b>0 / Del</b> : Clear Data<br><br><b>4. WA Report:</b><br>- Generates automatically. Click <b>"Copy WA Text"</b>.<br><br><b>5. Undo/Redo & Changes:</b><br>- Press <b>Ctrl+Z</b> (Undo) and <b>Ctrl+Y</b> (Redo).<br>- Click <b>"Show Changes"</b> to view modification history.`
+    },
+    id: {
+      appTitle: "Inventaris Cell",
+      appSubtitle: "Zona Utara & Selatan • Pengaturan Anoda & Katoda",
+      showChanges: "🔄 Riwayat Perubahan",
+      checking: "🟢 Memeriksa...",
+      online: "🟢 Online",
+      offline: "🔴 Offline / Lokal",
+      lastUpdate: "Pembaruan Terakhir: ",
+      phaseLabel: "Fase",
+      all: "Semua",
+      machine: "Mesin",
+      instructions: "ℹ️ Panduan Penggunaan",
+      cellViewLabel: "Tampilan Cell",
+      optAllCells: "Semua Cell",
+      optFilled: "Hanya Cell Terisi",
+      optEmpty: "Hanya Cell Kosong",
+      zoneLabel: "Zona",
+      optAllZones: "Semua Zona",
+      optNorth: "Utara",
+      optSouth: "Selatan",
+      groupLabel: "Grup",
+      optAllGroups: "Semua Grup",
+      anodeFilterLabel: "Filter Anoda",
+      optAllAnodes: "Semua Anoda",
+      optEmptyAnode: "Kosong",
+      cathodeFilterLabel: "Filter Katoda",
+      optAllCathodes: "Semua Katoda",
+      optEmptyCathode: "Kosong",
+      clearDataLabel: "Hapus Data Cell",
+      btnClrP1: "Hapus P1",
+      btnClrP2: "Hapus P2",
+      btnClrP3: "Hapus P3",
+      btnClrMach: "Hapus Mesin",
+      inspTitle: "Pengaturan Cell",
+      clickCell: "Klik cell pada grid untuk mengatur status.",
+      h1Anode: "1. Status Anoda Cell:",
+      h2Cathode: "2. Status Katoda Cell:",
+      h3Clear: "3. Opsi Hapus:",
+      h4Harvest: "4. Atur Panen Grup:",
+      btnClearAnode: "Hapus Anoda",
+      btnClearCathode: "Hapus Katoda",
+      btnClearDel: "Bersihkan / Hapus Cell [Del]",
+      btnResetHarvest: "Reset Panen",
+      inspWA: "Laporan WA",
+      btnCopyWa: "Salin Teks WA",
+      undo: "↩ Batal",
+      redo: "↪ Ulangi",
+      del: "🗑️ Hapus",
+      instModalTitle: "📖 Panduan Penggunaan (Instructions for Use)",
+      changeModalTitle: "🔄 Riwayat Perubahan (Show Changes)",
+      emptyLog: "Belum ada aktivitas/perubahan pada sesi ini.",
+      waTitle: "LAPORAN MAPPING - ER TANKHOUSE",
+      waNorth: "UTARA",
+      waSouth: "SELATAN",
+      kpi63: "Anode 63 FL (63FL)",
+      kpi62ku: "Anode 62 KU (62KU)",
+      kpi62ks: "Anode 62 KS (62KS)",
+      kpi62sa: "Spent Anode (62SA)",
+      kpicath: "Cathodes (CATH)",
+      kpiss: "SS Blanks (SS)",
+      txtSelection: "Seleksi",
+      txtFocus: "Fokus Cell",
+      txtArea: "Area",
+      txtMarked: "Cell Ditandai",
+      txtAnode: "Anoda",
+      txtCathode: "Katoda",
+      txtStatus: "Status",
+      txtEmptyStr: "Kosong",
+      txtFilledStr: "TERISI",
+      txtCompEmpty: "KOSONG TOTAL",
+      instBody: `<b>1. Filter & Navigasi:</b><br>- Gunakan menu <b>Phase</b>, <b>Cell View</b>, <b>Zone</b>, dan <b>Group</b> di atas untuk menyaring tampilan grid.<br><br><b>2. Memilih Cell:</b><br>- Klik cell mana saja untuk memilihnya.<br>- <b>Shift + Klik</b> pada cell lain untuk memilih rentang banyak cell sekaligus.<br>- Gunakan <b>tombol Panah (Keyboard Arrows)</b> untuk berpindah antar cell.<br><br><b>3. Mengubah Status (Anode / Cathode):</b><br>- Setelah memilih cell, atur via <b>Cell Settings</b> di panel kanan (PC) atau <b>Quick Bar</b> di bawah (Mobile).<br>- Atau gunakan <b>Shortcut Keyboard</b>:<br>  • <b>1</b> : 63 FL<br>  • <b>2</b> : 62 KU<br>  • <b>3</b> : 62 KS<br>  • <b>4</b> : 62 SA<br>  • <b>C</b> : CATH (Cathode)<br>  • <b>S</b> : SS (SS Blank)<br>  • <b>0 / Delete</b> : Clear / Hapus Data Cell<br><br><b>4. Laporan Otomatis (WA Report):</b><br>- Format WA ter-generate otomatis di kanan bawah. Klik <b>"Copy WA Text"</b>.<br><br><b>5. Riwayat Perubahan:</b><br>- Gunakan shortcut <b>Ctrl+Z</b> (Undo) dan <b>Ctrl+Y</b> (Redo).<br>- Gunakan tombol <b>"Show Changes"</b> untuk melihat riwayat modifikasi data.`
+    }
+  };
+
+  let currentLang = localStorage.getItem('tankhouse_lang') || 'id';
+
+  function tr(key) {
+    return i18n[currentLang][key] || key;
+  }
+
+  function applyLanguage() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      if (i18n[currentLang][key]) {
+        el.textContent = i18n[currentLang][key];
+      }
+    });
+
+    document.getElementById('instructionBody').innerHTML = i18n[currentLang].instBody;
+    
+    // Toggle Text on Language Buttons (Show the OPPOSITE language to click)
+    const btnText = currentLang === 'id' ? '🌐 English (US)' : '🌐 Bahasa Indonesia';
+    document.getElementById('langTogglePC').textContent = btnText;
+    document.getElementById('langToggleMobile').textContent = btnText;
+
+    updateThemeButtonLabel(document.documentElement.getAttribute('data-theme'));
+    populateGroupSelect();
+    recalculateStats();
+    if (activeSelectedCell) updateSelectionUI();
+  }
+
+  function toggleLanguage() {
+    currentLang = currentLang === 'id' ? 'en' : 'id';
+    localStorage.setItem('tankhouse_lang', currentLang);
+    applyLanguage();
+  }
+  /* ======================================= */
+
+  /* ====== FITUR LOG PERUBAHAN (SHOW CHANGES DETAIL) ====== */
+  let changesLog = [];
+
+  function formatLogTargets(targets) {
+    if (!targets || targets.length === 0) return "";
+    let groups = {};
+    targets.forEach(t => {
+      if (!groups[t.groupId]) groups[t.groupId] = [];
+      groups[t.groupId].push(t.cellNum);
+    });
+    
+    let resultParts = [];
+    for (let gId in groups) {
+      let grp = plantData.find(g => String(g.groupId) === String(gId));
+      if (grp) {
+        let phaseText = grp.phase === 'Machine' ? tr('machine') : `${tr('phaseLabel')} ${grp.phase}`;
+        let groupName = (typeof grp.groupId === 'string' && isNaN(grp.groupId)) ? grp.groupId : `Group ${grp.groupId}`;
+        let cellUnit = (typeof grp.groupId === 'string' && isNaN(grp.groupId) && String(grp.groupId).startsWith('Rack')) 
+            ? (currentLang==='id'?'Rak':'Rack') 
+            : (typeof grp.groupId === 'string' && isNaN(grp.groupId) ? (currentLang==='id'?'Stasiun':'Station') : 'Cell');
+        let cellsFmt = formatCellNumbers(groups[gId]);
+        resultParts.push(`${phaseText}, ${groupName} (${cellUnit} ${cellsFmt})`);
+      }
+    }
+    return "- " + resultParts.join(' | ');
+  }
+
+  function logChange(actionTxt, targets = null) {
+    const now = new Date();
+    const dd = String(now.getDate()).padStart(2, '0');
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const yy = String(now.getFullYear()).slice(-2);
+    const hh = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    
+    // Format required: [12/11/26, 04:05]
+    const timeFmt = `[${dd}/${mm}/${yy}, ${hh}:${mins}]`;
+    const targetStr = targets ? ` ${formatLogTargets(targets)}` : "";
+    
+    changesLog.unshift(`<b>${timeFmt}</b> ${actionTxt} ${targetStr}`);
+    if (changesLog.length > 50) changesLog.pop();
+  }
+
+  function openModal(id) {
+    if (id === 'changesModal') {
+      const list = document.getElementById('changesLogList');
+      if (changesLog.length === 0) {
+        list.innerHTML = `<li>${tr('emptyLog')}</li>`;
+      } else {
+        list.innerHTML = changesLog.map(log => `<li>${log}</li>`).join('');
+      }
+    }
+    document.getElementById(id).style.display = 'flex';
+  }
+
+  function closeModal(id) {
+    document.getElementById(id).style.display = 'none';
+  }
+  /* ======================================================= */
+
   function getCellElement(gId, cNum) {
     return document.querySelector(`.cell-card[data-group="${String(gId).replace(/"/g, '\\"')}"][data-cell="${cNum}"]`);
   }
@@ -1011,11 +1332,9 @@
   function updateThemeButtonLabel(theme) {
     const btn = document.getElementById('themeToggleBtn');
     if (btn) {
-      btn.textContent = theme === 'dark' ? '🌙 Dark' : '☀️ Light';
+      btn.textContent = theme === 'dark' ? `🌙 ${tr('dark') || 'Dark'}` : `☀️ ${tr('light') || 'Light'}`;
     }
   }
-
-  initTheme();
 
   const firebaseConfig = {
     databaseURL: "https://cell-inventory-er-default-rtdb.asia-southeast1.firebasedatabase.app/"
@@ -1041,23 +1360,22 @@
     const badge = document.getElementById('lastUpdatedBadge');
     if (!badge) return;
     if (!ts) {
-      badge.textContent = 'Last Update: -';
+      badge.textContent = `${tr('lastUpdate')}-`;
       return;
     }
     const d = new Date(Number(ts) || ts);
     if (isNaN(d.getTime())) {
-      badge.textContent = `Last Update: ${ts}`;
+      badge.textContent = `${tr('lastUpdate')}${ts}`;
       return;
     }
-    const dateStr = d.toLocaleDateString('en-US', { month: 'short', day: '2-digit', year: 'numeric' });
+    
+    const loc = currentLang === 'id' ? 'id-ID' : 'en-US';
+    const dateStr = d.toLocaleDateString(loc, { month: 'short', day: '2-digit', year: 'numeric' });
     const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
-    badge.textContent = `Last Update: ${dateStr} • ${timeStr}`;
+    badge.textContent = `${tr('lastUpdate')}${dateStr} • ${timeStr}`;
   }
 
   const cachedLastUpdated = localStorage.getItem(LOCAL_STORAGE_LAST_UPDATED);
-  if (cachedLastUpdated) {
-    updateLastUpdatedUI(cachedLastUpdated);
-  }
 
   function generateDefaultPlantData() {
     let data = [];
@@ -1256,35 +1574,25 @@
   }
 
   function undo() {
-    if (undoStack.length === 0) {
-      showToast("No changes to undo");
-      return;
-    }
+    if (undoStack.length === 0) return;
     redoStack.push(JSON.stringify(plantData));
     plantData = JSON.parse(undoStack.pop());
     recalculateStats();
     renderMatrix();
-    if (activeSelectedCell) {
-      updateSelectionUI();
-    }
+    if (activeSelectedCell) updateSelectionUI();
     syncBulkData();
-    showToast("Undo");
+    logChange(currentLang === 'id' ? `Melakukan Undo (Batal) aksi sebelumnya.` : `Performed Undo on last action.`);
   }
 
   function redo() {
-    if (redoStack.length === 0) {
-      showToast("No changes to redo");
-      return;
-    }
+    if (redoStack.length === 0) return;
     undoStack.push(JSON.stringify(plantData));
     plantData = JSON.parse(redoStack.pop());
     recalculateStats();
     renderMatrix();
-    if (activeSelectedCell) {
-      updateSelectionUI();
-    }
+    if (activeSelectedCell) updateSelectionUI();
     syncBulkData();
-    showToast("Redo");
+    logChange(currentLang === 'id' ? `Melakukan Redo (Ulangi).` : `Performed Redo.`);
   }
 
   function deselectCell() {
@@ -1296,7 +1604,7 @@
     if (mb) mb.style.display = 'none';
     document.getElementById('inspectorContent').innerHTML = `
       <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11px;">
-        Click a cell in the grid to configure status.
+        ${tr('clickCell')}
       </div>
     `;
     updateSelectionUI();
@@ -1327,7 +1635,6 @@
       plantData = mergeFirebaseData(data);
       saveLocalData();
     }
-
     populateGroupSelect();
     recalculateStats();
     renderMatrix();
@@ -1345,22 +1652,24 @@
     const statusEl = document.getElementById('dbStatus');
     if (statusEl) {
       if (snap.val() === true) {
-        statusEl.textContent = '🟢 Online';
+        statusEl.textContent = tr('online');
         statusEl.style.color = 'var(--positive)';
       } else {
-        statusEl.textContent = '🔴 Offline / Local';
+        statusEl.textContent = tr('offline');
         statusEl.style.color = 'var(--error)';
       }
     }
   });
 
   function kosongkanIsianPhase(targetPhase) {
-    let phaseLabel = (targetPhase === 'Machine') ? 'Machine' : `Phase ${targetPhase}`;
-    let confirmMsg = `TOTAL erase all Anode, Cathode, and SS Blank entries in ${phaseLabel}?`;
+    let phaseLabel = (targetPhase === 'Machine') ? tr('machine') : `${tr('phaseLabel')} ${targetPhase}`;
+    let confirmMsg = currentLang === 'id' ? `HAPUS TOTAL semua data di ${phaseLabel}?` : `TOTAL erase all data in ${phaseLabel}?`;
       
     if (!confirm(confirmMsg)) return;
 
     saveState();
+    let actionTxt = currentLang === 'id' ? `Membersihkan HAPUS TOTAL data pada area ${phaseLabel}` : `TOTALLY cleared all data in ${phaseLabel} area`;
+    logChange(actionTxt);
 
     plantData.forEach(g => {
       if (String(g.phase) === String(targetPhase)) {
@@ -1376,21 +1685,23 @@
     recalculateStats();
     renderMatrix();
     syncBulkData();
-    showToast(`Cleared ${phaseLabel} Data`);
+    showToast(`Cleared ${phaseLabel}`);
   }
 
   function populateGroupSelect() {
     const sel = document.getElementById('groupSelect');
     if (!sel) return;
     const currentVal = sel.value;
-    sel.innerHTML = '<option value="ALL">All Groups</option>';
+    sel.innerHTML = `<option value="ALL">${tr('optAllGroups')}</option>`;
     plantData.forEach(g => {
       if (!g) return;
       let opt = document.createElement('option');
       opt.value = g.groupId;
+      
+      let trZone = g.zone === 'North' ? tr('optNorth') : tr('optSouth');
       let label = (typeof g.groupId === 'string' && isNaN(g.groupId)) 
-        ? `${g.displayName || g.groupId} (${g.zone})` 
-        : `G${g.groupId} (P${g.phase}-${g.zone})`;
+        ? `${g.displayName || g.groupId} (${trZone})` 
+        : `G${g.groupId} (P${g.phase}-${trZone})`;
       opt.textContent = label;
       sel.appendChild(opt);
     });
@@ -1415,8 +1726,12 @@
     if (tagType === 'anode') {
       cell.anodeStatus = 'NONE';
       cell.pcs = 0;
+      let act = currentLang === 'id' ? `Menghapus tag Anoda secara manual pada 1 cell` : `Manually removed Anode tag on 1 cell`;
+      logChange(act, [{groupId: gId, cellNum: cNum}]);
     } else if (tagType === 'cathode') {
       cell.cathodeStatus = 'NONE';
+      let act = currentLang === 'id' ? `Menghapus tag Katoda secara manual pada 1 cell` : `Manually removed Cathode tag on 1 cell`;
+      logChange(act, [{groupId: gId, cellNum: cNum}]);
     }
 
     selectCell(gId, cNum, null, true);
@@ -1494,20 +1809,22 @@
           let isBlank = (cell.anodeStatus === 'NONE' || !cell.anodeStatus) && (cell.cathodeStatus === 'NONE' || !cell.cathodeStatus);
           let insContent = document.getElementById('inspectorContent');
           let groupName = grp.displayName || ((typeof grp.groupId === 'string' && isNaN(grp.groupId)) ? grp.groupId : `G${grp.groupId}`);
-          let phaseText = (grp.phase === 'Machine') ? 'Machine' : `P${grp.phase}`;
+          let phaseText = (grp.phase === 'Machine') ? tr('machine') : `P${grp.phase}`;
+          let trZone = grp.zone === 'North' ? tr('optNorth') : tr('optSouth');
+
           if (selectedCellsList.length > 1) {
             insContent.innerHTML = `
-              <div class="detail-row"><span class="detail-label">Selection:</span><span class="detail-val" style="color:var(--primary);">${selectedCellsList.length} Cell Marked</span></div>
-              <div class="detail-row"><span class="detail-label">Focus Cell:</span><span class="detail-val">${groupName} - ${cell.cellId}</span></div>
-              <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">${phaseText} / ${grp.zone}</span></div>
+              <div class="detail-row"><span class="detail-label">${tr('txtSelection')}:</span><span class="detail-val" style="color:var(--primary);">${selectedCellsList.length} ${tr('txtMarked')}</span></div>
+              <div class="detail-row"><span class="detail-label">${tr('txtFocus')}:</span><span class="detail-val">${groupName} - ${cell.cellId}</span></div>
+              <div class="detail-row"><span class="detail-label">${tr('txtArea')}:</span><span class="detail-val">${phaseText} / ${trZone}</span></div>
             `;
           } else {
             insContent.innerHTML = `
               <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">${groupName} - ${cell.cellId}</span></div>
-              <div class="detail-row"><span class="detail-label">Area:</span><span class="detail-val">${phaseText} / ${grp.zone}</span></div>
-              <div class="detail-row"><span class="detail-label">Anode:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
-              <div class="detail-row"><span class="detail-label">Cathode:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">Empty</span>'}</span></div>
-              <div class="detail-row"><span class="detail-label">Status:</span><span class="detail-val" style="color:${isBlank?'var(--error)':'var(--positive)'};">${isBlank ? 'COMPLETELY EMPTY' : 'FILLED'}</span></div>
+              <div class="detail-row"><span class="detail-label">${tr('txtArea')}:</span><span class="detail-val">${phaseText} / ${trZone}</span></div>
+              <div class="detail-row"><span class="detail-label">${tr('txtAnode')}:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">'+tr('txtEmptyStr')+'</span>'}</span></div>
+              <div class="detail-row"><span class="detail-label">${tr('txtCathode')}:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">'+tr('txtEmptyStr')+'</span>'}</span></div>
+              <div class="detail-row"><span class="detail-label">${tr('txtStatus')}:</span><span class="detail-val" style="color:${isBlank?'var(--error)':'var(--positive)'};">${isBlank ? tr('txtCompEmpty') : tr('txtFilledStr')}</span></div>
             `;
           }
         }
@@ -1593,10 +1910,14 @@
       grpSec.className = 'group-section';
 
       let cropClass = g.cropStatus === 'Crop 1' ? 'crop-c1' : (g.cropStatus === 'Crop 2' ? 'crop-c2' : (g.cropStatus === 'Crop 3' ? 'crop-c3' : 'crop-none'));
-      let cropLabel = g.cropStatus !== '-' ? `Harvest: ${g.cropStatus}` : 'No Harvest';
+      
+      let lblNoHarv = currentLang === 'id' ? 'Tanpa Panen' : 'No Harvest';
+      let cropLabel = g.cropStatus !== '-' ? `${currentLang==='id'?'Panen':'Harvest'}: ${g.cropStatus}` : lblNoHarv;
+      
       let isStringGroup = typeof g.groupId === 'string' && isNaN(g.groupId);
       let isRackGroup = isStringGroup && String(g.groupId).startsWith('Rack');
-      let tagSpecial = g.groupId === 33 ? 'EW0' : `${g.cellCount} ${isRackGroup ? 'Racks' : (isStringGroup ? 'Stations' : 'Cells')}`;
+      let lblSpecialUnit = isRackGroup ? (currentLang==='id'?'Rak':'Racks') : (isStringGroup ? (currentLang==='id'?'Stasiun':'Stations') : 'Cells');
+      let tagSpecial = g.groupId === 33 ? 'EW0' : `${g.cellCount} ${lblSpecialUnit}`;
 
       let isSpecialGroup = (g.groupId >= 13 && g.groupId <= 20);
       let splitCutoff = isSpecialGroup ? 14 : 13;
@@ -1610,6 +1931,8 @@
 
       let groupDisplayName = g.displayName ? g.displayName : (isStringGroup ? g.groupId : `Group ${g.groupId}`);
       let safeGId = String(g.groupId).replace(/[^a-zA-Z0-9_-]/g, '_');
+      
+      let trZone = g.zone === 'North' ? tr('optNorth') : tr('optSouth');
 
       let isMachineGroup = (g.phase === 'Machine' || isStringGroup);
       let cropHtml = isMachineGroup ? '' : `<div class="crop-tag ${cropClass}" onclick="toggleCrop('${String(g.groupId).replace(/'/g, "\\'")}')">${cropLabel}</div>`;
@@ -1618,7 +1941,7 @@
         <div class="group-header">
           <div class="group-title">
             <span>${groupDisplayName}</span> 
-            <span style="font-size:9px; background:var(--primary-container); color:var(--primary); padding:1px 5px; border-radius:4px;">${g.zone}</span>
+            <span style="font-size:9px; background:var(--primary-container); color:var(--primary); padding:1px 5px; border-radius:4px;">${trZone}</span>
             <span style="font-size:9px; background:var(--surface); padding:1px 5px; border:1px solid var(--stroke-default); border-radius:4px; color:var(--on-surface-variant); font-family:var(--ff-mono);">${tagSpecial}</span>
           </div>
           ${cropHtml}
@@ -1691,15 +2014,17 @@
     container.innerHTML = '';
     if (renderedCount === 0) {
       if (selContent === 'FILLED') {
-        container.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">Tidak ada cell yang terisi (Pilih "All Cells" untuk menampilkan semua cell).</div>';
+        let msg = currentLang==='id'?'Tidak ada cell yang terisi.':'No filled cells found.';
+        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">${msg}</div>`;
       } else if (selContent === 'EMPTY') {
-        container.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">Tidak ada cell yang kosong.</div>';
+        let msg = currentLang==='id'?'Tidak ada cell yang kosong.':'No empty cells found.';
+        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">${msg}</div>`;
       } else {
-        container.innerHTML = '<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">Tidak ada cell yang cocok dengan filter yang dipilih.</div>';
+        let msg = currentLang==='id'?'Tidak ada cell yang cocok.':'No cells match the filter.';
+        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">${msg}</div>`;
       }
     } else {
       container.appendChild(fragment);
-
       container.scrollTop = matrixScrollTop;
       container.querySelectorAll('.group-section').forEach(sec => {
         const wrapper = sec.querySelector('.group-grid-wrapper');
@@ -1775,6 +2100,12 @@
     let targets = getActiveTargets();
     if(targets.length === 0) return;
     saveState();
+    
+    let actionTxt = currentLang === 'id' 
+      ? `Mengatur Anoda menjadi [${val}] pada ${targets.length} cell` 
+      : `Set Anode to [${val}] on ${targets.length} cell(s)`;
+    logChange(actionTxt, targets); 
+    
     targets.forEach(t => {
       let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
       if (grp) {
@@ -1794,6 +2125,12 @@
     let targets = getActiveTargets();
     if(targets.length === 0) return;
     saveState();
+    
+    let actionTxt = currentLang === 'id' 
+      ? `Mengatur Katoda menjadi [${val}] pada ${targets.length} cell` 
+      : `Set Cathode to [${val}] on ${targets.length} cell(s)`;
+    logChange(actionTxt, targets); 
+    
     targets.forEach(t => {
       let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
       if (grp) {
@@ -1812,6 +2149,12 @@
     let targets = getActiveTargets();
     if(targets.length === 0) return;
     saveState();
+    
+    let actionTxt = currentLang === 'id' 
+      ? `Menghapus isi data (Clear Cell) pada ${targets.length} cell` 
+      : `Cleared all data on ${targets.length} cell(s)`;
+    logChange(actionTxt, targets);
+
     targets.forEach(t => {
       let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
       if (grp) {
@@ -1825,7 +2168,7 @@
       }
     });
     recalculateStats();
-    showToast(`Cleared (${targets.length} Cell)`);
+    showToast(`Cleared (${targets.length})`);
     syncCellTargets(targets);
   }
 
@@ -1835,6 +2178,10 @@
     let grp = plantData.find(g => g && String(g.groupId) === String(activeSelectedCell.groupId));
     if (grp) {
       grp.cropStatus = val;
+      let actionTxt = currentLang === 'id' 
+        ? `Mengubah siklus panen Grup ${grp.groupId} menjadi [${val}]` 
+        : `Changed harvest cycle for Group ${grp.groupId} to [${val}]`;
+      logChange(actionTxt);
       renderMatrix();
       syncGroupCrop(grp.groupId, val);
     }
@@ -1846,6 +2193,10 @@
     if (grp) {
       let crops = ['-', 'Crop 1', 'Crop 2', 'Crop 3'];
       grp.cropStatus = crops[(crops.indexOf(grp.cropStatus) + 1) % crops.length];
+      let actionTxt = currentLang === 'id' 
+        ? `Toggle panen Grup ${grp.groupId} menjadi [${grp.cropStatus}]` 
+        : `Toggled harvest for Group ${grp.groupId} to [${grp.cropStatus}]`;
+      logChange(actionTxt);
       renderMatrix();
       syncGroupCrop(grp.groupId, grp.cropStatus);
     }
@@ -1865,7 +2216,7 @@
         if (start === prev) {
           ranges.push(`${start}`);
         } else {
-          ranges.push(`${start}–${prev}`);
+          ranges.push(`${start}-${prev}`);
         }
         start = nums[i];
         prev = nums[i];
@@ -1874,7 +2225,7 @@
     if (start === prev) {
       ranges.push(`${start}`);
     } else {
-      ranges.push(`${start}–${prev}`);
+      ranges.push(`${start}-${prev}`);
     }
 
     return ranges.join(', ');
@@ -1905,31 +2256,26 @@
           if (isNorth) stats.c63N++;
           else stats.c63S++;
         }
-
         if (c.anodeStatus === '62 KU') {
           stats.c62ku++;
           if (isNorth) stats.c62kuN++;
           else stats.c62kuS++;
         }
-
         if (c.anodeStatus === '62 KS') {
           stats.c62ks++;
           if (isNorth) stats.c62ksN++;
           else stats.c62ksS++;
         }
-
         if (c.anodeStatus === '62 SA') {
           stats.c62sa++;
           if (isNorth) stats.c62saN++;
           else stats.c62saS++;
         }
-
         if (c.cathodeStatus === 'CATH') {
           stats.cCA++;
           if (isNorth) stats.cCAN++;
           else stats.cCAS++;
         }
-        
         if (c.cathodeStatus === 'SS') {
           stats.cSS++;
           if (isNorth) stats.cSSN++;
@@ -1956,55 +2302,21 @@
     document.getElementById('kpiSSCount').textContent = stats.cSS.toLocaleString('en-US');
     document.getElementById('kpiSSNS').textContent = `N: ${stats.cSSN.toLocaleString('en-US')} • S: ${stats.cSSS.toLocaleString('en-US')}`;
 
+    // WA REPORT GENERATION
     const now = new Date();
-    const days = ['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'];
-    const months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    
-    const dayName = days[now.getDay()];
+    const loc = currentLang === 'id' ? 'id-ID' : 'en-US';
+    const dayName = now.toLocaleDateString(loc, { weekday: 'long' });
     const dateNum = now.getDate();
-    const monthName = months[now.getMonth()];
+    const monthName = now.toLocaleDateString(loc, { month: 'short' });
     const yearNum = now.getFullYear();
     const hours = String(now.getHours()).padStart(2, '0');
     const minutes = String(now.getMinutes()).padStart(2, '0');
     
-    const timeHeader = `*📅 ${dayName}, ${dateNum} ${monthName} ${yearNum} | ${hours}:${minutes}*`;
-    const divider = `_ _ _ _ _ _ `;
+    let timeHeader = currentLang === 'id' 
+      ? `📅 ${dayName}, ${dateNum} ${monthName} ${yearNum} | ${hours}:${minutes}` 
+      : `📅 ${dayName}, ${monthName} ${dateNum}, ${yearNum} | ${hours}:${minutes}`;
 
-    let summaryLines = [];
-    if (stats.cCA > 0) summaryLines.push(`- Cathode: *(Utara: ${stats.cCAN} Cell | Selatan: ${stats.cCAS} Cell)*`);
-    if (stats.c63 > 0) summaryLines.push(`- Anode 63: *(Utara: ${stats.c63N} Cell | Selatan: ${stats.c63S} Cell)*`);
-    if (stats.c62ku > 0) summaryLines.push(`- Anode 62 KU: *(Utara: ${stats.c62kuN} Cell | Selatan: ${stats.c62kuS} Cell)*`);
-    if (stats.c62ks > 0) summaryLines.push(`- Anode 62 KS: *(Utara: ${stats.c62ksN} Cell | Selatan: ${stats.c62ksS} Cell)*`);
-    if (stats.c62sa > 0) summaryLines.push(`- Spent Anode 62: *(Utara: ${stats.c62saN} Cell | Selatan: ${stats.c62saS} Cell)*`);
-    if (stats.cSS > 0) summaryLines.push(`- SS Blank: *(Utara: ${stats.cSSN} Cell | Selatan: ${stats.cSSS} Cell)*`);
-
-    let reportBlocks = [];
-    let headerBlock = `*🔄 ANODE / CATHODE / SS BLANK MAPPING*\n${timeHeader}`;
-    if (summaryLines.length > 0) {
-      headerBlock += `\n${divider}\n` + summaryLines.join('\n');
-    }
-    reportBlocks.push(headerBlock);
-
-    function buildZoneSection(title, totalCount, itemsNorth, itemsSouth) {
-      if (totalCount === 0) return null;
-      
-      let block = `*${title} (Total: ${totalCount} Cell)*\n\n`;
-      
-      block += `*UTARA (${itemsNorth.total} Cell)*`;
-      if (itemsNorth.lines.length > 0) {
-        block += `\n` + itemsNorth.lines.join('\n');
-      }
-      
-      block += `\n\n*SELATAN (${itemsSouth.total} Cell)*`;
-      if (itemsSouth.lines.length > 0) {
-        block += `\n` + itemsSouth.lines.join('\n');
-      }
-
-      return block;
-    }
-
-    /* Penyesuaian Penamaan Item & Satuan di WA Report (Rack / Station / Cell) */
-    function getItemsForCategory(filterFn) {
+    function getItemsForCategory(filterFn, isCathode = false) {
       let north = { total: 0, lines: [] };
       let south = { total: 0, lines: [] };
 
@@ -2016,41 +2328,76 @@
           let matchedNums = matchedCells.map(c => c.cellNum);
           let target = isNorth ? north : south;
           target.total += matchedCells.length;
+
           let isStringGroup = (typeof g.groupId === 'string' && isNaN(g.groupId));
           let isRackGroup = isStringGroup && String(g.groupId).startsWith('Rack');
-          let groupName = g.displayName || (isStringGroup ? g.groupId : `Group ${g.groupId}`);
+          
+          let groupLabel = (typeof g.groupId === 'number' || !isNaN(g.groupId)) 
+            ? `G${g.groupId}` 
+            : (g.displayName || g.groupId);
 
-          let fmt = isStringGroup ? matchedCells.map(c => c.cellId).join(', ') : formatCellNumbers(matchedNums);
+          let unitLabel = isRackGroup ? (currentLang==='id'?'Rak':'Rack') : (isStringGroup ? (currentLang==='id'?'Stasiun':'Station') : 'Cell');
 
-          let itemPrefix = isRackGroup ? 'Rack ' : (isStringGroup ? 'Station ' : 'Cell ');
-          let unitLabel = isRackGroup ? 'Rack' : (isStringGroup ? 'Station' : 'Cell');
+          let rangeStr = '';
+          if (matchedCells.length < g.cellCount) {
+            let fmt = isStringGroup 
+              ? matchedCells.map(c => c.cellId).join(', ') 
+              : formatCellNumbers(matchedNums);
+            rangeStr = ` [${fmt}]`;
+          }
 
-          target.lines.push(`- *${groupName}* ➡️ ${itemPrefix}${fmt} (${matchedCells.length} ${unitLabel})`);
+          let suffixStr = isCathode ? ' ()' : '';
+
+          target.lines.push(`- ${groupLabel} : ${matchedCells.length} ${unitLabel}${rangeStr}${suffixStr}`);
         }
       });
 
       return { north, south };
     }
 
-    let cathSec = buildZoneSection('CATHODE', stats.cCA, getItemsForCategory(c => c.cathodeStatus === 'CATH').north, getItemsForCategory(c => c.cathodeStatus === 'CATH').south);
-    if (cathSec) reportBlocks.push(cathSec);
+    function buildZoneSection(catIndex, title, totalCount, itemsNorth, itemsSouth) {
+      if (totalCount === 0) return null;
+      let textTotal = tr('waTotal');
+      let textNorth = tr('waNorth');
+      let textSouth = tr('waSouth');
 
-    let a63Sec = buildZoneSection('ANODE 63', stats.c63, getItemsForCategory(c => c.anodeStatus === '63 FL').north, getItemsForCategory(c => c.anodeStatus === '63 FL').south);
-    if (a63Sec) reportBlocks.push(a63Sec);
+      let block = `*${catIndex}. ${title} (${textTotal}: ${totalCount} Cell)*`;
+      
+      if (itemsNorth.total > 0) {
+        block += `\n${textNorth} (${itemsNorth.total})\n` + itemsNorth.lines.join('\n');
+      }
+      if (itemsSouth.total > 0) {
+        block += `\n${textSouth} (${itemsSouth.total})\n` + itemsSouth.lines.join('\n');
+      }
 
-    let a62kuSec = buildZoneSection('ANODE 62 KU', stats.c62ku, getItemsForCategory(c => c.anodeStatus === '62 KU').north, getItemsForCategory(c => c.anodeStatus === '62 KU').south);
-    if (a62kuSec) reportBlocks.push(a62kuSec);
+      return block;
+    }
 
-    let a62ksSec = buildZoneSection('ANODE 62 KS', stats.c62ks, getItemsForCategory(c => c.anodeStatus === '62 KS').north, getItemsForCategory(c => c.anodeStatus === '62 KS').south);
-    if (a62ksSec) reportBlocks.push(a62ksSec);
+    let headerBlock = `*${tr('waTitle')}*\n${timeHeader}`;
+    let reportBlocks = [headerBlock];
+    let catNum = 1;
 
-    let a62saSec = buildZoneSection('SPENT ANODE 62', stats.c62sa, getItemsForCategory(c => c.anodeStatus === '62 SA').north, getItemsForCategory(c => c.anodeStatus === '62 SA').south);
-    if (a62saSec) reportBlocks.push(a62saSec);
+    const categories = [
+      { title: 'CATHODE', total: stats.cCA, filter: c => c.cathodeStatus === 'CATH', isCathode: true },
+      { title: 'ANODE 63', total: stats.c63, filter: c => c.anodeStatus === '63 FL', isCathode: false },
+      { title: 'ANODE 62 KU', total: stats.c62ku, filter: c => c.anodeStatus === '62 KU', isCathode: false },
+      { title: 'ANODE 62 KS', total: stats.c62ks, filter: c => c.anodeStatus === '62 KS', isCathode: false },
+      { title: 'SPENT ANODE 62', total: stats.c62sa, filter: c => c.anodeStatus === '62 SA', isCathode: false },
+      { title: 'SS BLANK', total: stats.cSS, filter: c => c.cathodeStatus === 'SS', isCathode: false }
+    ];
 
-    let ssSec = buildZoneSection('SS BLANK', stats.cSS, getItemsForCategory(c => c.cathodeStatus === 'SS').north, getItemsForCategory(c => c.cathodeStatus === 'SS').south);
-    if (ssSec) reportBlocks.push(ssSec);
+    categories.forEach(cat => {
+      if (cat.total > 0) {
+        let items = getItemsForCategory(cat.filter, cat.isCathode);
+        let block = buildZoneSection(catNum, cat.title, cat.total, items.north, items.south);
+        if (block) {
+          reportBlocks.push(block);
+          catNum++;
+        }
+      }
+    });
 
-    let text = reportBlocks.join(`\n${divider}\n`);
+    let text = reportBlocks.join('\n\n');
     document.getElementById('waText').value = text.trim();
   }
 
@@ -2236,15 +2583,15 @@
 
   setInterval(() => {
     const now = new Date();
-    const dateStr = now.toLocaleDateString('en-US', { day: '2-digit', month: 'short', year: 'numeric' });
+    const loc = currentLang === 'id' ? 'id-ID' : 'en-US';
+    const dateStr = now.toLocaleDateString(loc, { day: '2-digit', month: 'short', year: 'numeric' });
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
     
     document.getElementById('liveClock').textContent = `${dateStr} • ${timeStr}`;
   }, 1000);
 
-  populateGroupSelect();
-  recalculateStats();
-  renderMatrix();
+  // Initialize
+  applyLanguage();
 </script>
 </body>
 </html>
