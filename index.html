@@ -659,8 +659,15 @@
     font-size: 16px; font-weight: bold; cursor: pointer; padding: 4px; outline: none;
   }
   .modal-body {
-    padding: 16px; overflow-y: auto; font-size: 11.5px;
-    color: var(--on-surface-variant); line-height: 1.6;
+    padding: 16px; 
+    overflow-y: auto; 
+    font-size: 11.5px;
+    color: var(--on-surface-variant); 
+    line-height: 1.6;
+    /* FIX: Scrollbar smooth pada mobile dan flex shrink agar tidak terpotong */
+    -webkit-overflow-scrolling: touch;
+    flex: 1 1 auto;
+    min-height: 0;
   }
   .modal-body b { color: var(--on-surface); }
   
@@ -1238,6 +1245,10 @@
     document.getElementById('langTogglePC').textContent = btnText;
     document.getElementById('langToggleMobile').textContent = btnText;
 
+    // FIX: Update UI for connection status and last update instantly
+    updateDbStatusUI();
+    updateLastUpdatedUI(localStorage.getItem(LOCAL_STORAGE_LAST_UPDATED));
+
     updateThemeButtonLabel(document.documentElement.getAttribute('data-theme'));
     populateGroupSelect();
     recalculateStats();
@@ -1252,7 +1263,8 @@
   /* ======================================= */
 
   /* ====== FITUR LOG PERUBAHAN (SHOW CHANGES DETAIL) ====== */
-  let changesLog = [];
+  // FIX: Load existing logs from localStorage
+  let changesLog = JSON.parse(localStorage.getItem('tankhouse_changes_log')) || [];
 
   function formatLogTargets(targets) {
     if (!targets || targets.length === 0) return "";
@@ -1292,6 +1304,9 @@
     
     changesLog.unshift(`<b>${timeFmt}</b> ${actionTxt} ${targetStr}`);
     if (changesLog.length > 50) changesLog.pop();
+    
+    // FIX: Save logs to localStorage
+    localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
   }
 
   function openModal(id) {
@@ -1355,6 +1370,8 @@
   let undoStack = [];
   let redoStack = [];
   const MAX_HISTORY = 50;
+  
+  let isDbConnected = false; // FIX: Variable for tracking DB connection status
 
   function updateLastUpdatedUI(ts) {
     const badge = document.getElementById('lastUpdatedBadge');
@@ -1648,10 +1665,11 @@
     }
   });
 
-  db.ref('.info/connected').on('value', (snap) => {
+  // FIX: Connection update method logic extracted for easy language toggle handling
+  function updateDbStatusUI() {
     const statusEl = document.getElementById('dbStatus');
     if (statusEl) {
-      if (snap.val() === true) {
+      if (isDbConnected) {
         statusEl.textContent = tr('online');
         statusEl.style.color = 'var(--positive)';
       } else {
@@ -1659,6 +1677,11 @@
         statusEl.style.color = 'var(--error)';
       }
     }
+  }
+
+  db.ref('.info/connected').on('value', (snap) => {
+    isDbConnected = snap.val() === true;
+    updateDbStatusUI();
   });
 
   function kosongkanIsianPhase(targetPhase) {
