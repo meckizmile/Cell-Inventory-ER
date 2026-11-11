@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -664,7 +664,6 @@
     font-size: 11.5px;
     color: var(--on-surface-variant); 
     line-height: 1.6;
-    /* FIX: Scrollbar smooth pada mobile dan flex shrink agar tidak terpotong */
     -webkit-overflow-scrolling: touch;
     flex: 1 1 auto;
     min-height: 0;
@@ -1263,8 +1262,15 @@
   /* ======================================= */
 
   /* ====== FITUR LOG PERUBAHAN (SHOW CHANGES DETAIL) ====== */
-  // FIX: Load existing logs from localStorage
-  let changesLog = JSON.parse(localStorage.getItem('tankhouse_changes_log')) || [];
+  // Load existing logs from localStorage & Delete older than 3 days
+  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+  const nowMs = Date.now();
+  let rawLog = JSON.parse(localStorage.getItem('tankhouse_changes_log')) || [];
+  
+  let changesLog = rawLog.map(item => {
+    if (typeof item === 'string') return { msg: item, time: nowMs }; // Retro-compatibility for previous format
+    return item;
+  }).filter(item => (nowMs - item.time) <= THREE_DAYS_MS);
 
   function formatLogTargets(targets) {
     if (!targets || targets.length === 0) return "";
@@ -1302,10 +1308,14 @@
     const timeFmt = `[${dd}/${mm}/${yy}, ${hh}:${mins}]`;
     const targetStr = targets ? ` ${formatLogTargets(targets)}` : "";
     
-    changesLog.unshift(`<b>${timeFmt}</b> ${actionTxt} ${targetStr}`);
+    changesLog.unshift({
+      msg: `<b>${timeFmt}</b> ${actionTxt} ${targetStr}`,
+      time: now.getTime()
+    });
+    
     if (changesLog.length > 50) changesLog.pop();
     
-    // FIX: Save logs to localStorage
+    // Save logs to localStorage
     localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
   }
 
@@ -1315,7 +1325,7 @@
       if (changesLog.length === 0) {
         list.innerHTML = `<li>${tr('emptyLog')}</li>`;
       } else {
-        list.innerHTML = changesLog.map(log => `<li>${log}</li>`).join('');
+        list.innerHTML = changesLog.map(log => `<li>${log.msg}</li>`).join('');
       }
     }
     document.getElementById(id).style.display = 'flex';
@@ -1331,13 +1341,13 @@
   }
 
   function initTheme() {
-    const savedTheme = localStorage.getItem('tankhouse_theme') || 'dark';
+    const savedTheme = localStorage.getItem('tankhouse_theme') || 'light';
     document.documentElement.setAttribute('data-theme', savedTheme);
     updateThemeButtonLabel(savedTheme);
   }
 
   function toggleTheme() {
-    const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
     document.documentElement.setAttribute('data-theme', newTheme);
     localStorage.setItem('tankhouse_theme', newTheme);
@@ -1371,7 +1381,7 @@
   let redoStack = [];
   const MAX_HISTORY = 50;
   
-  let isDbConnected = false; // FIX: Variable for tracking DB connection status
+  let isDbConnected = false; 
 
   function updateLastUpdatedUI(ts) {
     const badge = document.getElementById('lastUpdatedBadge');
@@ -1665,7 +1675,6 @@
     }
   });
 
-  // FIX: Connection update method logic extracted for easy language toggle handling
   function updateDbStatusUI() {
     const statusEl = document.getElementById('dbStatus');
     if (statusEl) {
@@ -2380,11 +2389,10 @@
 
     function buildZoneSection(catIndex, title, totalCount, itemsNorth, itemsSouth) {
       if (totalCount === 0) return null;
-      let textTotal = tr('waTotal');
       let textNorth = tr('waNorth');
       let textSouth = tr('waSouth');
 
-      let block = `*${catIndex}. ${title} (${textTotal}: ${totalCount} Cell)*`;
+      let block = `*${catIndex}. ${title}*`;
       
       if (itemsNorth.total > 0) {
         block += `\n${textNorth} (${itemsNorth.total})\n` + itemsNorth.lines.join('\n');
@@ -2405,7 +2413,7 @@
       { title: 'ANODE 63', total: stats.c63, filter: c => c.anodeStatus === '63 FL', isCathode: false },
       { title: 'ANODE 62 KU', total: stats.c62ku, filter: c => c.anodeStatus === '62 KU', isCathode: false },
       { title: 'ANODE 62 KS', total: stats.c62ks, filter: c => c.anodeStatus === '62 KS', isCathode: false },
-      { title: 'SPENT ANODE 62', total: stats.c62sa, filter: c => c.anodeStatus === '62 SA', isCathode: false },
+      { title: 'SPENT ANODE', total: stats.c62sa, filter: c => c.anodeStatus === '62 SA', isCathode: false },
       { title: 'SS BLANK', total: stats.cSS, filter: c => c.cathodeStatus === 'SS', isCathode: false }
     ];
 
@@ -2614,6 +2622,7 @@
   }, 1000);
 
   // Initialize
+  initTheme();
   applyLanguage();
 </script>
 </body>
