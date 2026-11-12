@@ -25,7 +25,6 @@
     --error-container: rgba(244, 63, 94, 0.12);
     --stroke-default: #2a303f;
     --chart-8: #a855f7;
-    --spent-anode: #57534e;
     --copper: #ea580c;
     --copper-border: #f97316;
     --stainless: #64748b;
@@ -52,7 +51,6 @@
     --error-container: #ffe4e6;
     --stroke-default: #cbd5e1;
     --chart-8: #7e22ce;
-    --spent-anode: #475569;
     --copper: #c2410c;
     --copper-border: #ea580c;
     --stainless: #475569;
@@ -694,36 +692,6 @@
       padding: 10px;
     }
 
-    /* Penyesuaian Header agar Center di Mobile (Instruksi 2) */
-    .header {
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      gap: 12px;
-      padding-bottom: 12px;
-    }
-    .title-area {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-    }
-    .title-area h1, .title-area p {
-      text-align: center;
-    }
-    .header-actions {
-      justify-content: center;
-      width: 100%;
-    }
-
-    /* Penyesuaian Toggle Filter Mobile (Instruksi 3) */
-    .mobile-filter-group {
-      display: none !important;
-    }
-    .mobile-filter-group.show-filter {
-      display: flex !important;
-    }
-
     .kpi-grid {
       grid-template-columns: repeat(3, 1fr);
       gap: 6px;
@@ -891,7 +859,7 @@
         <button class="lumi-chip" id="themeToggleBtn" onclick="toggleTheme()" style="min-height:24px; font-weight:700;">🌙 Dark</button>
         <div class="update-badge" id="dbStatus" data-i18n="checking" style="color: var(--positive);">🟢 Checking...</div>
         <div class="update-badge" id="lastUpdatedBadge" style="color: var(--primary);">Last Update: -</div>
-        <div class="update-badge" id="liveClock">Nov 5, 2026 • 00:00:00</div>
+        <div class="update-badge" id="liveClock">Nov 5, 2026 • 00:00:00 AM</div>
 
         <button class="lumi-chip mobile-only-btn" onclick="openModal('changesModal')" data-i18n="showChanges" style="min-height:24px; font-weight:700; color: var(--primary); border-color: var(--primary);">🔄 Show Changes</button>
 
@@ -947,10 +915,7 @@
         </div>
       </div>
 
-      <!-- TOMBOL TOGGLE FILTER MOBILE BARU -->
-      <button class="lumi-chip mobile-only-btn" id="toggleFiltersBtn" onclick="toggleMobileFilters()" style="width: 100%; margin-top: 4px; font-weight: 700; justify-content: center; background: var(--surface-container-high); border: 1px solid var(--stroke-default); color: var(--on-surface);" data-i18n="showFilters">🔽 Show Filters</button>
-
-      <div class="control-group mobile-filter-group">
+      <div class="control-group">
         <label data-i18n="cellViewLabel">Cell View</label>
         <select class="lumi-select" id="contentSelect" onchange="renderMatrix()">
           <option value="ALL" selected data-i18n="optAllCells">All Cells</option>
@@ -959,7 +924,7 @@
         </select>
       </div>
 
-      <div class="control-group mobile-filter-group">
+      <div class="control-group">
         <label data-i18n="zoneLabel">Zone</label>
         <select class="lumi-select" id="zoneSelect" onchange="renderMatrix()">
           <option value="ALL" data-i18n="optAllZones">All Zones</option>
@@ -968,14 +933,14 @@
         </select>
       </div>
 
-      <div class="control-group mobile-filter-group">
+      <div class="control-group">
         <label data-i18n="groupLabel">Group</label>
         <select class="lumi-select" id="groupSelect" onchange="renderMatrix()">
           <option value="ALL" data-i18n="optAllGroups">All Groups</option>
         </select>
       </div>
 
-      <div class="control-group mobile-filter-group">
+      <div class="control-group">
         <label data-i18n="anodeFilterLabel">Anode Filter</label>
         <select class="lumi-select" id="statusSelect" onchange="renderMatrix()">
           <option value="ALL" data-i18n="optAllAnodes">All Anodes</option>
@@ -987,7 +952,7 @@
         </select>
       </div>
 
-      <div class="control-group mobile-filter-group">
+      <div class="control-group">
         <label data-i18n="cathodeFilterLabel">Cathode Filter</label>
         <select class="lumi-select" id="cathSelect" onchange="renderMatrix()">
           <option value="ALL" data-i18n="optAllCathodes">All Cathodes</option>
@@ -1114,8 +1079,6 @@
       appTitle: "Cell Inventory",
       appSubtitle: "North & South Zone • Anode & Cathode Setting",
       showChanges: "🔄 Show Changes",
-      showFilters: "🔽 Show Filters",
-      hideFilters: "🔼 Hide Filters",
       checking: "🟢 Checking...",
       online: "🟢 Online",
       offline: "🔴 Offline / Local",
@@ -1188,8 +1151,6 @@
       appTitle: "Inventaris Cell",
       appSubtitle: "Zona Utara & Selatan • Pengaturan Anoda & Katoda",
       showChanges: "🔄 Riwayat Perubahan",
-      showFilters: "🔽 Tampilkan Filter",
-      hideFilters: "🔼 Sembunyikan Filter",
       checking: "🟢 Memeriksa...",
       online: "🟢 Online",
       offline: "🔴 Offline / Lokal",
@@ -1276,14 +1237,13 @@
 
     document.getElementById('instructionBody').innerHTML = i18n[currentLang].instBody;
     
-    // Toggle Text on Language Buttons (Show the OPPOSITE language to click)
     const btnText = currentLang === 'id' ? '🌐 English (US)' : '🌐 Bahasa Indonesia';
     document.getElementById('langTogglePC').textContent = btnText;
     document.getElementById('langToggleMobile').textContent = btnText;
 
-    // Update UI for connection status and last update instantly
     updateDbStatusUI();
     updateLastUpdatedUI(localStorage.getItem(LOCAL_STORAGE_LAST_UPDATED));
+    renderChangesLogList();
 
     updateThemeButtonLabel(document.documentElement.getAttribute('data-theme'));
     populateGroupSelect();
@@ -1298,38 +1258,20 @@
   }
   /* ======================================= */
 
-  /* ====== FITUR TOGGLE MOBILE FILTER (SHOW/HIDE) ====== */
-  let filtersVisible = false;
-  function toggleMobileFilters() {
-    filtersVisible = !filtersVisible;
-    const groups = document.querySelectorAll('.mobile-filter-group');
-    const btn = document.getElementById('toggleFiltersBtn');
-    
-    groups.forEach(g => {
-      if (filtersVisible) {
-        g.classList.add('show-filter');
-      } else {
-        g.classList.remove('show-filter');
-      }
-    });
-    
-    if (btn) {
-      btn.setAttribute('data-i18n', filtersVisible ? 'hideFilters' : 'showFilters');
-      btn.innerHTML = tr(filtersVisible ? 'hideFilters' : 'showFilters');
+  /* ====== FITUR LOG PERUBAHAN (SHOW CHANGES DETAIL) ====== */
+  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+  let rawLog = JSON.parse(localStorage.getItem('tankhouse_changes_log')) || [];
+  let changesLog = rawLog.filter(item => item && item.msg && (Date.now() - item.time) <= THREE_DAYS_MS);
+
+  function renderChangesLogList() {
+    const list = document.getElementById('changesLogList');
+    if (!list) return;
+    if (changesLog.length === 0) {
+      list.innerHTML = `<li>${tr('emptyLog')}</li>`;
+    } else {
+      list.innerHTML = changesLog.map(log => `<li>${log.msg}</li>`).join('');
     }
   }
-  /* ======================================================= */
-
-  /* ====== FITUR LOG PERUBAHAN (SHOW CHANGES DETAIL) ====== */
-  // Load existing logs from localStorage & Delete older than 3 days
-  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
-  const nowMs = Date.now();
-  let rawLog = JSON.parse(localStorage.getItem('tankhouse_changes_log')) || [];
-  
-  let changesLog = rawLog.map(item => {
-    if (typeof item === 'string') return { msg: item, time: nowMs }; // Retro-compatibility for previous format
-    return item;
-  }).filter(item => (nowMs - item.time) <= THREE_DAYS_MS);
 
   function formatLogTargets(targets) {
     if (!targets || targets.length === 0) return "";
@@ -1357,35 +1299,35 @@
 
   function logChange(actionTxt, targets = null) {
     const now = new Date();
+    const nowTime = now.getTime();
     const dd = String(now.getDate()).padStart(2, '0');
     const mm = String(now.getMonth() + 1).padStart(2, '0');
     const yy = String(now.getFullYear()).slice(-2);
     const hh = String(now.getHours()).padStart(2, '0');
     const mins = String(now.getMinutes()).padStart(2, '0');
     
-    // Format required: [12/11/26, 04:05]
     const timeFmt = `[${dd}/${mm}/${yy}, ${hh}:${mins}]`;
     const targetStr = targets ? ` ${formatLogTargets(targets)}` : "";
-    
+
+    changesLog = changesLog.filter(item => item && item.msg && (nowTime - item.time) <= THREE_DAYS_MS);
     changesLog.unshift({
       msg: `<b>${timeFmt}</b> ${actionTxt} ${targetStr}`,
-      time: now.getTime()
+      time: nowTime
     });
     
     if (changesLog.length > 50) changesLog.pop();
     
-    // Save logs to localStorage
     localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
+    renderChangesLogList();
+
+    db.ref().update({ tankhouseLogs: changesLog }).catch(err => {
+      console.warn("Firebase log sync failed:", err);
+    });
   }
 
   function openModal(id) {
     if (id === 'changesModal') {
-      const list = document.getElementById('changesLogList');
-      if (changesLog.length === 0) {
-        list.innerHTML = `<li>${tr('emptyLog')}</li>`;
-      } else {
-        list.innerHTML = changesLog.map(log => `<li>${log.msg}</li>`).join('');
-      }
+      renderChangesLogList();
     }
     document.getElementById(id).style.display = 'flex';
   }
@@ -1455,15 +1397,11 @@
       return;
     }
     
-    // Perbaikan Waktu 12 Jam (EN) / 24 Jam (ID)
-    const isId = currentLang === 'id';
-    const loc = isId ? 'id-ID' : 'en-US';
+    const loc = currentLang === 'id' ? 'id-ID' : 'en-US';
     const dateStr = d.toLocaleDateString(loc, { month: 'short', day: '2-digit', year: 'numeric' });
-    const timeStr = d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: !isId });
+    const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
     badge.textContent = `${tr('lastUpdate')}${dateStr} • ${timeStr}`;
   }
-
-  const cachedLastUpdated = localStorage.getItem(LOCAL_STORAGE_LAST_UPDATED);
 
   function generateDefaultPlantData() {
     let data = [];
@@ -1733,6 +1671,17 @@
     if (ts) {
       localStorage.setItem(LOCAL_STORAGE_LAST_UPDATED, ts);
       updateLastUpdatedUI(ts);
+    }
+  });
+
+  db.ref('tankhouseLogs').on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      const nowMs = Date.now();
+      const logs = Array.isArray(data) ? data : Object.values(data);
+      changesLog = logs.filter(item => item && item.msg && (nowMs - item.time) <= THREE_DAYS_MS);
+      localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
+      renderChangesLogList();
     }
   });
 
@@ -2675,11 +2624,9 @@
 
   setInterval(() => {
     const now = new Date();
-    // Perbaikan Waktu 12 Jam (EN) / 24 Jam (ID)
-    const isId = currentLang === 'id';
-    const loc = isId ? 'id-ID' : 'en-US';
+    const loc = currentLang === 'id' ? 'id-ID' : 'en-US';
     const dateStr = now.toLocaleDateString(loc, { day: '2-digit', month: 'short', year: 'numeric' });
-    const timeStr = now.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: !isId });
+    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
     
     document.getElementById('liveClock').textContent = `${dateStr} • ${timeStr}`;
   }, 1000);
