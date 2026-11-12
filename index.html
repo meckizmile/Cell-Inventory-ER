@@ -79,10 +79,35 @@
   .widget-container {
     width: 100%;
     height: 100vh;
-    padding: 10px;
+    padding: 8px 10px 10px 10px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 6px;
+  }
+
+  .brand-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    flex-shrink: 0;
+  }
+
+  .brand-logo-box {
+    display: inline-flex;
+    align-items: center;
+    background: #ffffff;
+    padding: 3px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--stroke-default);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+  }
+
+  .brand-logo {
+    height: 24px;
+    width: auto;
+    display: block;
+    object-fit: contain;
   }
 
   .app-card {
@@ -93,7 +118,8 @@
     flex-direction: column;
     gap: 10px;
     border: 1px solid var(--stroke-default);
-    height: 100%;
+    flex: 1;
+    min-height: 0;
     overflow: hidden;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
   }
@@ -230,6 +256,10 @@
     flex-wrap: wrap;
     gap: 10px 12px;
     align-items: flex-end;
+  }
+
+  .collapsible-filters {
+    display: contents;
   }
 
   .control-group {
@@ -686,10 +716,36 @@
       padding-bottom: 110px;
     }
 
+    .brand-logo {
+      height: 20px;
+    }
+
     .app-card {
       height: auto;
       overflow: visible;
       padding: 10px;
+      flex: none;
+    }
+
+    .header {
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+
+    .title-area {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .header-actions {
+      width: 100%;
+      justify-content: center;
+      align-items: center;
     }
 
     .kpi-grid {
@@ -717,6 +773,27 @@
       align-items: stretch;
       gap: 8px;
       padding: 10px;
+    }
+
+    .collapsible-filters {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      width: 100%;
+    }
+
+    .collapsible-filters.is-open {
+      display: flex;
+    }
+
+    .mobile-filter-toggle {
+      width: 100%;
+      justify-content: center;
+      min-height: 30px;
+      font-weight: 700;
+      background: var(--surface);
+      color: var(--primary);
+      border-color: var(--primary);
     }
 
     .control-group {
@@ -843,6 +920,12 @@
 <body>
 
 <div class="widget-container">
+  <div class="brand-header-bar">
+    <div class="brand-logo-box">
+      <img src="Freeport.png" alt="PT Freeport Indonesia" class="brand-logo">
+    </div>
+  </div>
+
   <div class="app-card" id="captureArea">
     
     <div class="header">
@@ -915,62 +998,66 @@
         </div>
       </div>
 
-      <div class="control-group">
-        <label data-i18n="cellViewLabel">Cell View</label>
-        <select class="lumi-select" id="contentSelect" onchange="renderMatrix()">
-          <option value="ALL" selected data-i18n="optAllCells">All Cells</option>
-          <option value="FILLED" data-i18n="optFilled">Filled Cells Only</option>
-          <option value="EMPTY" data-i18n="optEmpty">Empty Cells Only</option>
-        </select>
-      </div>
+      <button type="button" class="lumi-chip mobile-only-btn mobile-filter-toggle" id="toggleMobileFiltersBtn" onclick="toggleMobileFilters()">🔍 Show Filters</button>
 
-      <div class="control-group">
-        <label data-i18n="zoneLabel">Zone</label>
-        <select class="lumi-select" id="zoneSelect" onchange="renderMatrix()">
-          <option value="ALL" data-i18n="optAllZones">All Zones</option>
-          <option value="North" data-i18n="optNorth">North</option>
-          <option value="South" data-i18n="optSouth">South</option>
-        </select>
-      </div>
+      <div class="collapsible-filters" id="mobileFiltersWrapper">
+        <div class="control-group">
+          <label data-i18n="cellViewLabel">Cell View</label>
+          <select class="lumi-select" id="contentSelect" onchange="renderMatrix()">
+            <option value="ALL" selected data-i18n="optAllCells">All Cells</option>
+            <option value="FILLED" data-i18n="optFilled">Filled Cells Only</option>
+            <option value="EMPTY" data-i18n="optEmpty">Empty Cells Only</option>
+          </select>
+        </div>
 
-      <div class="control-group">
-        <label data-i18n="groupLabel">Group</label>
-        <select class="lumi-select" id="groupSelect" onchange="renderMatrix()">
-          <option value="ALL" data-i18n="optAllGroups">All Groups</option>
-        </select>
-      </div>
+        <div class="control-group">
+          <label data-i18n="zoneLabel">Zone</label>
+          <select class="lumi-select" id="zoneSelect" onchange="renderMatrix()">
+            <option value="ALL" data-i18n="optAllZones">All Zones</option>
+            <option value="North" data-i18n="optNorth">North</option>
+            <option value="South" data-i18n="optSouth">South</option>
+          </select>
+        </div>
 
-      <div class="control-group">
-        <label data-i18n="anodeFilterLabel">Anode Filter</label>
-        <select class="lumi-select" id="statusSelect" onchange="renderMatrix()">
-          <option value="ALL" data-i18n="optAllAnodes">All Anodes</option>
-          <option value="63 FL">63FL (Anode 63 Full)</option>
-          <option value="62 KU">62KU (Anode 62 Kosong Utara)</option>
-          <option value="62 KS">62KS (Anode 62 Kosong Selatan)</option>
-          <option value="62 SA">62SA (Spent Anode)</option>
-          <option value="NONE" data-i18n="optEmptyAnode">Empty</option>
-        </select>
-      </div>
+        <div class="control-group">
+          <label data-i18n="groupLabel">Group</label>
+          <select class="lumi-select" id="groupSelect" onchange="renderMatrix()">
+            <option value="ALL" data-i18n="optAllGroups">All Groups</option>
+          </select>
+        </div>
 
-      <div class="control-group">
-        <label data-i18n="cathodeFilterLabel">Cathode Filter</label>
-        <select class="lumi-select" id="cathSelect" onchange="renderMatrix()">
-          <option value="ALL" data-i18n="optAllCathodes">All Cathodes</option>
-          <option value="CATH">CATH (Cathode)</option>
-          <option value="SS">SS (SS Blank)</option>
-          <option value="NONE" data-i18n="optEmptyCathode">Empty</option>
-        </select>
-      </div>
+        <div class="control-group">
+          <label data-i18n="anodeFilterLabel">Anode Filter</label>
+          <select class="lumi-select" id="statusSelect" onchange="renderMatrix()">
+            <option value="ALL" data-i18n="optAllAnodes">All Anodes</option>
+            <option value="63 FL">63FL (Anode 63 Full)</option>
+            <option value="62 KU">62KU (Anode 62 Kosong Utara)</option>
+            <option value="62 KS">62KS (Anode 62 Kosong Selatan)</option>
+            <option value="62 SA">62SA (Spent Anode)</option>
+            <option value="NONE" data-i18n="optEmptyAnode">Empty</option>
+          </select>
+        </div>
 
-      <div class="control-group clear-group">
-        <label data-i18n="clearDataLabel">Clear Cell Data</label>
-        <div class="segmented-pills">
-          <button onclick="kosongkanIsianPhase(1)" data-i18n="btnClrP1">Clear P1</button>
-          <button onclick="kosongkanIsianPhase(2)" data-i18n="btnClrP2">Clear P2</button>
-          <button onclick="kosongkanIsianPhase(3)" data-i18n="btnClrP3">Clear P3</button>
-          <button onclick="kosongkanIsianPhase('Machine')" data-i18n="btnClrMach">Clear Machine</button>
+        <div class="control-group">
+          <label data-i18n="cathodeFilterLabel">Cathode Filter</label>
+          <select class="lumi-select" id="cathSelect" onchange="renderMatrix()">
+            <option value="ALL" data-i18n="optAllCathodes">All Cathodes</option>
+            <option value="CATH">CATH (Cathode)</option>
+            <option value="SS">SS (SS Blank)</option>
+            <option value="NONE" data-i18n="optEmptyCathode">Empty</option>
+          </select>
+        </div>
 
-          <button class="lumi-chip desktop-only-btn" onclick="openModal('instructionModal')" data-i18n="instructions" style="background: var(--primary); color: white; border-color: transparent; font-weight: bold;">ℹ️ Instructions for Use</button>
+        <div class="control-group clear-group">
+          <label data-i18n="clearDataLabel">Clear Cell Data</label>
+          <div class="segmented-pills">
+            <button onclick="kosongkanIsianPhase(1)" data-i18n="btnClrP1">Clear P1</button>
+            <button onclick="kosongkanIsianPhase(2)" data-i18n="btnClrP2">Clear P2</button>
+            <button onclick="kosongkanIsianPhase(3)" data-i18n="btnClrP3">Clear P3</button>
+            <button onclick="kosongkanIsianPhase('Machine')" data-i18n="btnClrMach">Clear Machine</button>
+
+            <button class="lumi-chip desktop-only-btn" onclick="openModal('instructionModal')" data-i18n="instructions" style="background: var(--primary); color: white; border-color: transparent; font-weight: bold;">ℹ️ Instructions for Use</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1079,6 +1166,8 @@
       appTitle: "Cell Inventory",
       appSubtitle: "North & South Zone • Anode & Cathode Setting",
       showChanges: "🔄 Show Changes",
+      showFilters: "🔍 Show Filters",
+      hideFilters: "🔼 Hide Filters",
       checking: "🟢 Checking...",
       online: "🟢 Online",
       offline: "🔴 Offline / Local",
@@ -1151,6 +1240,8 @@
       appTitle: "Inventaris Cell",
       appSubtitle: "Zona Utara & Selatan • Pengaturan Anoda & Katoda",
       showChanges: "🔄 Riwayat Perubahan",
+      showFilters: "🔍 Tampilkan Filter",
+      hideFilters: "🔼 Sembunyikan Filter",
       checking: "🟢 Memeriksa...",
       online: "🟢 Online",
       offline: "🔴 Offline / Lokal",
@@ -1222,9 +1313,27 @@
   };
 
   let currentLang = localStorage.getItem('tankhouse_lang') || 'id';
+  let isMobileFiltersOpen = false;
 
   function tr(key) {
     return i18n[currentLang][key] || key;
+  }
+
+  function toggleMobileFilters() {
+    isMobileFiltersOpen = !isMobileFiltersOpen;
+    updateMobileFiltersUI();
+  }
+
+  function updateMobileFiltersUI() {
+    const wrapper = document.getElementById('mobileFiltersWrapper');
+    const btn = document.getElementById('toggleMobileFiltersBtn');
+    if (wrapper) {
+      if (isMobileFiltersOpen) wrapper.classList.add('is-open');
+      else wrapper.classList.remove('is-open');
+    }
+    if (btn) {
+      btn.textContent = isMobileFiltersOpen ? tr('hideFilters') : tr('showFilters');
+    }
   }
 
   function applyLanguage() {
@@ -1241,8 +1350,10 @@
     document.getElementById('langTogglePC').textContent = btnText;
     document.getElementById('langToggleMobile').textContent = btnText;
 
+    updateMobileFiltersUI();
     updateDbStatusUI();
     updateLastUpdatedUI(localStorage.getItem(LOCAL_STORAGE_LAST_UPDATED));
+    updateLiveClock();
     renderChangesLogList();
 
     updateThemeButtonLabel(document.documentElement.getAttribute('data-theme'));
@@ -1397,9 +1508,12 @@
       return;
     }
     
-    const loc = currentLang === 'id' ? 'id-ID' : 'en-US';
+    const isEn = currentLang === 'en';
+    const loc = isEn ? 'en-US' : 'id-ID';
     const dateStr = d.toLocaleDateString(loc, { month: 'short', day: '2-digit', year: 'numeric' });
-    const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const timeStr = isEn
+      ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+      : d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     badge.textContent = `${tr('lastUpdate')}${dateStr} • ${timeStr}`;
   }
 
@@ -2346,17 +2460,19 @@
 
     // WA REPORT GENERATION
     const now = new Date();
-    const loc = currentLang === 'id' ? 'id-ID' : 'en-US';
+    const isEn = currentLang === 'en';
+    const loc = isEn ? 'en-US' : 'id-ID';
     const dayName = now.toLocaleDateString(loc, { weekday: 'long' });
     const dateNum = now.getDate();
     const monthName = now.toLocaleDateString(loc, { month: 'short' });
     const yearNum = now.getFullYear();
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const waTimeStr = isEn
+      ? now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+      : `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     
-    let timeHeader = currentLang === 'id' 
-      ? `📅 ${dayName}, ${dateNum} ${monthName} ${yearNum} | ${hours}:${minutes}` 
-      : `📅 ${dayName}, ${monthName} ${dateNum}, ${yearNum} | ${hours}:${minutes}`;
+    let timeHeader = !isEn
+      ? `📅 ${dayName}, ${dateNum} ${monthName} ${yearNum} | ${waTimeStr}` 
+      : `📅 ${dayName}, ${monthName} ${dateNum}, ${yearNum} | ${waTimeStr}`;
 
     function getItemsForCategory(filterFn, isCathode = false) {
       let north = { total: 0, lines: [] };
@@ -2622,14 +2738,21 @@
     }
   });
 
-  setInterval(() => {
+  function updateLiveClock() {
+    const clockEl = document.getElementById('liveClock');
+    if (!clockEl) return;
     const now = new Date();
-    const loc = currentLang === 'id' ? 'id-ID' : 'en-US';
+    const isEn = currentLang === 'en';
+    const loc = isEn ? 'en-US' : 'id-ID';
     const dateStr = now.toLocaleDateString(loc, { day: '2-digit', month: 'short', year: 'numeric' });
-    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const timeStr = isEn
+      ? now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
+      : now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     
-    document.getElementById('liveClock').textContent = `${dateStr} • ${timeStr}`;
-  }, 1000);
+    clockEl.textContent = `${dateStr} • ${timeStr}`;
+  }
+
+  setInterval(updateLiveClock, 1000);
 
   // Initialize
   initTheme();
