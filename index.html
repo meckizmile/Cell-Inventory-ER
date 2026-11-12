@@ -694,6 +694,36 @@
       padding: 10px;
     }
 
+    /* Penyesuaian Header agar Center di Mobile (Instruksi 2) */
+    .header {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 12px;
+      padding-bottom: 12px;
+    }
+    .title-area {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+    .title-area h1, .title-area p {
+      text-align: center;
+    }
+    .header-actions {
+      justify-content: center;
+      width: 100%;
+    }
+
+    /* Penyesuaian Toggle Filter Mobile (Instruksi 3) */
+    .mobile-filter-group {
+      display: none !important;
+    }
+    .mobile-filter-group.show-filter {
+      display: flex !important;
+    }
+
     .kpi-grid {
       grid-template-columns: repeat(3, 1fr);
       gap: 6px;
@@ -861,7 +891,7 @@
         <button class="lumi-chip" id="themeToggleBtn" onclick="toggleTheme()" style="min-height:24px; font-weight:700;">🌙 Dark</button>
         <div class="update-badge" id="dbStatus" data-i18n="checking" style="color: var(--positive);">🟢 Checking...</div>
         <div class="update-badge" id="lastUpdatedBadge" style="color: var(--primary);">Last Update: -</div>
-        <div class="update-badge" id="liveClock">Nov 5, 2026 • 00:00:00 AM</div>
+        <div class="update-badge" id="liveClock">Nov 5, 2026 • 00:00:00</div>
 
         <button class="lumi-chip mobile-only-btn" onclick="openModal('changesModal')" data-i18n="showChanges" style="min-height:24px; font-weight:700; color: var(--primary); border-color: var(--primary);">🔄 Show Changes</button>
 
@@ -917,7 +947,10 @@
         </div>
       </div>
 
-      <div class="control-group">
+      <!-- TOMBOL TOGGLE FILTER MOBILE BARU -->
+      <button class="lumi-chip mobile-only-btn" id="toggleFiltersBtn" onclick="toggleMobileFilters()" style="width: 100%; margin-top: 4px; font-weight: 700; justify-content: center; background: var(--surface-container-high); border: 1px solid var(--stroke-default); color: var(--on-surface);" data-i18n="showFilters">🔽 Show Filters</button>
+
+      <div class="control-group mobile-filter-group">
         <label data-i18n="cellViewLabel">Cell View</label>
         <select class="lumi-select" id="contentSelect" onchange="renderMatrix()">
           <option value="ALL" selected data-i18n="optAllCells">All Cells</option>
@@ -926,7 +959,7 @@
         </select>
       </div>
 
-      <div class="control-group">
+      <div class="control-group mobile-filter-group">
         <label data-i18n="zoneLabel">Zone</label>
         <select class="lumi-select" id="zoneSelect" onchange="renderMatrix()">
           <option value="ALL" data-i18n="optAllZones">All Zones</option>
@@ -935,14 +968,14 @@
         </select>
       </div>
 
-      <div class="control-group">
+      <div class="control-group mobile-filter-group">
         <label data-i18n="groupLabel">Group</label>
         <select class="lumi-select" id="groupSelect" onchange="renderMatrix()">
           <option value="ALL" data-i18n="optAllGroups">All Groups</option>
         </select>
       </div>
 
-      <div class="control-group">
+      <div class="control-group mobile-filter-group">
         <label data-i18n="anodeFilterLabel">Anode Filter</label>
         <select class="lumi-select" id="statusSelect" onchange="renderMatrix()">
           <option value="ALL" data-i18n="optAllAnodes">All Anodes</option>
@@ -954,7 +987,7 @@
         </select>
       </div>
 
-      <div class="control-group">
+      <div class="control-group mobile-filter-group">
         <label data-i18n="cathodeFilterLabel">Cathode Filter</label>
         <select class="lumi-select" id="cathSelect" onchange="renderMatrix()">
           <option value="ALL" data-i18n="optAllCathodes">All Cathodes</option>
@@ -1081,6 +1114,8 @@
       appTitle: "Cell Inventory",
       appSubtitle: "North & South Zone • Anode & Cathode Setting",
       showChanges: "🔄 Show Changes",
+      showFilters: "🔽 Show Filters",
+      hideFilters: "🔼 Hide Filters",
       checking: "🟢 Checking...",
       online: "🟢 Online",
       offline: "🔴 Offline / Local",
@@ -1147,12 +1182,14 @@
       txtEmptyStr: "Empty",
       txtFilledStr: "FILLED",
       txtCompEmpty: "COMPLETELY EMPTY",
-      instBody: `<b>1. Selecting Cells:</b><br>💻 <b>PC/Laptop:</b> Click a cell. Hold <b>Shift + Click</b> to select multiple cells. Use arrow keys to navigate.<br>📱 <b>Mobile/HP:</b> Tap any cell on the screen.<br><br><b>2. Changing Status:</b><br>💻 <b>PC/Laptop:</b> Use the <b>Cell Settings</b> panel on the right, or keyboard shortcuts: <b>1/2/3/4</b> for Anode, <b>C/S</b> for Cathode, and <b>Del</b> to clear.<br>📱 <b>Mobile/HP:</b> Use the <b>Quick Bar</b> buttons that appear at the bottom of your screen.<br><br><b>3. Filtering the View:</b><br>- Use the dropdown menus at the top (Phase, Zone, Group) to easily find specific cells.<br><br><b>4. WA Report:</b><br>- The report is generated automatically. Click <b>"Copy WA Text"</b> and paste it into WhatsApp.<br><br><b>5. Undo/Redo & History:</b><br>- Made a mistake? Click <b>Undo</b> or press <b>Ctrl+Z</b> (on PC). Click <b>"Show Changes"</b> to view today's edit history from all users.`
+      instBody: `<b>1. Filter & Navigation:</b><br>- Use <b>Phase</b>, <b>Cell View</b>, <b>Zone</b>, and <b>Group</b> menus above to filter the grid.<br><br><b>2. Selecting Cells:</b><br>- Click any cell to select it.<br>- <b>Shift + Click</b> another cell to select a range.<br>- Use <b>Arrow Keys</b> to navigate.<br><br><b>3. Changing Status:</b><br>- Use <b>Cell Settings</b> on the right (PC) or <b>Quick Bar</b> at the bottom (Mobile).<br>- Or use <b>Keyboard Shortcuts</b>:<br>  • <b>1</b> : 63 FL<br>  • <b>2</b> : 62 KU<br>  • <b>3</b> : 62 KS<br>  • <b>4</b> : 62 SA<br>  • <b>C</b> : CATH (Cathode)<br>  • <b>S</b> : SS (SS Blank)<br>  • <b>0 / Del</b> : Clear Data<br><br><b>4. WA Report:</b><br>- Generates automatically. Click <b>"Copy WA Text"</b>.<br><br><b>5. Undo/Redo & Changes:</b><br>- Press <b>Ctrl+Z</b> (Undo) and <b>Ctrl+Y</b> (Redo).<br>- Click <b>"Show Changes"</b> to view modification history.`
     },
     id: {
       appTitle: "Inventaris Cell",
       appSubtitle: "Zona Utara & Selatan • Pengaturan Anoda & Katoda",
       showChanges: "🔄 Riwayat Perubahan",
+      showFilters: "🔽 Tampilkan Filter",
+      hideFilters: "🔼 Sembunyikan Filter",
       checking: "🟢 Memeriksa...",
       online: "🟢 Online",
       offline: "🔴 Offline / Lokal",
@@ -1219,7 +1256,7 @@
       txtEmptyStr: "Kosong",
       txtFilledStr: "TERISI",
       txtCompEmpty: "KOSONG TOTAL",
-      instBody: `<b>1. Cara Memilih Cell:</b><br>💻 <b>PC/Laptop:</b> Klik kotak cell. Tahan <b>Shift + Klik</b> untuk memilih banyak cell sekaligus. Gunakan tombol panah keyboard untuk geser.<br>📱 <b>HP/Mobile:</b> Sentuh kotak cell di layar Anda.<br><br><b>2. Cara Mengubah Status:</b><br>💻 <b>PC/Laptop:</b> Gunakan menu <b>Cell Settings</b> di sebelah kanan, atau tombol keyboard: <b>1/2/3/4</b> untuk Anoda, <b>C/S</b> untuk Katoda, <b>Del</b> untuk menghapus.<br>📱 <b>HP/Mobile:</b> Gunakan tombol-tombol <b>Quick Bar</b> yang muncul di bagian bawah layar.<br><br><b>3. Filter Tampilan:</b><br>- Gunakan menu pilihan di atas (Phase, Zone, Group) untuk mencari area atau cell tertentu dengan mudah.<br><br><b>4. Laporan WA:</b><br>- Laporan terbuat otomatis. Cukup klik tombol <b>"Salin Teks WA"</b> lalu paste di WhatsApp.<br><br><b>5. Batal (Undo) & Riwayat:</b><br>- Jika salah, klik <b>Undo (Batal)</b> atau tekan <b>Ctrl+Z</b> (di PC). Klik <b>"Riwayat Perubahan"</b> untuk melihat riwayat modifikasi data dari semua pengguna.`
+      instBody: `<b>1. Filter & Navigasi:</b><br>- Gunakan menu <b>Phase</b>, <b>Cell View</b>, <b>Zone</b>, dan <b>Group</b> di atas untuk menyaring tampilan grid.<br><br><b>2. Memilih Cell:</b><br>- Klik cell mana saja untuk memilihnya.<br>- <b>Shift + Klik</b> pada cell lain untuk memilih rentang banyak cell sekaligus.<br>- Gunakan <b>tombol Panah (Keyboard Arrows)</b> untuk berpindah antar cell.<br><br><b>3. Mengubah Status (Anode / Cathode):</b><br>- Setelah memilih cell, atur via <b>Cell Settings</b> di panel kanan (PC) atau <b>Quick Bar</b> di bawah (Mobile).<br>- Atau gunakan <b>Shortcut Keyboard</b>:<br>  • <b>1</b> : 63 FL<br>  • <b>2</b> : 62 KU<br>  • <b>3</b> : 62 KS<br>  • <b>4</b> : 62 SA<br>  • <b>C</b> : CATH (Cathode)<br>  • <b>S</b> : SS (SS Blank)<br>  • <b>0 / Delete</b> : Clear / Hapus Data Cell<br><br><b>4. Laporan Otomatis (WA Report):</b><br>- Format WA ter-generate otomatis di kanan bawah. Klik <b>"Copy WA Text"</b>.<br><br><b>5. Riwayat Perubahan:</b><br>- Gunakan shortcut <b>Ctrl+Z</b> (Undo) dan <b>Ctrl+Y</b> (Redo).<br>- Gunakan tombol <b>"Show Changes"</b> untuk melihat riwayat modifikasi data.`
     }
   };
 
@@ -1244,7 +1281,7 @@
     document.getElementById('langTogglePC').textContent = btnText;
     document.getElementById('langToggleMobile').textContent = btnText;
 
-    // FIX: Update UI for connection status and last update instantly
+    // Update UI for connection status and last update instantly
     updateDbStatusUI();
     updateLastUpdatedUI(localStorage.getItem(LOCAL_STORAGE_LAST_UPDATED));
 
@@ -1261,8 +1298,38 @@
   }
   /* ======================================= */
 
-  /* ====== FITUR LOG PERUBAHAN (SHOW CHANGES DETAIL - REALTIME SYNC) ====== */
-  let changesLog = [];
+  /* ====== FITUR TOGGLE MOBILE FILTER (SHOW/HIDE) ====== */
+  let filtersVisible = false;
+  function toggleMobileFilters() {
+    filtersVisible = !filtersVisible;
+    const groups = document.querySelectorAll('.mobile-filter-group');
+    const btn = document.getElementById('toggleFiltersBtn');
+    
+    groups.forEach(g => {
+      if (filtersVisible) {
+        g.classList.add('show-filter');
+      } else {
+        g.classList.remove('show-filter');
+      }
+    });
+    
+    if (btn) {
+      btn.setAttribute('data-i18n', filtersVisible ? 'hideFilters' : 'showFilters');
+      btn.innerHTML = tr(filtersVisible ? 'hideFilters' : 'showFilters');
+    }
+  }
+  /* ======================================================= */
+
+  /* ====== FITUR LOG PERUBAHAN (SHOW CHANGES DETAIL) ====== */
+  // Load existing logs from localStorage & Delete older than 3 days
+  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
+  const nowMs = Date.now();
+  let rawLog = JSON.parse(localStorage.getItem('tankhouse_changes_log')) || [];
+  
+  let changesLog = rawLog.map(item => {
+    if (typeof item === 'string') return { msg: item, time: nowMs }; // Retro-compatibility for previous format
+    return item;
+  }).filter(item => (nowMs - item.time) <= THREE_DAYS_MS);
 
   function formatLogTargets(targets) {
     if (!targets || targets.length === 0) return "";
@@ -1300,18 +1367,15 @@
     const timeFmt = `[${dd}/${mm}/${yy}, ${hh}:${mins}]`;
     const targetStr = targets ? ` ${formatLogTargets(targets)}` : "";
     
-    const entry = {
+    changesLog.unshift({
       msg: `<b>${timeFmt}</b> ${actionTxt} ${targetStr}`,
       time: now.getTime()
-    };
+    });
     
-    // Update local immediately for responsive UI
-    changesLog.unshift(entry);
     if (changesLog.length > 50) changesLog.pop();
-    localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
     
-    // Realtime Push to Firebase (Capped to 50 later by limits on listener to keep lightweight)
-    db.ref('changesLog').push(entry).catch(err => console.log('Log sync failed:', err));
+    // Save logs to localStorage
+    localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
   }
 
   function openModal(id) {
@@ -1391,9 +1455,11 @@
       return;
     }
     
-    const loc = currentLang === 'id' ? 'id-ID' : 'en-US';
+    // Perbaikan Waktu 12 Jam (EN) / 24 Jam (ID)
+    const isId = currentLang === 'id';
+    const loc = isId ? 'id-ID' : 'en-US';
     const dateStr = d.toLocaleDateString(loc, { month: 'short', day: '2-digit', year: 'numeric' });
-    const timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const timeStr = d.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: !isId });
     badge.textContent = `${tr('lastUpdate')}${dateStr} • ${timeStr}`;
   }
 
@@ -1660,25 +1726,6 @@
     populateGroupSelect();
     recalculateStats();
     renderMatrix();
-  });
-  
-  // Realtime Sync Listener for changesLog (limited to 50 latest logs so no performance issue)
-  db.ref('changesLog').orderByChild('time').limitToLast(50).on('value', (snapshot) => {
-    const data = snapshot.val();
-    if (data) {
-      let arr = Object.values(data);
-      arr.sort((a, b) => b.time - a.time);
-      changesLog = arr;
-      localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
-      
-      const modal = document.getElementById('changesModal');
-      if (modal && modal.style.display !== 'none') {
-        const list = document.getElementById('changesLogList');
-        if (list) {
-          list.innerHTML = changesLog.map(log => `<li>${log.msg}</li>`).join('');
-        }
-      }
-    }
   });
 
   db.ref('lastUpdated').on('value', (snapshot) => {
@@ -2628,9 +2675,11 @@
 
   setInterval(() => {
     const now = new Date();
-    const loc = currentLang === 'id' ? 'id-ID' : 'en-US';
+    // Perbaikan Waktu 12 Jam (EN) / 24 Jam (ID)
+    const isId = currentLang === 'id';
+    const loc = isId ? 'id-ID' : 'en-US';
     const dateStr = now.toLocaleDateString(loc, { day: '2-digit', month: 'short', year: 'numeric' });
-    const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+    const timeStr = now.toLocaleTimeString(loc, { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: !isId });
     
     document.getElementById('liveClock').textContent = `${dateStr} • ${timeStr}`;
   }, 1000);
