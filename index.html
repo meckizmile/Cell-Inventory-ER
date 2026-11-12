@@ -1147,7 +1147,7 @@
       txtEmptyStr: "Empty",
       txtFilledStr: "FILLED",
       txtCompEmpty: "COMPLETELY EMPTY",
-      instBody: `<b>1. Selecting Cells:</b><br>💻 <b>PC/Laptop:</b> Click a cell. Hold <b>Shift + Click</b> to select multiple cells. Use arrow keys to navigate.<br>📱 <b>Mobile/HP:</b> Tap any cell on the screen.<br><br><b>2. Changing Status:</b><br>💻 <b>PC/Laptop:</b> Use the <b>Cell Settings</b> panel on the right, or keyboard shortcuts: <b>1/2/3/4</b> for Anode, <b>C/S</b> for Cathode, and <b>Del</b> to clear.<br>📱 <b>Mobile/HP:</b> Use the <b>Quick Bar</b> buttons that appear at the bottom of your screen.<br><br><b>3. Filtering the View:</b><br>- Use the dropdown menus at the top (Phase, Zone, Group) to easily find specific cells.<br><br><b>4. WA Report:</b><br>- The report is generated automatically. Click <b>"Copy WA Text"</b> and paste it into WhatsApp.<br><br><b>5. Undo/Redo & History:</b><br>- Made a mistake? Click <b>Undo</b> or press <b>Ctrl+Z</b> (on PC). Click <b>"Show Changes"</b> to view today's edit history.`
+      instBody: `<b>1. Selecting Cells:</b><br>💻 <b>PC/Laptop:</b> Click a cell. Hold <b>Shift + Click</b> to select multiple cells. Use arrow keys to navigate.<br>📱 <b>Mobile/HP:</b> Tap any cell on the screen.<br><br><b>2. Changing Status:</b><br>💻 <b>PC/Laptop:</b> Use the <b>Cell Settings</b> panel on the right, or keyboard shortcuts: <b>1/2/3/4</b> for Anode, <b>C/S</b> for Cathode, and <b>Del</b> to clear.<br>📱 <b>Mobile/HP:</b> Use the <b>Quick Bar</b> buttons that appear at the bottom of your screen.<br><br><b>3. Filtering the View:</b><br>- Use the dropdown menus at the top (Phase, Zone, Group) to easily find specific cells.<br><br><b>4. WA Report:</b><br>- The report is generated automatically. Click <b>"Copy WA Text"</b> and paste it into WhatsApp.<br><br><b>5. Undo/Redo & History:</b><br>- Made a mistake? Click <b>Undo</b> or press <b>Ctrl+Z</b> (on PC). Click <b>"Show Changes"</b> to view today's edit history from all users.`
     },
     id: {
       appTitle: "Inventaris Cell",
@@ -1219,7 +1219,7 @@
       txtEmptyStr: "Kosong",
       txtFilledStr: "TERISI",
       txtCompEmpty: "KOSONG TOTAL",
-      instBody: `<b>1. Cara Memilih Cell:</b><br>💻 <b>PC/Laptop:</b> Klik kotak cell. Tahan <b>Shift + Klik</b> untuk memilih banyak cell sekaligus. Gunakan tombol panah keyboard untuk geser.<br>📱 <b>HP/Mobile:</b> Sentuh kotak cell di layar Anda.<br><br><b>2. Cara Mengubah Status:</b><br>💻 <b>PC/Laptop:</b> Gunakan menu <b>Cell Settings</b> di sebelah kanan, atau tombol keyboard: <b>1/2/3/4</b> untuk Anoda, <b>C/S</b> untuk Katoda, <b>Del</b> untuk menghapus.<br>📱 <b>HP/Mobile:</b> Gunakan tombol-tombol <b>Quick Bar</b> yang muncul di bagian bawah layar.<br><br><b>3. Filter Tampilan:</b><br>- Gunakan menu pilihan di atas (Phase, Zone, Group) untuk mencari area atau cell tertentu dengan mudah.<br><br><b>4. Laporan WA:</b><br>- Laporan terbuat otomatis. Cukup klik tombol <b>"Salin Teks WA"</b> lalu paste di WhatsApp.<br><br><b>5. Batal (Undo) & Riwayat:</b><br>- Jika salah, klik <b>Undo (Batal)</b> atau tekan <b>Ctrl+Z</b> (di PC). Klik <b>"Riwayat Perubahan"</b> untuk melihat riwayat modifikasi data.`
+      instBody: `<b>1. Cara Memilih Cell:</b><br>💻 <b>PC/Laptop:</b> Klik kotak cell. Tahan <b>Shift + Klik</b> untuk memilih banyak cell sekaligus. Gunakan tombol panah keyboard untuk geser.<br>📱 <b>HP/Mobile:</b> Sentuh kotak cell di layar Anda.<br><br><b>2. Cara Mengubah Status:</b><br>💻 <b>PC/Laptop:</b> Gunakan menu <b>Cell Settings</b> di sebelah kanan, atau tombol keyboard: <b>1/2/3/4</b> untuk Anoda, <b>C/S</b> untuk Katoda, <b>Del</b> untuk menghapus.<br>📱 <b>HP/Mobile:</b> Gunakan tombol-tombol <b>Quick Bar</b> yang muncul di bagian bawah layar.<br><br><b>3. Filter Tampilan:</b><br>- Gunakan menu pilihan di atas (Phase, Zone, Group) untuk mencari area atau cell tertentu dengan mudah.<br><br><b>4. Laporan WA:</b><br>- Laporan terbuat otomatis. Cukup klik tombol <b>"Salin Teks WA"</b> lalu paste di WhatsApp.<br><br><b>5. Batal (Undo) & Riwayat:</b><br>- Jika salah, klik <b>Undo (Batal)</b> atau tekan <b>Ctrl+Z</b> (di PC). Klik <b>"Riwayat Perubahan"</b> untuk melihat riwayat modifikasi data dari semua pengguna.`
     }
   };
 
@@ -1239,8 +1239,8 @@
 
     document.getElementById('instructionBody').innerHTML = i18n[currentLang].instBody;
     
-    // Toggle Text on Language Buttons (Show the CURRENT language)
-    const btnText = currentLang === 'id' ? '🌐 Bahasa Indonesia' : '🌐 English (US)';
+    // Toggle Text on Language Buttons (Show the OPPOSITE language to click)
+    const btnText = currentLang === 'id' ? '🌐 English (US)' : '🌐 Bahasa Indonesia';
     document.getElementById('langTogglePC').textContent = btnText;
     document.getElementById('langToggleMobile').textContent = btnText;
 
@@ -1261,16 +1261,8 @@
   }
   /* ======================================= */
 
-  /* ====== FITUR LOG PERUBAHAN (SHOW CHANGES DETAIL) ====== */
-  // Load existing logs from localStorage & Delete older than 3 days
-  const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
-  const nowMs = Date.now();
-  let rawLog = JSON.parse(localStorage.getItem('tankhouse_changes_log')) || [];
-  
-  let changesLog = rawLog.map(item => {
-    if (typeof item === 'string') return { msg: item, time: nowMs }; // Retro-compatibility for previous format
-    return item;
-  }).filter(item => (nowMs - item.time) <= THREE_DAYS_MS);
+  /* ====== FITUR LOG PERUBAHAN (SHOW CHANGES DETAIL - REALTIME SYNC) ====== */
+  let changesLog = [];
 
   function formatLogTargets(targets) {
     if (!targets || targets.length === 0) return "";
@@ -1308,15 +1300,18 @@
     const timeFmt = `[${dd}/${mm}/${yy}, ${hh}:${mins}]`;
     const targetStr = targets ? ` ${formatLogTargets(targets)}` : "";
     
-    changesLog.unshift({
+    const entry = {
       msg: `<b>${timeFmt}</b> ${actionTxt} ${targetStr}`,
       time: now.getTime()
-    });
+    };
     
+    // Update local immediately for responsive UI
+    changesLog.unshift(entry);
     if (changesLog.length > 50) changesLog.pop();
-    
-    // Save logs to localStorage
     localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
+    
+    // Realtime Push to Firebase (Capped to 50 later by limits on listener to keep lightweight)
+    db.ref('changesLog').push(entry).catch(err => console.log('Log sync failed:', err));
   }
 
   function openModal(id) {
@@ -1665,6 +1660,25 @@
     populateGroupSelect();
     recalculateStats();
     renderMatrix();
+  });
+  
+  // Realtime Sync Listener for changesLog (limited to 50 latest logs so no performance issue)
+  db.ref('changesLog').orderByChild('time').limitToLast(50).on('value', (snapshot) => {
+    const data = snapshot.val();
+    if (data) {
+      let arr = Object.values(data);
+      arr.sort((a, b) => b.time - a.time);
+      changesLog = arr;
+      localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
+      
+      const modal = document.getElementById('changesModal');
+      if (modal && modal.style.display !== 'none') {
+        const list = document.getElementById('changesLogList');
+        if (list) {
+          list.innerHTML = changesLog.map(log => `<li>${log.msg}</li>`).join('');
+        }
+      }
+    }
   });
 
   db.ref('lastUpdated').on('value', (snapshot) => {
