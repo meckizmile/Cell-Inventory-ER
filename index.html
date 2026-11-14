@@ -29,6 +29,20 @@
     --copper-border: #f97316;
     --stainless: #64748b;
     --stainless-border: #94a3b8;
+
+    /* Electrolyte & Electrorefining Tokens (Dark Mode) */
+    --elec-top: rgba(14, 165, 233, 0.34);
+    --elec-mid: rgba(2, 132, 199, 0.54);
+    --elec-bottom: rgba(2, 132, 199, 0.74);
+    --meniscus-color: #7dd3fc;
+    --meniscus-glow: rgba(125, 211, 252, 0.85);
+    --lvl-pill-bg: rgba(9, 14, 26, 0.9);
+    --lvl-pill-text: #7dd3fc;
+    --lvl-pill-border: rgba(125, 211, 252, 0.55);
+    --ionic-copper-glow: rgba(251, 146, 60, 0.34);
+    --ionic-cyan-glow: rgba(56, 189, 248, 0.32);
+    --plate-shadow: rgba(2, 6, 23, 0.78);
+
     --ff-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
     --ff-mono: "JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
     --r-s: 8px;
@@ -55,6 +69,19 @@
     --copper-border: #ea580c;
     --stainless: #475569;
     --stainless-border: #64748b;
+
+    /* Electrolyte & Electrorefining Tokens (Light Mode) */
+    --elec-top: rgba(14, 165, 233, 0.24);
+    --elec-mid: rgba(2, 132, 199, 0.40);
+    --elec-bottom: rgba(3, 105, 161, 0.56);
+    --meniscus-color: #0284c7;
+    --meniscus-glow: rgba(2, 132, 199, 0.55);
+    --lvl-pill-bg: rgba(255, 255, 255, 0.92);
+    --lvl-pill-text: #0369a1;
+    --lvl-pill-border: rgba(2, 132, 199, 0.45);
+    --ionic-copper-glow: rgba(234, 88, 12, 0.26);
+    --ionic-cyan-glow: rgba(2, 132, 199, 0.24);
+    --plate-shadow: rgba(15, 23, 42, 0.34);
   }
 
   * {
@@ -79,9 +106,10 @@
   .widget-container {
     width: 100%;
     height: 100vh;
-    padding: 10px;
+    padding: 8px 10px 10px 10px;
     display: flex;
     flex-direction: column;
+    gap: 6px;
   }
 
   .app-card {
@@ -240,7 +268,7 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
-    min-width: 120px;
+    min-width: 112px;
     flex: 1 1 auto;
   }
 
@@ -378,11 +406,11 @@
   }
 
   .cell-row-26 {
-    grid-template-columns: repeat(13, minmax(52px, 1fr));
+    grid-template-columns: repeat(13, minmax(54px, 1fr));
   }
 
   .cell-row-28 {
-    grid-template-columns: repeat(14, minmax(52px, 1fr));
+    grid-template-columns: repeat(14, minmax(54px, 1fr));
   }
 
   .cell-card {
@@ -391,6 +419,7 @@
     text-align: center;
     cursor: pointer;
     position: relative;
+    overflow: hidden;
     min-height: 54px;
     display: flex;
     flex-direction: column;
@@ -399,6 +428,10 @@
     transition: background 0.12s ease, border-color 0.12s ease;
     user-select: none;
     outline: none !important;
+  }
+
+  .cell-card.has-electrolyte {
+    padding-right: 7px;
   }
 
   .cell-blank {
@@ -466,6 +499,180 @@
     opacity: 1 !important;
   }
 
+  /* =====================================================================
+     ELECTROLYTE VISUALIZATION (SUBMERGED LIQUID + MENISCUS + SHADOW + BUBBLES + MINI BAR)
+     ===================================================================== */
+  .electrolyte-layer {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--lvl, 0%);
+    background: linear-gradient(
+      180deg,
+      var(--elec-top) 0%,
+      var(--elec-mid) 45%,
+      var(--elec-bottom) 100%
+    );
+    z-index: 1;
+    overflow: hidden;
+    contain: strict;
+    pointer-events: none;
+    transition: height 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .meniscus-surface {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2.5px;
+    background: linear-gradient(
+      90deg,
+      rgba(125, 211, 252, 0.78) 0%,
+      #e0f2fe 25%,
+      var(--meniscus-color) 50%,
+      #e0f2fe 75%,
+      rgba(125, 211, 252, 0.78) 100%
+    );
+    box-shadow: 0 0 8px var(--meniscus-glow), 0 0 3px var(--meniscus-color);
+    z-index: 4;
+  }
+
+  .electrode-shadow-layer {
+    position: absolute;
+    left: 4px;
+    right: 4px;
+    bottom: 0;
+    height: 48px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    z-index: 2;
+    pointer-events: none;
+  }
+
+  .cell-card.has-electrolyte .electrode-shadow-layer {
+    right: 7px;
+  }
+
+  .plate-anode {
+    width: 4px;
+    height: 100%;
+    border-radius: 2px 2px 0 0;
+    background: linear-gradient(180deg, rgba(15, 23, 42, 0.5) 0%, var(--plate-shadow) 100%);
+    border-left: 1px solid rgba(251, 146, 60, 0.35);
+    border-right: 1px solid rgba(56, 189, 248, 0.35);
+    box-shadow: 0 0 6px var(--ionic-copper-glow);
+  }
+  .anode-tone-63fl {
+    border-left-color: rgba(52, 211, 153, 0.5);
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.32);
+  }
+  .anode-tone-62ku {
+    border-left-color: rgba(56, 189, 248, 0.5);
+    box-shadow: 0 0 6px rgba(56, 189, 248, 0.34);
+  }
+  .anode-tone-62ks {
+    border-left-color: rgba(192, 132, 252, 0.5);
+    box-shadow: 0 0 6px rgba(168, 85, 247, 0.34);
+  }
+  .anode-tone-62sa {
+    border-left-color: rgba(168, 162, 158, 0.45);
+    box-shadow: 0 0 5px rgba(120, 113, 108, 0.25);
+  }
+
+  .plate-cathode {
+    width: 2px;
+    height: 96%;
+    border-radius: 1.5px 1.5px 0 0;
+    background: linear-gradient(180deg, rgba(251, 146, 60, 0.48) 0%, rgba(234, 88, 12, 0.74) 100%);
+    box-shadow: 0 0 5px var(--ionic-copper-glow);
+  }
+
+  .plate-ss {
+    width: 2px;
+    height: 96%;
+    border-radius: 1.5px 1.5px 0 0;
+    background: linear-gradient(180deg, rgba(203, 213, 225, 0.48) 0%, rgba(148, 163, 184, 0.74) 100%);
+    box-shadow: 0 0 5px var(--ionic-cyan-glow);
+  }
+
+  .gas-bubbles-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  .gas-bubble {
+    position: absolute;
+    top: 100%;
+    left: var(--bx, 50%);
+    width: var(--bsize, 2px);
+    height: var(--bsize, 2px);
+    border-radius: 50%;
+    background: rgba(224, 242, 254, 0.9);
+    box-shadow: 0 0 3px rgba(125, 211, 252, 0.95);
+    will-change: transform, opacity;
+    animation: riseBubbleCell var(--bdur, 2.5s) linear var(--bdelay, 0s) infinite;
+  }
+
+  @keyframes riseBubbleCell {
+    0% {
+      transform: translate3d(0, 0, 0) scale(0.75);
+      opacity: 0;
+    }
+    15% {
+      opacity: 0.9;
+    }
+    60% {
+      transform: translate3d(var(--bsway, 2px), -32px, 0) scale(1);
+      opacity: 0.85;
+    }
+    100% {
+      transform: translate3d(calc(var(--bsway, 2px) * -0.7), -58px, 0) scale(1.08);
+      opacity: 0;
+    }
+  }
+
+  .side-gauge-track {
+    position: absolute;
+    top: 3px;
+    bottom: 3px;
+    right: 2.5px;
+    width: 3px;
+    border-radius: 99px;
+    background: rgba(148, 163, 184, 0.22);
+    z-index: 5;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .side-gauge-fill {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: var(--lvl, 0%);
+    background: var(--meniscus-color);
+    box-shadow: 0 0 5px var(--meniscus-glow);
+    border-radius: 99px;
+    transition: height 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .cell-header-row {
+    position: relative;
+    z-index: 6;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2px;
+    margin-top: 1px;
+  }
+
   .cell-id {
     font-size: 10px;
     font-family: var(--ff-mono);
@@ -473,6 +680,25 @@
     letter-spacing: -0.1px;
     line-height: 1;
     margin-top: 2px;
+    position: relative;
+    z-index: 6;
+  }
+
+  .cell-header-row .cell-id {
+    margin-top: 0;
+  }
+
+  .lvl-corner-badge {
+    font-family: var(--ff-mono);
+    font-size: 7.5px;
+    font-weight: 800;
+    line-height: 1;
+    padding: 1.5px 3px;
+    border-radius: 3.5px;
+    background: var(--lvl-pill-bg);
+    color: var(--lvl-pill-text);
+    border: 1px solid var(--lvl-pill-border);
+    cursor: pointer;
   }
 
   .tags-wrapper {
@@ -482,6 +708,8 @@
     align-items: center;
     width: 100%;
     margin-top: 2px;
+    position: relative;
+    z-index: 6;
   }
 
   .anode-tag, .cathode-tag {
@@ -502,9 +730,9 @@
   }
 
   .tag-63 {
-    background: rgba(16, 185, 129, 0.2);
-    color: #10b981;
-    border: 1px solid rgba(16, 185, 129, 0.5);
+    background: rgba(6, 78, 59, 0.92);
+    color: #34d399;
+    border: 1px solid #10b981;
   }
   [data-theme="light"] .tag-63 {
     background: #d1fae5;
@@ -513,9 +741,9 @@
   }
 
   .tag-62ku {
-    background: rgba(2, 132, 199, 0.2);
-    color: #0284c7;
-    border: 1px solid rgba(2, 132, 199, 0.5);
+    background: rgba(12, 74, 110, 0.92);
+    color: #38bdf8;
+    border: 1px solid #0ea5e9;
   }
   [data-theme="light"] .tag-62ku {
     background: #e0f2fe;
@@ -524,9 +752,9 @@
   }
 
   .tag-62ks {
-    background: rgba(168, 85, 247, 0.2);
-    color: #c084fc;
-    border: 1px solid rgba(168, 85, 247, 0.5);
+    background: rgba(59, 7, 100, 0.92);
+    color: #d8b4fe;
+    border: 1px solid #a855f7;
   }
   [data-theme="light"] .tag-62ks {
     background: #f3e8ff;
@@ -541,9 +769,9 @@
   }
 
   .tag-cath { 
-    background: rgba(234, 88, 12, 0.2); 
-    color: #f97316; 
-    border: 1px solid rgba(234, 88, 12, 0.5); 
+    background: rgba(124, 45, 18, 0.92); 
+    color: #fdba74; 
+    border: 1px solid #f97316;
   }
   [data-theme="light"] .tag-cath {
     background: #ffedd5;
@@ -552,14 +780,38 @@
   }
 
   .tag-ss { 
-    background: rgba(100, 116, 139, 0.2); 
-    color: #cbd5e1; 
-    border: 1px solid rgba(100, 116, 139, 0.5); 
+    background: rgba(30, 41, 59, 0.94); 
+    color: #e2e8f0; 
+    border: 1px solid #94a3b8;
   }
   [data-theme="light"] .tag-ss {
     background: #f1f5f9;
     color: #334155;
     border-color: #64748b;
+  }
+
+  .el-preset-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 4px;
+  }
+
+  .el-preset-btn {
+    padding: 2px 4px;
+    font-size: 10px;
+    font-family: var(--ff-mono);
+    font-weight: 700;
+    border-color: rgba(14, 165, 233, 0.45);
+    color: var(--primary);
+  }
+
+  .el-preset-btn.is-active {
+    background: var(--primary);
+    color: #ffffff;
+    border-color: transparent;
+  }
+  [data-theme="dark"] .el-preset-btn.is-active {
+    color: #032b45;
   }
 
   .inspector-panel {
@@ -687,7 +939,7 @@
       height: auto;
       min-height: 100vh;
       padding: 6px;
-      padding-bottom: 110px;
+      padding-bottom: 92px;
     }
 
     .app-card {
@@ -795,7 +1047,7 @@
       max-height: 60vh;
       height: auto;
       padding: 8px;
-      padding-bottom: 80px;
+      padding-bottom: 52px;
     }
 
     .group-header {
@@ -808,86 +1060,200 @@
       font-size: 13px;
     }
 
-    .group-grid-wrapper {
-      gap: 8px;
-    }
-
     .cell-row-26 {
-      grid-template-columns: repeat(13, minmax(72px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(13, minmax(60px, 1fr));
+      gap: 6px;
     }
 
     .cell-row-28 {
-      grid-template-columns: repeat(14, minmax(72px, 1fr));
-      gap: 8px;
+      grid-template-columns: repeat(14, minmax(60px, 1fr));
+      gap: 6px;
     }
 
     .cell-card {
-      min-height: 70px;
-      padding: 6px 4px;
-      border-radius: 9px;
+      min-height: 58px;
+      padding: 5px 3px;
+      border-radius: 8px;
+    }
+
+    .cell-card.has-electrolyte {
+      padding-right: 8px;
+    }
+
+    .electrode-shadow-layer {
+      height: 52px;
+    }
+
+    .cell-card.has-electrolyte .electrode-shadow-layer {
+      right: 8px;
     }
 
     .cell-id {
-      font-size: 12px;
+      font-size: 11px;
       font-weight: 800;
     }
 
-    .tags-wrapper {
-      gap: 4px;
+    .lvl-corner-badge {
+      font-size: 8px;
+      padding: 1.5px 3.5px;
     }
 
     .anode-tag, .cathode-tag {
-      font-size: 10.5px;
-      padding: 4px 0;
-      border-radius: 5px;
+      font-size: 9.5px;
+      padding: 3px 0;
+      border-radius: 4px;
     }
 
     .inspector-panel {
       height: auto;
       max-height: none;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
     }
 
+    /* Quick Toolbar Mobile: Terpusat & Terpisah Jelas Electrode | Electrolyte */
     .mobile-quick-bar {
       position: fixed;
-      bottom: 12px;
+      bottom: calc(10px + env(safe-area-inset-bottom, 0px));
       left: 50%;
       transform: translateX(-50%);
-      background: rgba(17, 19, 25, 0.96);
-      border: 1px solid rgba(255, 255, 255, 0.18);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
-      padding: 8px 10px;
-      border-radius: 18px;
+      width: fit-content;
+      max-width: calc(100vw - 14px);
+      background: rgba(18, 22, 31, 0.90);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      box-shadow:
+        0 12px 32px rgba(0, 0, 0, 0.45),
+        0 2px 8px rgba(0, 0, 0, 0.25),
+        inset 0 1px 0 rgba(255, 255, 255, 0.10);
+      padding: 5px 7px;
+      border-radius: 15px;
       display: none;
       flex-direction: column;
-      gap: 6px;
-      z-index: 10000;
-      max-width: 96vw;
-      width: max-content;
-    }
-    
-    [data-theme="light"] .mobile-quick-bar {
-      background: rgba(255, 255, 255, 0.96);
-      border-color: rgba(0, 0, 0, 0.18);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.2);
-    }
-
-    .mobile-quick-row {
-      display: flex;
       align-items: center;
       justify-content: center;
       gap: 5px;
+      z-index: 10000;
+      animation: dockSlideUp 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+
+    @keyframes dockSlideUp {
+      from {
+        opacity: 0;
+        transform: translate(-50%, 10px) scale(0.97);
+      }
+      to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+      }
+    }
+    
+    [data-theme="light"] .mobile-quick-bar {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      box-shadow:
+        0 12px 32px rgba(15, 23, 42, 0.16),
+        0 2px 8px rgba(15, 23, 42, 0.06),
+        inset 0 1px 0 rgba(255, 255, 255, 0.95);
+    }
+
+    .mq-section {
+      display: flex;
+      flex-direction: row;
       flex-wrap: nowrap;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+
+    .mq-electrode-section {
+      background: rgba(148, 163, 184, 0.10);
+      border: 1px solid rgba(148, 163, 184, 0.20);
+      padding: 3px 4px;
+      border-radius: 10px;
+      max-width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .mq-electrode-section::-webkit-scrollbar {
+      display: none;
+    }
+
+    .mq-bottom-row {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: nowrap;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      max-width: 100%;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .mq-bottom-row::-webkit-scrollbar {
+      display: none;
+    }
+
+    .mq-el-group {
+      background: rgba(14, 165, 233, 0.09);
+      border: 1px solid rgba(14, 165, 233, 0.26);
+      padding: 3px 4px;
+      border-radius: 10px;
+      flex: 0 0 auto;
+    }
+
+    .mq-actions-group {
+      flex: 0 0 auto;
     }
 
     .mobile-quick-bar button {
-      padding: 6px 10px;
-      font-size: 11px;
-      font-weight: 800;
+      flex: 0 0 auto;
+      height: 27px;
+      min-height: 27px;
+      padding: 0 7.5px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.15px;
       white-space: nowrap;
-      min-height: 34px;
       border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      transition: transform 0.12s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .mobile-quick-bar button:active {
+      transform: scale(0.94);
+    }
+
+    .mobile-quick-bar button.mq-icon-btn {
+      width: 27px;
+      padding: 0;
+      font-size: 11.5px;
+    }
+
+    .mobile-quick-bar button.mq-el-btn {
+      background: rgba(14, 165, 233, 0.14);
+      color: var(--primary);
+      border: 1px solid rgba(14, 165, 233, 0.34);
+      font-family: var(--ff-mono);
+      padding: 0 6.5px;
+    }
+
+    .mobile-quick-bar button.mq-el-btn.is-active {
+      background: var(--primary);
+      color: #ffffff;
+      border-color: transparent;
+      box-shadow: 0 2px 6px rgba(2, 132, 199, 0.35);
+    }
+    [data-theme="dark"] .mobile-quick-bar button.mq-el-btn.is-active {
+      color: #032b45;
+    }
+
+    .mq-divider {
+      flex: 0 0 1px;
+      width: 1px;
+      height: 20px;
+      background: rgba(148, 163, 184, 0.42);
+      margin: 0 1px;
     }
     
     .desktop-only-btn { display: none !important; }
@@ -970,7 +1336,7 @@
         </div>
       </div>
 
-      <button type="button" class="lumi-chip mobile-only-btn mobile-filter-toggle" id="toggleMobileFiltersBtn" onclick="toggleMobileFilters()">🔽 Show Filters</button>
+      <button type="button" class="lumi-chip mobile-only-btn mobile-filter-toggle" id="toggleMobileFiltersBtn" onclick="toggleMobileFilters()">🔍 Show Filters</button>
 
       <div class="collapsible-filters" id="mobileFiltersWrapper">
         <div class="control-group">
@@ -1020,6 +1386,19 @@
           </select>
         </div>
 
+        <div class="control-group">
+          <label data-i18n="electrolyteFilterLabel">Electrolyte Filter</label>
+          <select class="lumi-select" id="electrolyteSelect" onchange="renderMatrix()">
+            <option value="ALL" data-i18n="optAllElectrolyte">All Electrolyte</option>
+            <option value="FILLED" data-i18n="optFilledElectrolyte">Filled (> 0%)</option>
+            <option value="EMPTY" data-i18n="optEmptyElectrolyte">Unfilled (0%)</option>
+            <option value="10">10%</option>
+            <option value="50">50%</option>
+            <option value="70">70%</option>
+            <option value="100">100%</option>
+          </select>
+        </div>
+
         <div class="control-group clear-group">
           <label data-i18n="clearDataLabel">Clear Cell Data</label>
           <div class="segmented-pills">
@@ -1063,6 +1442,17 @@
             <button style="grid-column: span 2;" onclick="updateActiveCellCathode('NONE')" data-i18n="btnClearCathode">Clear Cathode</button>
           </div>
 
+          <div id="electrolyteControlSection" style="display: flex; flex-direction: column; gap: 6px;">
+            <h4 data-i18n="hElectrolyte">Electrolyte Level (Cell Only):</h4>
+            <div class="el-preset-grid">
+              <button class="el-preset-btn" data-el="0" onclick="updateActiveCellElectrolyte(0)">0%</button>
+              <button class="el-preset-btn" data-el="10" onclick="updateActiveCellElectrolyte(10)">10%</button>
+              <button class="el-preset-btn" data-el="50" onclick="updateActiveCellElectrolyte(50)">50%</button>
+              <button class="el-preset-btn" data-el="70" onclick="updateActiveCellElectrolyte(70)">70%</button>
+              <button class="el-preset-btn" data-el="100" onclick="updateActiveCellElectrolyte(100)">100%</button>
+            </div>
+          </div>
+
           <h4 data-i18n="h3Clear">3. Clear Options:</h4>
           <button style="width: 100%; color: var(--error);" onclick="clearCellCompletely()" data-i18n="btnClearDel">Clear / Delete Cell [Del]</button>
 
@@ -1086,20 +1476,31 @@
   </div>
 </div>
 
+<!-- Mobile Quick Toolbar: Terpusat & Terpisah Jelas Electrode | Electrolyte -->
 <div class="mobile-quick-bar" id="mobileQuickBar">
-  <div class="mobile-quick-row">
-    <button style="background: #10b981; color: #ffffff; font-weight: 800; border: 1px solid #059669;" onclick="updateActiveCellAnode('63 FL')">63FL</button>
-    <button style="background: #0284c7; color: #ffffff; font-weight: 800; border: 1px solid #0369a1;" onclick="updateActiveCellAnode('62 KU')">62KU</button>
-    <button style="background: #a855f7; color: #ffffff; font-weight: 800; border: 1px solid #7e22ce;" onclick="updateActiveCellAnode('62 KS')">62KS</button>
-    <button style="background: #57534e; color: #ffffff; font-weight: 800; border: 1px solid #78716c;" onclick="updateActiveCellAnode('62 SA')">62SA</button>
-    <button style="background: var(--copper); color: #ffffff; font-weight: bold; border-color: var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH</button>
-    <button style="background: var(--stainless); color: #ffffff; font-weight: bold; border-color: var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS</button>
+  <div class="mq-section mq-electrode-section">
+    <button style="background: #10b981; color: #ffffff; border: 1px solid #059669;" onclick="updateActiveCellAnode('63 FL')">63FL</button>
+    <button style="background: #0284c7; color: #ffffff; border: 1px solid #0369a1;" onclick="updateActiveCellAnode('62 KU')">62KU</button>
+    <button style="background: #a855f7; color: #ffffff; border: 1px solid #7e22ce;" onclick="updateActiveCellAnode('62 KS')">62KS</button>
+    <button style="background: #57534e; color: #ffffff; border: 1px solid #78716c;" onclick="updateActiveCellAnode('62 SA')">62SA</button>
+    <button style="background: var(--copper); color: #ffffff; border-color: var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH</button>
+    <button style="background: var(--stainless); color: #ffffff; border-color: var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS</button>
   </div>
-  <div class="mobile-quick-row">
-    <button style="flex:1;" onclick="undo()" title="Undo" data-i18n="undo">↩ Undo</button>
-    <button style="flex:1;" onclick="redo()" title="Redo" data-i18n="redo">↪ Redo</button>
-    <button class="btn-danger" style="flex:1.2;" onclick="clearCellCompletely()" data-i18n="del">🗑️ Del</button>
-    <button style="background:var(--surface-dim); width: 38px;" onclick="deselectCell()">✕</button>
+  <div class="mq-bottom-row">
+    <div class="mq-section mq-el-group" id="mobileElectrolyteGroup">
+      <button class="mq-el-btn" data-el="0" onclick="updateActiveCellElectrolyte(0)">0%</button>
+      <button class="mq-el-btn" data-el="10" onclick="updateActiveCellElectrolyte(10)">10%</button>
+      <button class="mq-el-btn" data-el="50" onclick="updateActiveCellElectrolyte(50)">50%</button>
+      <button class="mq-el-btn" data-el="70" onclick="updateActiveCellElectrolyte(70)">70%</button>
+      <button class="mq-el-btn" data-el="100" onclick="updateActiveCellElectrolyte(100)">100%</button>
+    </div>
+    <span class="mq-divider" id="mobileElectrolyteDivider"></span>
+    <div class="mq-section mq-actions-group">
+      <button class="mq-icon-btn" onclick="undo()" title="Undo">↩</button>
+      <button class="mq-icon-btn" onclick="redo()" title="Redo">↪</button>
+      <button class="btn-danger" onclick="clearCellCompletely()" data-i18n="del">🗑️ Del</button>
+      <button class="mq-icon-btn" style="background:var(--surface-dim);" onclick="deselectCell()" title="Close">✕</button>
+    </div>
   </div>
 </div>
 
@@ -1138,7 +1539,7 @@
       appTitle: "Cell Inventory",
       appSubtitle: "North & South Zone • Anode & Cathode Setting",
       showChanges: "🔄 Show Changes",
-      showFilters: "🔽 Show Filters",
+      showFilters: "🔍 Show Filters",
       hideFilters: "🔼 Hide Filters",
       checking: "🟢 Checking...",
       online: "🟢 Online",
@@ -1164,6 +1565,10 @@
       cathodeFilterLabel: "Cathode Filter",
       optAllCathodes: "All Cathodes",
       optEmptyCathode: "Empty",
+      electrolyteFilterLabel: "Electrolyte Filter",
+      optAllElectrolyte: "All Electrolyte",
+      optFilledElectrolyte: "Filled (> 0%)",
+      optEmptyElectrolyte: "Unfilled (0%)",
       clearDataLabel: "Clear Cell Data",
       btnClrP1: "Clear P1",
       btnClrP2: "Clear P2",
@@ -1173,6 +1578,7 @@
       clickCell: "Click a cell in the grid to configure status.",
       h1Anode: "1. Cell Anode Status:",
       h2Cathode: "2. Cell Cathode Status:",
+      hElectrolyte: "Electrolyte Level (Cell Only):",
       h3Clear: "3. Clear Options:",
       h4Harvest: "4. Set Group Harvest:",
       btnClearAnode: "Clear Anode",
@@ -1202,17 +1608,18 @@
       txtMarked: "Cell Marked",
       txtAnode: "Anode",
       txtCathode: "Cathode",
+      txtElectrolyte: "Electrolyte",
       txtStatus: "Status",
       txtEmptyStr: "Empty",
       txtFilledStr: "FILLED",
       txtCompEmpty: "COMPLETELY EMPTY",
-      instBody: `<b>1. Filter & Navigation:</b><br>- Use <b>Phase</b>, <b>Cell View</b>, <b>Zone</b>, and <b>Group</b> menus above to filter the grid.<br><br><b>2. Selecting Cells:</b><br>- Click any cell to select it.<br>- <b>Shift + Click</b> another cell to select a range.<br>- Use <b>Arrow Keys</b> to navigate.<br><br><b>3. Changing Status:</b><br>- Use <b>Cell Settings</b> on the right (PC) or <b>Quick Bar</b> at the bottom (Mobile).<br>- Or use <b>Keyboard Shortcuts</b>:<br>  • <b>1</b> : 63 FL<br>  • <b>2</b> : 62 KU<br>  • <b>3</b> : 62 KS<br>  • <b>4</b> : 62 SA<br>  • <b>C</b> : CATH (Cathode)<br>  • <b>S</b> : SS (SS Blank)<br>  • <b>0 / Del</b> : Clear Data<br><br><b>4. WA Report:</b><br>- Generates automatically. Click <b>"Copy WA Text"</b>.<br><br><b>5. Undo/Redo & Changes:</b><br>- Press <b>Ctrl+Z</b> (Undo) and <b>Ctrl+Y</b> (Redo).<br>- Click <b>"Show Changes"</b> to view modification history.`
+      instBody: `<b>1. Filter & Navigation:</b><br>- Use <b>Phase</b>, <b>Cell View</b>, <b>Zone</b>, <b>Group</b>, and <b>Electrolyte</b> menus above to filter the grid.<br><br><b>2. Selecting Cells & Electrolyte Level:</b><br>- Click any cell to select it.<br>- Click the selected cell again (or click the <b>%</b> badge) to cycle Electrolyte Level: <b>0% → 10% → 50% → 70% → 100%</b> (Group Cells only).<br>- <b>Shift + Click</b> another cell to select a range.<br>- Use <b>Arrow Keys</b> to navigate.<br><br><b>3. Changing Status:</b><br>- Use <b>Cell Settings</b> on the right (PC) or <b>Quick Bar</b> at the bottom (Mobile).<br>- Or use <b>Keyboard Shortcuts</b>:<br>  • <b>1</b> : 63 FL<br>  • <b>2</b> : 62 KU<br>  • <b>3</b> : 62 KS<br>  • <b>4</b> : 62 SA<br>  • <b>C</b> : CATH (Cathode)<br>  • <b>S</b> : SS (SS Blank)<br>  • <b>0 / Del</b> : Clear Data<br><br><b>4. WA Report:</b><br>- Generates automatically. Click <b>"Copy WA Text"</b>.<br><br><b>5. Undo/Redo & Changes:</b><br>- Press <b>Ctrl+Z</b> (Undo) and <b>Ctrl+Y</b> (Redo).<br>- Click <b>"Show Changes"</b> to view modification history.`
     },
     id: {
       appTitle: "Inventaris Cell",
       appSubtitle: "Zona Utara & Selatan • Pengaturan Anoda & Katoda",
       showChanges: "🔄 Riwayat Perubahan",
-      showFilters: "🔽 Tampilkan Filter",
+      showFilters: "🔍 Tampilkan Filter",
       hideFilters: "🔼 Sembunyikan Filter",
       checking: "🟢 Memeriksa...",
       online: "🟢 Online",
@@ -1238,6 +1645,10 @@
       cathodeFilterLabel: "Filter Katoda",
       optAllCathodes: "Semua Katoda",
       optEmptyCathode: "Kosong",
+      electrolyteFilterLabel: "Filter Elektrolit",
+      optAllElectrolyte: "Semua Elektrolit",
+      optFilledElectrolyte: "Terisi (> 0%)",
+      optEmptyElectrolyte: "Tidak Terisi (0%)",
       clearDataLabel: "Hapus Data Cell",
       btnClrP1: "Hapus P1",
       btnClrP2: "Hapus P2",
@@ -1247,6 +1658,7 @@
       clickCell: "Klik cell pada grid untuk mengatur status.",
       h1Anode: "1. Status Anoda Cell:",
       h2Cathode: "2. Status Katoda Cell:",
+      hElectrolyte: "Level Elektrolit (Khusus Cell):",
       h3Clear: "3. Opsi Hapus:",
       h4Harvest: "4. Atur Panen Grup:",
       btnClearAnode: "Hapus Anoda",
@@ -1276,19 +1688,66 @@
       txtMarked: "Cell Ditandai",
       txtAnode: "Anoda",
       txtCathode: "Katoda",
+      txtElectrolyte: "Elektrolit",
       txtStatus: "Status",
       txtEmptyStr: "Kosong",
       txtFilledStr: "TERISI",
       txtCompEmpty: "KOSONG TOTAL",
-      instBody: `<b>1. Filter & Navigasi:</b><br>- Gunakan menu <b>Phase</b>, <b>Cell View</b>, <b>Zone</b>, dan <b>Group</b> di atas untuk menyaring tampilan grid.<br><br><b>2. Memilih Cell:</b><br>- Klik cell mana saja untuk memilihnya.<br>- <b>Shift + Klik</b> pada cell lain untuk memilih rentang banyak cell sekaligus.<br>- Gunakan <b>tombol Panah (Keyboard Arrows)</b> untuk berpindah antar cell.<br><br><b>3. Mengubah Status (Anode / Cathode):</b><br>- Setelah memilih cell, atur via <b>Cell Settings</b> di panel kanan (PC) atau <b>Quick Bar</b> di bawah (Mobile).<br>- Atau gunakan <b>Shortcut Keyboard</b>:<br>  • <b>1</b> : 63 FL<br>  • <b>2</b> : 62 KU<br>  • <b>3</b> : 62 KS<br>  • <b>4</b> : 62 SA<br>  • <b>C</b> : CATH (Cathode)<br>  • <b>S</b> : SS (SS Blank)<br>  • <b>0 / Delete</b> : Clear / Hapus Data Cell<br><br><b>4. Laporan Otomatis (WA Report):</b><br>- Format WA ter-generate otomatis di kanan bawah. Klik <b>"Copy WA Text"</b>.<br><br><b>5. Riwayat Perubahan:</b><br>- Gunakan shortcut <b>Ctrl+Z</b> (Undo) dan <b>Ctrl+Y</b> (Redo).<br>- Gunakan tombol <b>"Show Changes"</b> untuk melihat riwayat modifikasi data.`
+      instBody: `<b>1. Filter & Navigasi:</b><br>- Gunakan menu <b>Phase</b>, <b>Cell View</b>, <b>Zone</b>, <b>Group</b>, dan <b>Filter Elektrolit</b> di atas untuk menyaring tampilan grid.<br><br><b>2. Memilih Cell & Level Elektrolit:</b><br>- Klik cell mana saja untuk memilihnya.<br>- Klik ulang cell yang sudah terpilih (atau klik indikator <b>%</b>) untuk menaikkan level Elektrolit: <b>0% → 10% → 50% → 70% → 100%</b> (khusus Cell, tidak berlaku di Rack/Station Machine).<br>- <b>Shift + Klik</b> pada cell lain untuk memilih rentang banyak cell sekaligus.<br>- Gunakan <b>tombol Panah (Keyboard Arrows)</b> untuk berpindah antar cell.<br><br><b>3. Mengubah Status (Anode / Cathode):</b><br>- Setelah memilih cell, atur via <b>Cell Settings</b> di panel kanan (PC) atau <b>Quick Bar</b> di bawah (Mobile).<br>- Atau gunakan <b>Shortcut Keyboard</b>:<br>  • <b>1</b> : 63 FL<br>  • <b>2</b> : 62 KU<br>  • <b>3</b> : 62 KS<br>  • <b>4</b> : 62 SA<br>  • <b>C</b> : CATH (Cathode)<br>  • <b>S</b> : SS (SS Blank)<br>  • <b>0 / Delete</b> : Clear / Hapus Data Cell<br><br><b>4. Laporan Otomatis (WA Report):</b><br>- Format WA ter-generate otomatis di kanan bawah. Klik <b>"Copy WA Text"</b>.<br><br><b>5. Riwayat Perubahan:</b><br>- Gunakan shortcut <b>Ctrl+Z</b> (Undo) dan <b>Ctrl+Y</b> (Redo).<br>- Gunakan tombol <b>"Show Changes"</b> untuk melihat riwayat modifikasi data.`
     }
   };
 
   let currentLang = localStorage.getItem('tankhouse_lang') || 'id';
   let isMobileFiltersOpen = false;
+  const ELECTROLYTE_STEPS = [0, 10, 50, 70, 100];
 
   function tr(key) {
     return i18n[currentLang][key] || key;
+  }
+
+  function isMachineGroupObj(grp) {
+    return !grp || grp.phase === 'Machine' || (typeof grp.groupId === 'string' && isNaN(grp.groupId));
+  }
+
+  /* =====================================================================
+     VISUALISASI ELECTRODE SHADOW & ELEKTROLIT
+     ===================================================================== */
+  function buildElectrodePlatesHTML(cell) {
+    const hasAnode = cell.anodeStatus && cell.anodeStatus !== 'NONE';
+    const hasCath = cell.cathodeStatus && cell.cathodeStatus !== 'NONE';
+
+    if (!hasAnode && !hasCath) return '';
+
+    let toneClass = '';
+    if (cell.anodeStatus === '63 FL') toneClass = 'anode-tone-63fl';
+    else if (cell.anodeStatus === '62 KU') toneClass = 'anode-tone-62ku';
+    else if (cell.anodeStatus === '62 KS') toneClass = 'anode-tone-62ks';
+    else if (cell.anodeStatus === '62 SA') toneClass = 'anode-tone-62sa';
+
+    const cathPlateClass = cell.cathodeStatus === 'SS' ? 'plate-ss' : 'plate-cathode';
+
+    if (hasAnode && hasCath) {
+      return `<div class="electrode-shadow-layer"><span class="plate-anode ${toneClass}"></span><span class="${cathPlateClass}"></span><span class="plate-anode ${toneClass}"></span><span class="${cathPlateClass}"></span><span class="plate-anode ${toneClass}"></span><span class="${cathPlateClass}"></span><span class="plate-anode ${toneClass}"></span></div>`;
+    }
+
+    if (hasAnode && !hasCath) {
+      return `<div class="electrode-shadow-layer" style="justify-content:space-evenly;"><span class="plate-anode ${toneClass}"></span><span class="plate-anode ${toneClass}"></span><span class="plate-anode ${toneClass}"></span><span class="plate-anode ${toneClass}"></span></div>`;
+    }
+
+    return `<div class="electrode-shadow-layer" style="justify-content:space-evenly;"><span class="${cathPlateClass}"></span><span class="${cathPlateClass}"></span><span class="${cathPlateClass}"></span><span class="${cathPlateClass}"></span><span class="${cathPlateClass}"></span></div>`;
+  }
+
+  function buildElectrolyteOverlayHTML(grp, cell) {
+    if (isMachineGroupObj(grp)) return '';
+    const platesHtml = buildElectrodePlatesHTML(cell);
+    const lvl = Number(cell.electrolyteLevel) || 0;
+    if (lvl <= 0) {
+      return platesHtml;
+    }
+
+    const bubblesHtml = `<div class="gas-bubbles-layer"><span class="gas-bubble" style="--bx:18%;--bsize:1.8px;--bdur:2.4s;--bdelay:-0.3s;--bsway:2.2px;"></span><span class="gas-bubble" style="--bx:40%;--bsize:2.4px;--bdur:2.9s;--bdelay:-1.2s;--bsway:-2.5px;"></span><span class="gas-bubble" style="--bx:62%;--bsize:1.8px;--bdur:2.2s;--bdelay:-0.8s;--bsway:2px;"></span><span class="gas-bubble" style="--bx:80%;--bsize:2.2px;--bdur:2.7s;--bdelay:-1.7s;--bsway:-2.2px;"></span></div>`;
+
+    return `${platesHtml}<div class="electrolyte-layer" style="--lvl:${lvl}%;"><div class="meniscus-surface"></div>${bubblesHtml}</div><div class="side-gauge-track"><div class="side-gauge-fill" style="--lvl:${lvl}%;"></div></div>`;
   }
 
   function toggleMobileFilters() {
@@ -1330,8 +1789,9 @@
 
     updateThemeButtonLabel(document.documentElement.getAttribute('data-theme'));
     populateGroupSelect();
+    renderMatrix();
     recalculateStats();
-    if (activeSelectedCell) updateSelectionUI(false);
+    if (activeSelectedCell) updateSelectionUI();
   }
 
   function toggleLanguage() {
@@ -1345,7 +1805,6 @@
   const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
   let rawLog = JSON.parse(localStorage.getItem('tankhouse_changes_log')) || [];
   let changesLog = rawLog.filter(item => item && item.msg && (Date.now() - item.time) <= THREE_DAYS_MS);
-  let logSyncTimer = null;
 
   function renderChangesLogList() {
     const list = document.getElementById('changesLogList');
@@ -1367,7 +1826,7 @@
     
     let resultParts = [];
     for (let gId in groups) {
-      let grp = getGroupById(gId);
+      let grp = plantData.find(g => String(g.groupId) === String(gId));
       if (grp) {
         let phaseText = grp.phase === 'Machine' ? tr('machine') : `${tr('phaseLabel')} ${grp.phase}`;
         let groupName = (typeof grp.groupId === 'string' && isNaN(grp.groupId)) ? grp.groupId : `Group ${grp.groupId}`;
@@ -1401,19 +1860,12 @@
     
     if (changesLog.length > 50) changesLog.pop();
     
-    if (document.getElementById('changesModal').style.display === 'flex') {
-      renderChangesLogList();
-    }
+    localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
+    renderChangesLogList();
 
-    clearTimeout(logSyncTimer);
-    logSyncTimer = setTimeout(() => {
-      try {
-        localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
-      } catch(e) {}
-      db.ref().update({ tankhouseLogs: changesLog }).catch(err => {
-        console.warn("Firebase log sync failed:", err);
-      });
-    }, 350);
+    db.ref().update({ tankhouseLogs: changesLog }).catch(err => {
+      console.warn("Firebase log sync failed:", err);
+    });
   }
 
   function openModal(id) {
@@ -1464,39 +1916,16 @@
   const LOCAL_STORAGE_LAST_UPDATED = 'tankhouse_last_updated';
 
   let plantData = [];
-  let plantGroupMap = new Map();
-  let plantGroupIdxMap = new Map();
   let currentPhaseFilter = 'ALL';
   let activeSelectedCell = null;
   let selectionAnchor = null;
   let selectedCellsList = [];
-  let renderedSelectedEls = [];
 
   let undoStack = [];
   let redoStack = [];
   const MAX_HISTORY = 50;
   
-  let isDbConnected = false;
-  let isInitialRenderDone = false;
-  let saveLocalTimer = null;
-  let statsFramePending = false;
-
-  function rebuildGroupMaps() {
-    plantGroupMap.clear();
-    plantGroupIdxMap.clear();
-    for (let i = 0; i < plantData.length; i++) {
-      const g = plantData[i];
-      if (g) {
-        const key = String(g.groupId);
-        plantGroupMap.set(key, g);
-        plantGroupIdxMap.set(key, i);
-      }
-    }
-  }
-
-  function getGroupById(gId) {
-    return plantGroupMap.get(String(gId));
-  }
+  let isDbConnected = false; 
 
   function updateLastUpdatedUI(ts) {
     const badge = document.getElementById('lastUpdatedBadge');
@@ -1543,6 +1972,7 @@
           cellId: `C${cFormatted}`,
           anodeStatus: 'NONE', 
           cathodeStatus: 'NONE',
+          electrolyteLevel: 0,
           pcs: 0, 
           isEW0: isEW0
         });
@@ -1593,51 +2023,16 @@
   }
 
   function saveLocalData() {
-    clearTimeout(saveLocalTimer);
-    saveLocalTimer = setTimeout(() => {
-      try {
-        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(plantData));
-      } catch(e) {}
-    }, 250);
-  }
-
-  function scheduleRecalculateStats() {
-    if (statsFramePending) return;
-    statsFramePending = true;
-    requestAnimationFrame(() => {
-      statsFramePending = false;
-      recalculateStats();
-    });
-  }
-
-  function hasActiveCellLevelFilter() {
-    const selContent = document.getElementById('contentSelect').value;
-    const selA = document.getElementById('statusSelect').value;
-    const selC = document.getElementById('cathSelect').value;
-    return selContent !== 'ALL' || selA !== 'ALL' || selC !== 'ALL';
-  }
-
-  // Muat cache lokal segera agar startup tidak delay menunggu jaringan
-  (() => {
     try {
-      const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (cached) {
-        plantData = mergeFirebaseData(JSON.parse(cached));
-      } else {
-        plantData = generateDefaultPlantData();
-      }
-    } catch(e) {
-      plantData = generateDefaultPlantData();
-    }
-    rebuildGroupMaps();
-  })();
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(plantData));
+    } catch(e) {}
+  }
+
+  plantData = generateDefaultPlantData();
 
   function mergeFirebaseData(fbData) {
     let baseData = generateDefaultPlantData();
     if (!fbData) return baseData;
-
-    let baseMap = new Map();
-    baseData.forEach(g => baseMap.set(String(g.groupId), g));
 
     let fbGroups = Array.isArray(fbData) ? fbData : Object.values(fbData);
 
@@ -1646,7 +2041,8 @@
       let localGroup = null;
 
       if (fbGroup.groupId !== undefined) {
-        localGroup = baseMap.get(String(fbGroup.groupId)) || baseData.find(g => 
+        localGroup = baseData.find(g => 
+          String(g.groupId) === String(fbGroup.groupId) ||
           (fbGroup.groupId === 'CSM 1 (Utara)' && g.groupId === 'CSM 1 North') ||
           (fbGroup.groupId === 'CSM 1 (Selatan)' && g.groupId === 'CSM 1 South') ||
           (fbGroup.groupId === 'ASM 1 (Utara)' && g.groupId === 'ASM 1 North') ||
@@ -1674,13 +2070,13 @@
           let fbCells = Array.isArray(fbGroup.cells) ? fbGroup.cells : Object.values(fbGroup.cells);
           fbCells.forEach(fbCell => {
             if (!fbCell || fbCell.cellNum === undefined) return;
-            let localCell = localGroup.cells[fbCell.cellNum - 1];
-            if (!localCell || localCell.cellNum !== fbCell.cellNum) {
-              localCell = localGroup.cells.find(c => c.cellNum === fbCell.cellNum);
-            }
+            let localCell = localGroup.cells.find(c => c.cellNum === fbCell.cellNum);
             if (localCell) {
               if (fbCell.anodeStatus !== undefined) localCell.anodeStatus = fbCell.anodeStatus;
               if (fbCell.cathodeStatus !== undefined) localCell.cathodeStatus = fbCell.cathodeStatus;
+              if (!isMachineGroupObj(localGroup) && fbCell.electrolyteLevel !== undefined) {
+                localCell.electrolyteLevel = Number(fbCell.electrolyteLevel) || 0;
+              }
               if (fbCell.pcs !== undefined) localCell.pcs = fbCell.pcs;
             }
           });
@@ -1698,16 +2094,12 @@
     updates['lastUpdated'] = ts;
     localStorage.setItem(LOCAL_STORAGE_LAST_UPDATED, ts);
     targets.forEach(t => {
-      let gIdx = plantGroupIdxMap.get(String(t.groupId));
-      if (gIdx !== undefined) {
-        let cell = plantData[gIdx].cells[t.cellNum - 1];
-        if (!cell || cell.cellNum !== t.cellNum) {
-          cell = plantData[gIdx].cells.find(c => c && c.cellNum === t.cellNum);
-        }
-        if (cell) {
-          let cIdx = plantData[gIdx].cells.indexOf(cell);
-          updates[`tankhouseData/${gIdx}/groupId`] = plantData[gIdx].groupId;
-          updates[`tankhouseData/${gIdx}/cells/${cIdx}`] = {
+      let gIdx = plantData.findIndex(g => g && String(g.groupId) === String(t.groupId));
+      if (gIdx !== -1) {
+        let cIdx = plantData[gIdx].cells.findIndex(c => c && c.cellNum === t.cellNum);
+        if (cIdx !== -1) {
+          let cell = plantData[gIdx].cells[cIdx];
+          let payload = {
             cellNum: cell.cellNum,
             cellId: cell.cellId,
             anodeStatus: cell.anodeStatus,
@@ -1715,6 +2107,11 @@
             pcs: cell.pcs,
             isEW0: cell.isEW0
           };
+          if (!isMachineGroupObj(plantData[gIdx])) {
+            payload.electrolyteLevel = Number(cell.electrolyteLevel) || 0;
+          }
+          updates[`tankhouseData/${gIdx}/groupId`] = plantData[gIdx].groupId;
+          updates[`tankhouseData/${gIdx}/cells/${cIdx}`] = payload;
         }
       }
     });
@@ -1727,8 +2124,8 @@
 
   function syncGroupCrop(groupId, cropStatus) {
     saveLocalData();
-    let gIdx = plantGroupIdxMap.get(String(groupId));
-    if (gIdx !== undefined) {
+    let gIdx = plantData.findIndex(g => g && String(g.groupId) === String(groupId));
+    if (gIdx !== -1) {
       const ts = Date.now();
       let updates = {};
       updates[`tankhouseData/${gIdx}/cropStatus`] = cropStatus;
@@ -1750,52 +2147,30 @@
     updateLastUpdatedUI(ts);
   }
 
-  function createCompactSnapshot() {
-    return plantData.map(g => ({
-      c: g.cropStatus,
-      l: g.cells.map(c => [c.anodeStatus, c.cathodeStatus, c.pcs])
-    }));
-  }
-
-  function restoreCompactSnapshot(snap) {
-    for (let i = 0; i < plantData.length; i++) {
-      if (!snap[i]) continue;
-      plantData[i].cropStatus = snap[i].c;
-      const cells = plantData[i].cells;
-      const snapCells = snap[i].l;
-      for (let j = 0; j < cells.length; j++) {
-        if (!snapCells[j]) continue;
-        cells[j].anodeStatus = snapCells[j][0];
-        cells[j].cathodeStatus = snapCells[j][1];
-        cells[j].pcs = snapCells[j][2];
-      }
-    }
-  }
-
   function saveState() {
-    undoStack.push(createCompactSnapshot());
+    undoStack.push(JSON.stringify(plantData));
     if (undoStack.length > MAX_HISTORY) undoStack.shift();
     redoStack = [];
   }
 
   function undo() {
     if (undoStack.length === 0) return;
-    redoStack.push(createCompactSnapshot());
-    restoreCompactSnapshot(undoStack.pop());
+    redoStack.push(JSON.stringify(plantData));
+    plantData = JSON.parse(undoStack.pop());
     recalculateStats();
     renderMatrix();
-    if (activeSelectedCell) updateSelectionUI(false);
+    if (activeSelectedCell) updateSelectionUI();
     syncBulkData();
     logChange(currentLang === 'id' ? `Melakukan Undo (Batal) aksi sebelumnya.` : `Performed Undo on last action.`);
   }
 
   function redo() {
     if (redoStack.length === 0) return;
-    undoStack.push(createCompactSnapshot());
-    restoreCompactSnapshot(redoStack.pop());
+    undoStack.push(JSON.stringify(plantData));
+    plantData = JSON.parse(redoStack.pop());
     recalculateStats();
     renderMatrix();
-    if (activeSelectedCell) updateSelectionUI(false);
+    if (activeSelectedCell) updateSelectionUI();
     syncBulkData();
     logChange(currentLang === 'id' ? `Melakukan Redo (Ulangi).` : `Performed Redo.`);
   }
@@ -1812,7 +2187,7 @@
         ${tr('clickCell')}
       </div>
     `;
-    updateSelectionUI(false);
+    updateSelectionUI();
   }
 
   function getActiveTargets() {
@@ -1826,7 +2201,7 @@
     if (!toast) {
       toast = document.createElement('div');
       toast.id = 'toastMsg';
-      toast.style.cssText = 'position:fixed; bottom:20px; right:20px; background:var(--surface-dim); color:var(--primary); padding:8px 16px; border-radius:20px; border:1px solid var(--primary); font-size:11px; z-index:99999; transition:opacity 0.2s; pointer-events:none; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,0.3);';
+      toast.style.cssText = 'position:fixed; bottom:84px; left:50%; transform:translateX(-50%); background:var(--surface-dim); color:var(--primary); padding:6px 14px; border-radius:20px; border:1px solid var(--primary); font-size:11px; z-index:99999; transition:opacity 0.2s; pointer-events:none; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,0.3); white-space:nowrap;';
       document.body.appendChild(toast);
     }
     toast.textContent = msg;
@@ -1836,72 +2211,13 @@
 
   db.ref('tankhouseData').on('value', (snapshot) => {
     const data = snapshot.val();
-    if (!data) {
-      if (!isInitialRenderDone) {
-        populateGroupSelect();
-        recalculateStats();
-        renderMatrix();
-        isInitialRenderDone = true;
-      }
-      return;
-    }
-
-    const merged = mergeFirebaseData(data);
-
-    if (!isInitialRenderDone) {
-      plantData = merged;
-      rebuildGroupMaps();
+    if (data) {
+      plantData = mergeFirebaseData(data);
       saveLocalData();
-      populateGroupSelect();
-      recalculateStats();
-      renderMatrix();
-      isInitialRenderDone = true;
-      return;
     }
-
-    // Incremental diff: hanya perbarui cell/grup yang benar-benar berubah, cegah rebuild DOM 1.300+ cell
-    let changedCells = [];
-    let cropChanged = false;
-
-    for (let i = 0; i < merged.length; i++) {
-      const newG = merged[i];
-      const oldG = plantData[i];
-      if (!oldG) {
-        cropChanged = true;
-        continue;
-      }
-      if (oldG.cropStatus !== newG.cropStatus) {
-        cropChanged = true;
-      }
-      for (let j = 0; j < newG.cells.length; j++) {
-        const nc = newG.cells[j];
-        const oc = oldG.cells[j];
-        if (!oc || oc.anodeStatus !== nc.anodeStatus || oc.cathodeStatus !== nc.cathodeStatus || oc.pcs !== nc.pcs) {
-          changedCells.push({ groupId: newG.groupId, cellNum: nc.cellNum });
-        }
-      }
-    }
-
-    if (!cropChanged && changedCells.length === 0) {
-      return;
-    }
-
-    plantData = merged;
-    rebuildGroupMaps();
-    saveLocalData();
-
-    if (cropChanged || hasActiveCellLevelFilter() || changedCells.length > 40) {
-      renderMatrix();
-    } else {
-      for (let k = 0; k < changedCells.length; k++) {
-        updateCellDOM(changedCells[k].groupId, changedCells[k].cellNum);
-      }
-      scheduleRecalculateStats();
-    }
-
-    if (activeSelectedCell) {
-      updateSelectionUI(false);
-    }
+    populateGroupSelect();
+    recalculateStats();
+    renderMatrix();
   });
 
   db.ref('lastUpdated').on('value', (snapshot) => {
@@ -1918,12 +2234,8 @@
       const nowMs = Date.now();
       const logs = Array.isArray(data) ? data : Object.values(data);
       changesLog = logs.filter(item => item && item.msg && (nowMs - item.time) <= THREE_DAYS_MS);
-      try {
-        localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
-      } catch(e) {}
-      if (document.getElementById('changesModal').style.display === 'flex') {
-        renderChangesLogList();
-      }
+      localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
+      renderChangesLogList();
     }
   });
 
@@ -1961,6 +2273,7 @@
         g.cells.forEach(c => {
           c.anodeStatus = 'NONE';
           c.cathodeStatus = 'NONE';
+          if (!isMachineGroupObj(g)) c.electrolyteLevel = 0;
           c.pcs = 0;
         });
       }
@@ -1982,7 +2295,7 @@
       let opt = document.createElement('option');
       opt.value = g.groupId;
       
-      let trZone = g.zone === 'North' ? tr('optNorth') : tr('optSouth');
+      let trZone = (g.zone === 'North' || g.zone === 'Utara') ? tr('optNorth') : tr('optSouth');
       let label = (typeof g.groupId === 'string' && isNaN(g.groupId)) 
         ? `${g.displayName || g.groupId} (${trZone})` 
         : `G${g.groupId} (P${g.phase}-${trZone})`;
@@ -2001,9 +2314,9 @@
 
   function removeCellTag(e, gId, cNum, tagType) {
     if (e) e.stopPropagation();
-    let grp = getGroupById(gId);
+    let grp = plantData.find(g => g && String(g.groupId) === String(gId));
     if (!grp) return;
-    let cell = grp.cells[cNum - 1] || grp.cells.find(c => c && c.cellNum === cNum);
+    let cell = grp.cells.find(c => c && c.cellNum === cNum);
     if (!cell) return;
 
     saveState();
@@ -2019,19 +2332,70 @@
     }
 
     selectCell(gId, cNum, null, true);
-    if (hasActiveCellLevelFilter()) {
-      renderMatrix();
-    } else {
-      updateCellDOM(gId, cNum);
-      scheduleRecalculateStats();
-    }
+    updateCellDOM(gId, cNum);
+    recalculateStats();
     syncCellTargets([{ groupId: gId, cellNum: cNum }]);
   }
 
+  function cycleCellElectrolyteClick(e, gId, cNum) {
+    if (e) e.stopPropagation();
+    let grp = plantData.find(g => g && String(g.groupId) === String(gId));
+    if (!grp || isMachineGroupObj(grp)) return;
+    let cell = grp.cells.find(c => c && c.cellNum === cNum);
+    if (!cell) return;
+
+    saveState();
+    const currentLvl = Number(cell.electrolyteLevel) || 0;
+    const nextLvl = ELECTROLYTE_STEPS.find(step => step > currentLvl) ?? 0;
+    cell.electrolyteLevel = nextLvl;
+
+    let actionTxt = currentLang === 'id'
+      ? `Mengatur Level Elektrolit menjadi [${nextLvl}%] pada 1 cell`
+      : `Set Electrolyte Level to [${nextLvl}%] on 1 cell`;
+    logChange(actionTxt, [{ groupId: gId, cellNum: cNum }]);
+
+    selectCell(gId, cNum, null, true);
+    updateCellDOM(gId, cNum);
+    syncCellTargets([{ groupId: gId, cellNum: cNum }]);
+  }
+
+  function buildCellInnerHTML(grp, c) {
+    let hasAnode = c.anodeStatus && c.anodeStatus !== 'NONE';
+    let hasCathode = c.cathodeStatus && c.cathodeStatus !== 'NONE';
+    let isBlank = !hasAnode && !hasCathode;
+    let isMachine = isMachineGroupObj(grp);
+    let elLevel = isMachine ? 0 : (Number(c.electrolyteLevel) || 0);
+    let hasElectrolyte = elLevel > 0;
+
+    let shortA = c.anodeStatus === '63 FL' ? '63FL' : (c.anodeStatus === '62 KU' ? '62KU' : (c.anodeStatus === '62 KS' ? '62KS' : (c.anodeStatus === '62 SA' ? '62SA' : '')));
+    let anodeClass = c.anodeStatus === '63 FL' ? 'tag-63' : (c.anodeStatus === '62 KU' ? 'tag-62ku' : (c.anodeStatus === '62 KS' ? 'tag-62ks' : 'tag-62sa'));
+    let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
+    let safeGIdStr = String(grp.groupId).replace(/'/g, "\\'");
+
+    let headerHtml = hasElectrolyte
+      ? `<div class="cell-header-row"><div class="cell-id">${c.cellId}</div><span class="lvl-corner-badge" onclick="cycleCellElectrolyteClick(event, '${safeGIdStr}', ${c.cellNum})">${elLevel}%</span></div>`
+      : `<div class="cell-id">${c.cellId}</div>`;
+
+    let html = buildElectrolyteOverlayHTML(grp, c) + headerHtml;
+
+    if (!isBlank) {
+      html += `<div class="tags-wrapper">`;
+      if (shortA) {
+        html += `<div class="anode-tag ${anodeClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${c.cellNum}, 'anode')">${shortA}</div>`;
+      }
+      if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
+        html += `<div class="cathode-tag ${cathClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${c.cellNum}, 'cathode')">${c.cathodeStatus}</div>`;
+      }
+      html += `</div>`;
+    }
+
+    return html;
+  }
+
   function updateCellDOM(gId, cNum) {
-    let grp = getGroupById(gId);
+    let grp = plantData.find(g => g && String(g.groupId) === String(gId));
     if (!grp) return;
-    let c = grp.cells[cNum - 1] || grp.cells.find(cell => cell && cell.cellNum === cNum);
+    let c = grp.cells.find(cell => cell && cell.cellNum === cNum);
     if (!c) return;
 
     let cellEl = getCellElement(gId, cNum);
@@ -2040,6 +2404,7 @@
     let hasAnode = c.anodeStatus && c.anodeStatus !== 'NONE';
     let hasCathode = c.cathodeStatus && c.cathodeStatus !== 'NONE';
     let isBlank = !hasAnode && !hasCathode;
+    let hasElectrolyte = !isMachineGroupObj(grp) && (Number(c.electrolyteLevel) || 0) > 0;
 
     let statusClass = 'cell-blank';
     if (!isBlank) {
@@ -2054,58 +2419,65 @@
 
     let isSelected = selectedCellsList.some(sc => String(sc.groupId) === String(gId) && sc.cellNum === cNum) || (activeSelectedCell && String(activeSelectedCell.groupId) === String(gId) && activeSelectedCell.cellNum === cNum);
 
-    cellEl.className = `cell-card ${statusClass} ${isSelected ? 'selected' : ''}`;
-
-    let shortA = c.anodeStatus === '63 FL' ? '63FL' : (c.anodeStatus === '62 KU' ? '62KU' : (c.anodeStatus === '62 KS' ? '62KS' : (c.anodeStatus === '62 SA' ? '62SA' : '')));
-    let anodeClass = c.anodeStatus === '63 FL' ? 'tag-63' : (c.anodeStatus === '62 KU' ? 'tag-62ku' : (c.anodeStatus === '62 KS' ? 'tag-62ks' : 'tag-62sa'));
-    let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
-
-    let html = `<div class="cell-id">${c.cellId}</div>`;
-    if (!isBlank) {
-      html += `<div class="tags-wrapper">`;
-      if (shortA) {
-        html += `<div class="anode-tag ${anodeClass}" data-tag="anode">${shortA}</div>`;
-      }
-      if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
-        html += `<div class="cathode-tag ${cathClass}" data-tag="cathode">${c.cathodeStatus}</div>`;
-      }
-      html += `</div>`;
-    }
-
-    cellEl.innerHTML = html;
+    cellEl.className = `cell-card ${statusClass} ${hasElectrolyte ? 'has-electrolyte' : ''} ${isSelected ? 'selected' : ''}`;
+    cellEl.innerHTML = buildCellInnerHTML(grp, c);
   }
 
-  function updateSelectionUI(shouldScroll = false) {
-    for (let i = 0; i < renderedSelectedEls.length; i++) {
-      renderedSelectedEls[i].classList.remove('selected');
+  function updateSelectionUI() {
+    const prevSelected = document.querySelectorAll('.cell-card.selected');
+    for (let i = 0; i < prevSelected.length; i++) {
+      prevSelected[i].classList.remove('selected');
     }
-    renderedSelectedEls = [];
 
     const targets = getActiveTargets();
-    for (let i = 0; i < targets.length; i++) {
-      let el = getCellElement(targets[i].groupId, targets[i].cellNum);
-      if (el) {
-        el.classList.add('selected');
-        renderedSelectedEls.push(el);
-      }
+    targets.forEach(t => {
+      let el = getCellElement(t.groupId, t.cellNum);
+      if (el) el.classList.add('selected');
+    });
+
+    const hasGroupCellTarget = targets.some(t => {
+      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
+      return grp && !isMachineGroupObj(grp);
+    });
+
+    const elControlSec = document.getElementById('electrolyteControlSection');
+    if (elControlSec) {
+      elControlSec.style.display = hasGroupCellTarget ? 'flex' : 'none';
+    }
+    const mobileElGroup = document.getElementById('mobileElectrolyteGroup');
+    if (mobileElGroup) {
+      mobileElGroup.style.display = hasGroupCellTarget ? 'flex' : 'none';
+    }
+    const mobileElDivider = document.getElementById('mobileElectrolyteDivider');
+    if (mobileElDivider) {
+      mobileElDivider.style.display = hasGroupCellTarget ? 'block' : 'none';
     }
 
     if (activeSelectedCell) {
-      let grp = getGroupById(activeSelectedCell.groupId);
+      let grp = plantData.find(g => g && String(g.groupId) === String(activeSelectedCell.groupId));
       if (grp) {
-        let cell = grp.cells[activeSelectedCell.cellNum - 1] || grp.cells.find(c => c && c.cellNum === activeSelectedCell.cellNum);
+        let cell = grp.cells.find(c => c && c.cellNum === activeSelectedCell.cellNum);
         if (cell) {
+          let isMachine = isMachineGroupObj(grp);
+          let curElLevel = isMachine ? 0 : (Number(cell.electrolyteLevel) || 0);
+
+          document.querySelectorAll('.el-preset-btn, .mq-el-btn').forEach(btn => {
+            btn.classList.toggle('is-active', Number(btn.getAttribute('data-el')) === curElLevel);
+          });
+
           let isBlank = (cell.anodeStatus === 'NONE' || !cell.anodeStatus) && (cell.cathodeStatus === 'NONE' || !cell.cathodeStatus);
           let insContent = document.getElementById('inspectorContent');
           let groupName = grp.displayName || ((typeof grp.groupId === 'string' && isNaN(grp.groupId)) ? grp.groupId : `G${grp.groupId}`);
           let phaseText = (grp.phase === 'Machine') ? tr('machine') : `P${grp.phase}`;
-          let trZone = grp.zone === 'North' ? tr('optNorth') : tr('optSouth');
+          let trZone = (grp.zone === 'North' || grp.zone === 'Utara') ? tr('optNorth') : tr('optSouth');
+          let electrolyteRow = isMachine ? '' : `<div class="detail-row"><span class="detail-label">${tr('txtElectrolyte')}:</span><span class="detail-val" style="color:var(--primary);">${curElLevel}%</span></div>`;
 
           if (selectedCellsList.length > 1) {
             insContent.innerHTML = `
               <div class="detail-row"><span class="detail-label">${tr('txtSelection')}:</span><span class="detail-val" style="color:var(--primary);">${selectedCellsList.length} ${tr('txtMarked')}</span></div>
               <div class="detail-row"><span class="detail-label">${tr('txtFocus')}:</span><span class="detail-val">${groupName} - ${cell.cellId}</span></div>
               <div class="detail-row"><span class="detail-label">${tr('txtArea')}:</span><span class="detail-val">${phaseText} / ${trZone}</span></div>
+              ${electrolyteRow}
             `;
           } else {
             insContent.innerHTML = `
@@ -2113,42 +2485,19 @@
               <div class="detail-row"><span class="detail-label">${tr('txtArea')}:</span><span class="detail-val">${phaseText} / ${trZone}</span></div>
               <div class="detail-row"><span class="detail-label">${tr('txtAnode')}:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">'+tr('txtEmptyStr')+'</span>'}</span></div>
               <div class="detail-row"><span class="detail-label">${tr('txtCathode')}:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">'+tr('txtEmptyStr')+'</span>'}</span></div>
+              ${electrolyteRow}
               <div class="detail-row"><span class="detail-label">${tr('txtStatus')}:</span><span class="detail-val" style="color:${isBlank?'var(--error)':'var(--positive)'};">${isBlank ? tr('txtCompEmpty') : tr('txtFilledStr')}</span></div>
             `;
           }
         }
       }
 
-      if (shouldScroll) {
-        let activeEl = getCellElement(activeSelectedCell.groupId, activeSelectedCell.cellNum);
-        if (activeEl) {
-          activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
-        }
+      let activeEl = getCellElement(activeSelectedCell.groupId, activeSelectedCell.cellNum);
+      if (activeEl) {
+        activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
       }
     }
   }
-
-  function parseGroupIdAttr(gIdAttr) {
-    return (isNaN(gIdAttr) || gIdAttr.startsWith('Rack') || gIdAttr.includes(' ')) ? gIdAttr : parseInt(gIdAttr);
-  }
-
-  // Event delegation tunggal pada #matrixContainer untuk menghindari ribuan closure onclick
-  document.getElementById('matrixContainer').addEventListener('click', function(e) {
-    const tagEl = e.target.closest('.anode-tag, .cathode-tag');
-    const cardEl = e.target.closest('.cell-card');
-    if (!cardEl) return;
-
-    const gId = parseGroupIdAttr(cardEl.getAttribute('data-group'));
-    const cNum = parseInt(cardEl.getAttribute('data-cell'));
-
-    if (tagEl) {
-      const tagType = tagEl.getAttribute('data-tag');
-      removeCellTag(e, gId, cNum, tagType);
-      return;
-    }
-
-    selectCell(gId, cNum, e);
-  });
 
   function renderMatrix() {
     const container = document.getElementById('matrixContainer');
@@ -2156,6 +2505,7 @@
     const selG = document.getElementById('groupSelect').value;
     const selA = document.getElementById('statusSelect').value;
     const selC = document.getElementById('cathSelect').value;
+    const selE = document.getElementById('electrolyteSelect') ? document.getElementById('electrolyteSelect').value : 'ALL';
     const selContent = document.getElementById('contentSelect').value;
 
     const matrixScrollTop = container ? container.scrollTop : 0;
@@ -2197,20 +2547,23 @@
         if (!hasCathode) return false;
       }
 
+      if (selE !== 'ALL') {
+        if (isMachineGroupObj(g)) return false;
+        let hasEl = g.cells.some(c => {
+          if (!c) return false;
+          let lvl = Number(c.electrolyteLevel) || 0;
+          if (selE === 'FILLED') return lvl > 0;
+          if (selE === 'EMPTY') return lvl === 0;
+          return lvl === Number(selE);
+        });
+        if (!hasEl) return false;
+      }
+
       return true;
     });
 
     let fragment = document.createDocumentFragment();
     let renderedCount = 0;
-    renderedSelectedEls = [];
-
-    const isIdLang = currentLang === 'id';
-    const lblNoHarv = isIdLang ? 'Tanpa Panen' : 'No Harvest';
-    const lblHarvestPrefix = isIdLang ? 'Panen' : 'Harvest';
-    const lblRackUnit = isIdLang ? 'Rak' : 'Racks';
-    const lblStationUnit = isIdLang ? 'Stasiun' : 'Stations';
-    const trNorth = tr('optNorth');
-    const trSouth = tr('optSouth');
 
     filteredGroups.forEach(g => {
       let visibleCells = g.cells.filter(c => {
@@ -2220,6 +2573,13 @@
         if (selContent === 'EMPTY' && !isBlank) return false;
         if (selA !== 'ALL' && c.anodeStatus !== selA) return false;
         if (selC !== 'ALL' && c.cathodeStatus !== selC) return false;
+        if (selE !== 'ALL') {
+          if (isMachineGroupObj(g)) return false;
+          let lvl = Number(c.electrolyteLevel) || 0;
+          if (selE === 'FILLED' && lvl <= 0) return false;
+          if (selE === 'EMPTY' && lvl !== 0) return false;
+          if (selE !== 'FILLED' && selE !== 'EMPTY' && lvl !== Number(selE)) return false;
+        }
 
         return true;
       });
@@ -2232,11 +2592,13 @@
       grpSec.className = 'group-section';
 
       let cropClass = g.cropStatus === 'Crop 1' ? 'crop-c1' : (g.cropStatus === 'Crop 2' ? 'crop-c2' : (g.cropStatus === 'Crop 3' ? 'crop-c3' : 'crop-none'));
-      let cropLabel = g.cropStatus !== '-' ? `${lblHarvestPrefix}: ${g.cropStatus}` : lblNoHarv;
+      
+      let lblNoHarv = currentLang === 'id' ? 'Tanpa Panen' : 'No Harvest';
+      let cropLabel = g.cropStatus !== '-' ? `${currentLang==='id'?'Panen':'Harvest'}: ${g.cropStatus}` : lblNoHarv;
       
       let isStringGroup = typeof g.groupId === 'string' && isNaN(g.groupId);
       let isRackGroup = isStringGroup && String(g.groupId).startsWith('Rack');
-      let lblSpecialUnit = isRackGroup ? lblRackUnit : (isStringGroup ? lblStationUnit : 'Cells');
+      let lblSpecialUnit = isRackGroup ? (currentLang==='id'?'Rak':'Racks') : (isStringGroup ? (currentLang==='id'?'Stasiun':'Stations') : 'Cells');
       let tagSpecial = g.groupId === 33 ? 'EW0' : `${g.cellCount} ${lblSpecialUnit}`;
 
       let isSpecialGroup = (g.groupId >= 13 && g.groupId <= 20);
@@ -2251,7 +2613,8 @@
 
       let groupDisplayName = g.displayName ? g.displayName : (isStringGroup ? g.groupId : `Group ${g.groupId}`);
       let safeGId = String(g.groupId).replace(/[^a-zA-Z0-9_-]/g, '_');
-      let trZone = g.zone === 'North' ? trNorth : trSouth;
+      
+      let trZone = (g.zone === 'North' || g.zone === 'Utara') ? tr('optNorth') : tr('optSouth');
 
       let isMachineGroup = (g.phase === 'Machine' || isStringGroup);
       let cropHtml = isMachineGroup ? '' : `<div class="crop-tag ${cropClass}" onclick="toggleCrop('${String(g.groupId).replace(/'/g, "\\'")}')">${cropLabel}</div>`;
@@ -2280,6 +2643,7 @@
         let hasAnode = c.anodeStatus && c.anodeStatus !== 'NONE';
         let hasCathode = c.cathodeStatus && c.cathodeStatus !== 'NONE';
         let isBlank = !hasAnode && !hasCathode;
+        let hasElectrolyte = !isMachineGroupObj(g) && (Number(c.electrolyteLevel) || 0) > 0;
         
         let statusClass = 'cell-blank';
         if (!isBlank) {
@@ -2292,33 +2656,13 @@
           else if (c.cathodeStatus === 'SS') statusClass += ' cell-ss-only';
         }
 
-        let shortA = c.anodeStatus === '63 FL' ? '63FL' : (c.anodeStatus === '62 KU' ? '62KU' : (c.anodeStatus === '62 KS' ? '62KS' : (c.anodeStatus === '62 SA' ? '62SA' : '')));
-        let anodeClass = c.anodeStatus === '63 FL' ? 'tag-63' : (c.anodeStatus === '62 KU' ? 'tag-62ku' : (c.anodeStatus === '62 KS' ? 'tag-62ks' : 'tag-62sa'));
-        let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
-
         let isSelected = selectedCellsList.some(sc => String(sc.groupId) === String(g.groupId) && sc.cellNum === c.cellNum) || (activeSelectedCell && String(activeSelectedCell.groupId) === String(g.groupId) && activeSelectedCell.cellNum === c.cellNum);
 
-        cellDiv.className = `cell-card ${statusClass} ${isSelected ? 'selected' : ''}`;
+        cellDiv.className = `cell-card ${statusClass} ${hasElectrolyte ? 'has-electrolyte' : ''} ${isSelected ? 'selected' : ''}`;
         cellDiv.setAttribute('data-group', g.groupId);
         cellDiv.setAttribute('data-cell', c.cellNum);
-
-        if (isSelected) {
-          renderedSelectedEls.push(cellDiv);
-        }
-
-        let html = `<div class="cell-id">${c.cellId}</div>`;
-        if (!isBlank) {
-          html += `<div class="tags-wrapper">`;
-          if (shortA) {
-            html += `<div class="anode-tag ${anodeClass}" data-tag="anode">${shortA}</div>`;
-          }
-          if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
-            html += `<div class="cathode-tag ${cathClass}" data-tag="cathode">${c.cathodeStatus}</div>`;
-          }
-          html += `</div>`;
-        }
-
-        cellDiv.innerHTML = html;
+        cellDiv.onclick = (e) => selectCell(g.groupId, c.cellNum, e);
+        cellDiv.innerHTML = buildCellInnerHTML(g, c);
         return cellDiv;
       }
 
@@ -2358,10 +2702,10 @@
       });
     }
 
-    scheduleRecalculateStats();
+    recalculateStats();
   }
 
-  function selectRangeTo(targetGId, targetCNum, shouldScroll = false) {
+  function selectRangeTo(targetGId, targetCNum) {
     if (!selectionAnchor) {
       selectionAnchor = { groupId: targetGId, cellNum: targetCNum };
     }
@@ -2379,8 +2723,10 @@
       selectedCellsList = [];
       for (let i = minIdx; i <= maxIdx; i++) {
         let el = allCardEls[i];
+        let gIdAttr = el.getAttribute('data-group');
+        let parsedGId = (isNaN(gIdAttr) || gIdAttr.startsWith('Rack') || gIdAttr.includes(' ')) ? gIdAttr : parseInt(gIdAttr);
         selectedCellsList.push({
-          groupId: parseGroupIdAttr(el.getAttribute('data-group')),
+          groupId: parsedGId,
           cellNum: parseInt(el.getAttribute('data-cell'))
         });
       }
@@ -2394,13 +2740,30 @@
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'flex';
 
-    updateSelectionUI(shouldScroll);
+    updateSelectionUI();
   }
 
-  function selectCell(gId, cNum, event, skipRangeLogic = false, shouldScroll = false) {
+  function selectCell(gId, cNum, event, skipRangeLogic = false) {
     if (!skipRangeLogic && event && event.shiftKey && selectionAnchor) {
-      selectRangeTo(gId, cNum, shouldScroll);
+      selectRangeTo(gId, cNum);
       return;
+    }
+
+    const isAlreadySingleSelected =
+      !skipRangeLogic &&
+      event &&
+      !event.shiftKey &&
+      selectedCellsList.length === 1 &&
+      activeSelectedCell &&
+      String(activeSelectedCell.groupId) === String(gId) &&
+      activeSelectedCell.cellNum === cNum;
+
+    if (isAlreadySingleSelected) {
+      let grp = plantData.find(g => g && String(g.groupId) === String(gId));
+      if (grp && !isMachineGroupObj(grp)) {
+        cycleCellElectrolyteClick(null, gId, cNum);
+        return;
+      }
     }
 
     selectionAnchor = { groupId: gId, cellNum: cNum };
@@ -2411,7 +2774,7 @@
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'flex';
 
-    updateSelectionUI(shouldScroll);
+    updateSelectionUI();
   }
 
   function updateActiveCellAnode(val) {
@@ -2419,32 +2782,24 @@
     if(targets.length === 0) return;
     saveState();
     
-    let needFullRender = hasActiveCellLevelFilter();
-    targets.forEach(t => {
-      let grp = getGroupById(t.groupId);
-      if (grp) {
-        let cell = grp.cells[t.cellNum - 1] || grp.cells.find(c => c && c.cellNum === t.cellNum);
-        if (cell) {
-          cell.anodeStatus = val;
-          cell.pcs = val === '63 FL' ? 63 : ((val === '62 KU' || val === '62 KS' || val === '62 SA') ? 62 : 0);
-          if (!needFullRender) {
-            updateCellDOM(t.groupId, t.cellNum);
-          }
-        }
-      }
-    });
-
-    if (needFullRender) {
-      renderMatrix();
-    } else {
-      scheduleRecalculateStats();
-    }
-    updateSelectionUI(false);
-
     let actionTxt = currentLang === 'id' 
       ? `Mengatur Anoda menjadi [${val}] pada ${targets.length} cell` 
       : `Set Anode to [${val}] on ${targets.length} cell(s)`;
-    logChange(actionTxt, targets);
+    logChange(actionTxt, targets); 
+    
+    targets.forEach(t => {
+      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
+      if (grp) {
+        let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+        if (cell) {
+          cell.anodeStatus = val;
+          cell.pcs = val === '63 FL' ? 63 : ((val === '62 KU' || val === '62 KS' || val === '62 SA') ? 62 : 0);
+          updateCellDOM(t.groupId, t.cellNum);
+        }
+      }
+    });
+    updateSelectionUI();
+    recalculateStats();
     syncCellTargets(targets);
   }
 
@@ -2453,31 +2808,51 @@
     if(targets.length === 0) return;
     saveState();
     
-    let needFullRender = hasActiveCellLevelFilter();
-    targets.forEach(t => {
-      let grp = getGroupById(t.groupId);
-      if (grp) {
-        let cell = grp.cells[t.cellNum - 1] || grp.cells.find(c => c && c.cellNum === t.cellNum);
-        if (cell) {
-          cell.cathodeStatus = val;
-          if (!needFullRender) {
-            updateCellDOM(t.groupId, t.cellNum);
-          }
-        }
-      }
-    });
-
-    if (needFullRender) {
-      renderMatrix();
-    } else {
-      scheduleRecalculateStats();
-    }
-    updateSelectionUI(false);
-
     let actionTxt = currentLang === 'id' 
       ? `Mengatur Katoda menjadi [${val}] pada ${targets.length} cell` 
       : `Set Cathode to [${val}] on ${targets.length} cell(s)`;
+    logChange(actionTxt, targets); 
+    
+    targets.forEach(t => {
+      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
+      if (grp) {
+        let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+        if (cell) {
+          cell.cathodeStatus = val;
+          updateCellDOM(t.groupId, t.cellNum);
+        }
+      }
+    });
+    updateSelectionUI();
+    recalculateStats();
+    syncCellTargets(targets);
+  }
+
+  function updateActiveCellElectrolyte(val) {
+    let targets = getActiveTargets().filter(t => {
+      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
+      return grp && !isMachineGroupObj(grp);
+    });
+    if (targets.length === 0) return;
+    saveState();
+
+    const lvl = Number(val) || 0;
+    let actionTxt = currentLang === 'id'
+      ? `Mengatur Level Elektrolit menjadi [${lvl}%] pada ${targets.length} cell`
+      : `Set Electrolyte Level to [${lvl}%] on ${targets.length} cell(s)`;
     logChange(actionTxt, targets);
+
+    targets.forEach(t => {
+      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
+      if (grp && !isMachineGroupObj(grp)) {
+        let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+        if (cell) {
+          cell.electrolyteLevel = lvl;
+          updateCellDOM(t.groupId, t.cellNum);
+        }
+      }
+    });
+    updateSelectionUI();
     syncCellTargets(targets);
   }
 
@@ -2485,34 +2860,27 @@
     let targets = getActiveTargets();
     if(targets.length === 0) return;
     saveState();
-
-    let needFullRender = hasActiveCellLevelFilter();
-    targets.forEach(t => {
-      let grp = getGroupById(t.groupId);
-      if (grp) {
-        let cell = grp.cells[t.cellNum - 1] || grp.cells.find(c => c && c.cellNum === t.cellNum);
-        if (cell) {
-          cell.anodeStatus = 'NONE';
-          cell.cathodeStatus = 'NONE';
-          cell.pcs = 0;
-          if (!needFullRender) {
-            updateCellDOM(t.groupId, t.cellNum);
-          }
-        }
-      }
-    });
-
-    if (needFullRender) {
-      renderMatrix();
-    } else {
-      scheduleRecalculateStats();
-    }
-    updateSelectionUI(false);
-
+    
     let actionTxt = currentLang === 'id' 
       ? `Menghapus isi data (Clear Cell) pada ${targets.length} cell` 
       : `Cleared all data on ${targets.length} cell(s)`;
     logChange(actionTxt, targets);
+
+    targets.forEach(t => {
+      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
+      if (grp) {
+        let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+        if (cell) {
+          cell.anodeStatus = 'NONE';
+          cell.cathodeStatus = 'NONE';
+          if (!isMachineGroupObj(grp)) cell.electrolyteLevel = 0;
+          cell.pcs = 0;
+          updateCellDOM(t.groupId, t.cellNum);
+        }
+      }
+    });
+    updateSelectionUI();
+    recalculateStats();
     showToast(`Cleared (${targets.length})`);
     syncCellTargets(targets);
   }
@@ -2520,7 +2888,7 @@
   function updateActiveGroupCrop(val) {
     if(!activeSelectedCell) return;
     saveState();
-    let grp = getGroupById(activeSelectedCell.groupId);
+    let grp = plantData.find(g => g && String(g.groupId) === String(activeSelectedCell.groupId));
     if (grp) {
       grp.cropStatus = val;
       let actionTxt = currentLang === 'id' 
@@ -2534,7 +2902,7 @@
 
   function toggleCrop(gId) {
     saveState();
-    let grp = getGroupById(gId);
+    let grp = plantData.find(g => g && String(g.groupId) === String(gId));
     if (grp) {
       let crops = ['-', 'Crop 1', 'Crop 2', 'Crop 3'];
       grp.cropStatus = crops[(crops.indexOf(grp.cropStatus) + 1) % crops.length];
@@ -2647,7 +3015,6 @@
     document.getElementById('kpiSSCount').textContent = stats.cSS.toLocaleString('en-US');
     document.getElementById('kpiSSNS').textContent = `N: ${stats.cSSN.toLocaleString('en-US')} • S: ${stats.cSSS.toLocaleString('en-US')}`;
 
-    // WA REPORT GENERATION
     const now = new Date();
     const isEn = currentLang === 'en';
     const loc = isEn ? 'en-US' : 'id-ID';
@@ -2764,8 +3131,8 @@
     let curG = activeSelectedCell.groupId;
     let curC = activeSelectedCell.cellNum;
 
-    let grpIdx = plantGroupIdxMap.get(String(curG));
-    if (grpIdx === undefined) return null;
+    let grpIdx = plantData.findIndex(g => String(g.groupId) === String(curG));
+    if (grpIdx === -1) return null;
     let grp = plantData[grpIdx];
 
     let isSpecialGroup = (grp.groupId >= 13 && grp.groupId <= 20);
@@ -2848,7 +3215,7 @@
 
     if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
       if (!activeSelectedCell) {
-        selectCell(1, 1, null, true, true);
+        selectCell(1, 1, null, true);
         return;
       }
       e.preventDefault();
@@ -2862,7 +3229,7 @@
         if (curC > 1) {
           targetC = curC - 1;
         } else {
-          let curIdx = plantGroupIdxMap.get(String(curG));
+          let curIdx = plantData.findIndex(g => String(g.groupId) === String(curG));
           if (curIdx > 0) {
             let prevGroup = plantData[curIdx - 1];
             if (prevGroup) {
@@ -2872,7 +3239,7 @@
           }
         }
       } else if (e.key === 'ArrowRight') {
-        let curIdx = plantGroupIdxMap.get(String(curG));
+        let curIdx = plantData.findIndex(g => String(g.groupId) === String(curG));
         let grp = plantData[curIdx];
         if (grp && curC < grp.cellCount) {
           targetC = curC + 1;
@@ -2893,9 +3260,9 @@
       }
 
       if (e.shiftKey) {
-        selectRangeTo(targetG, targetC, true);
+        selectRangeTo(targetG, targetC);
       } else {
-        selectCell(targetG, targetC, null, true, true);
+        selectCell(targetG, targetC, null, true);
       }
       return;
     }
@@ -2943,11 +3310,9 @@
 
   setInterval(updateLiveClock, 1000);
 
-  // Initialize langsung dari cache lokal agar tampil instan tanpa menunggu Firebase
+  // Initialize
   initTheme();
   applyLanguage();
-  renderMatrix();
-  isInitialRenderDone = true;
 </script>
 </body>
 </html>
