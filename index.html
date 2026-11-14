@@ -79,35 +79,9 @@
   .widget-container {
     width: 100%;
     height: 100vh;
-    padding: 8px 10px 10px 10px;
+    padding: 10px;
     display: flex;
     flex-direction: column;
-    gap: 6px;
-  }
-
-  .brand-header-bar {
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    width: 100%;
-    flex-shrink: 0;
-  }
-
-  .brand-logo-box {
-    display: inline-flex;
-    align-items: center;
-    background: #ffffff;
-    padding: 3px 10px;
-    border-radius: 8px;
-    border: 1px solid var(--stroke-default);
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-  }
-
-  .brand-logo {
-    height: 24px;
-    width: auto;
-    display: block;
-    object-fit: contain;
   }
 
   .app-card {
@@ -569,7 +543,7 @@
   .tag-cath { 
     background: rgba(234, 88, 12, 0.2); 
     color: #f97316; 
-    border: 1px solid rgba(234, 88, 12, 0.5);
+    border: 1px solid rgba(234, 88, 12, 0.5); 
   }
   [data-theme="light"] .tag-cath {
     background: #ffedd5;
@@ -580,7 +554,7 @@
   .tag-ss { 
     background: rgba(100, 116, 139, 0.2); 
     color: #cbd5e1; 
-    border: 1px solid rgba(100, 116, 139, 0.5);
+    border: 1px solid rgba(100, 116, 139, 0.5); 
   }
   [data-theme="light"] .tag-ss {
     background: #f1f5f9;
@@ -716,10 +690,6 @@
       padding-bottom: 110px;
     }
 
-    .brand-logo {
-      height: 20px;
-    }
-
     .app-card {
       height: auto;
       overflow: visible;
@@ -838,31 +808,39 @@
       font-size: 13px;
     }
 
+    .group-grid-wrapper {
+      gap: 8px;
+    }
+
     .cell-row-26 {
-      grid-template-columns: repeat(13, minmax(58px, 1fr));
-      gap: 6px;
+      grid-template-columns: repeat(13, minmax(72px, 1fr));
+      gap: 8px;
     }
 
     .cell-row-28 {
-      grid-template-columns: repeat(14, minmax(58px, 1fr));
-      gap: 6px;
+      grid-template-columns: repeat(14, minmax(72px, 1fr));
+      gap: 8px;
     }
 
     .cell-card {
-      min-height: 58px;
-      padding: 5px 3px;
-      border-radius: 8px;
+      min-height: 70px;
+      padding: 6px 4px;
+      border-radius: 9px;
     }
 
     .cell-id {
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 800;
     }
 
+    .tags-wrapper {
+      gap: 4px;
+    }
+
     .anode-tag, .cathode-tag {
-      font-size: 9.5px;
-      padding: 3px 0;
-      border-radius: 4px;
+      font-size: 10.5px;
+      padding: 4px 0;
+      border-radius: 5px;
     }
 
     .inspector-panel {
@@ -920,12 +898,6 @@
 <body>
 
 <div class="widget-container">
-  <div class="brand-header-bar">
-    <div class="brand-logo-box">
-      <img src="Freeport.png" alt="PT Freeport Indonesia" class="brand-logo">
-    </div>
-  </div>
-
   <div class="app-card" id="captureArea">
     
     <div class="header">
@@ -998,7 +970,7 @@
         </div>
       </div>
 
-      <button type="button" class="lumi-chip mobile-only-btn mobile-filter-toggle" id="toggleMobileFiltersBtn" onclick="toggleMobileFilters()">🔍 Show Filters</button>
+      <button type="button" class="lumi-chip mobile-only-btn mobile-filter-toggle" id="toggleMobileFiltersBtn" onclick="toggleMobileFilters()">🔽 Show Filters</button>
 
       <div class="collapsible-filters" id="mobileFiltersWrapper">
         <div class="control-group">
@@ -1166,7 +1138,7 @@
       appTitle: "Cell Inventory",
       appSubtitle: "North & South Zone • Anode & Cathode Setting",
       showChanges: "🔄 Show Changes",
-      showFilters: "🔍 Show Filters",
+      showFilters: "🔽 Show Filters",
       hideFilters: "🔼 Hide Filters",
       checking: "🟢 Checking...",
       online: "🟢 Online",
@@ -1240,7 +1212,7 @@
       appTitle: "Inventaris Cell",
       appSubtitle: "Zona Utara & Selatan • Pengaturan Anoda & Katoda",
       showChanges: "🔄 Riwayat Perubahan",
-      showFilters: "🔍 Tampilkan Filter",
+      showFilters: "🔽 Tampilkan Filter",
       hideFilters: "🔼 Sembunyikan Filter",
       checking: "🟢 Memeriksa...",
       online: "🟢 Online",
