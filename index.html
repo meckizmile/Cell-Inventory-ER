@@ -420,6 +420,7 @@
     cursor: pointer;
     position: relative;
     overflow: hidden;
+    contain: content;
     min-height: 54px;
     display: flex;
     flex-direction: column;
@@ -615,7 +616,6 @@
     border-radius: 50%;
     background: rgba(224, 242, 254, 0.9);
     box-shadow: 0 0 3px rgba(125, 211, 252, 0.95);
-    will-change: transform, opacity;
     animation: riseBubbleCell var(--bdur, 2.5s) linear var(--bdelay, 0s) infinite;
   }
 
@@ -1790,7 +1790,7 @@
     updateThemeButtonLabel(document.documentElement.getAttribute('data-theme'));
     populateGroupSelect();
     renderMatrix();
-    recalculateStats();
+    recalculateStats(true);
     if (activeSelectedCell) updateSelectionUI();
   }
 
@@ -1861,7 +1861,10 @@
     if (changesLog.length > 50) changesLog.pop();
     
     localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
-    renderChangesLogList();
+    const changesModal = document.getElementById('changesModal');
+    if (changesModal && changesModal.style.display === 'flex') {
+      renderChangesLogList();
+    }
 
     db.ref().update({ tankhouseLogs: changesLog }).catch(err => {
       console.warn("Firebase log sync failed:", err);
@@ -1920,12 +1923,16 @@
   let activeSelectedCell = null;
   let selectionAnchor = null;
   let selectedCellsList = [];
+  let copiedCellsBuffer = [];
 
   let undoStack = [];
   let redoStack = [];
   const MAX_HISTORY = 50;
   
   let isDbConnected = false; 
+  let isInitialFirebaseSync = true;
+  let saveLocalTimer = null;
+  let waReportTimer = null;
 
   function updateLastUpdatedUI(ts) {
     const badge = document.getElementById('lastUpdatedBadge');
@@ -2022,11 +2029,22 @@
     return data;
   }
 
-  function saveLocalData() {
+  function flushLocalData() {
+    if (saveLocalTimer) {
+      clearTimeout(saveLocalTimer);
+      saveLocalTimer = null;
+    }
     try {
       localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(plantData));
     } catch(e) {}
   }
+
+  function saveLocalData() {
+    if (saveLocalTimer) clearTimeout(saveLocalTimer);
+    saveLocalTimer = setTimeout(flushLocalData, 250);
+  }
+
+  window.addEventListener('beforeunload', flushLocalData);
 
   plantData = generateDefaultPlantData();
 
@@ -2147,17 +2165,49 @@
     updateLastUpdatedUI(ts);
   }
 
+  function createCompactSnapshot() {
+    return plantData.map(g => ({
+      cropStatus: g.cropStatus,
+      cells: g.cells.map(c => [
+        c.anodeStatus || 'NONE',
+        c.cathodeStatus || 'NONE',
+        Number(c.electrolyteLevel) || 0,
+        Number(c.pcs) || 0
+      ])
+    }));
+  }
+
+  function restoreCompactSnapshot(snap) {
+    if (!Array.isArray(snap)) return;
+    for (let i = 0; i < snap.length && i < plantData.length; i++) {
+      const gSnap = snap[i];
+      const g = plantData[i];
+      if (!gSnap || !g) continue;
+      g.cropStatus = gSnap.cropStatus;
+      for (let j = 0; j < gSnap.cells.length && j < g.cells.length; j++) {
+        const cArr = gSnap.cells[j];
+        const c = g.cells[j];
+        c.anodeStatus = cArr[0];
+        c.cathodeStatus = cArr[1];
+        if (!isMachineGroupObj(g)) {
+          c.electrolyteLevel = cArr[2];
+        }
+        c.pcs = cArr[3];
+      }
+    }
+  }
+
   function saveState() {
-    undoStack.push(JSON.stringify(plantData));
+    undoStack.push(createCompactSnapshot());
     if (undoStack.length > MAX_HISTORY) undoStack.shift();
     redoStack = [];
   }
 
   function undo() {
     if (undoStack.length === 0) return;
-    redoStack.push(JSON.stringify(plantData));
-    plantData = JSON.parse(undoStack.pop());
-    recalculateStats();
+    redoStack.push(createCompactSnapshot());
+    restoreCompactSnapshot(undoStack.pop());
+    recalculateStats(true);
     renderMatrix();
     if (activeSelectedCell) updateSelectionUI();
     syncBulkData();
@@ -2166,9 +2216,9 @@
 
   function redo() {
     if (redoStack.length === 0) return;
-    undoStack.push(JSON.stringify(plantData));
-    plantData = JSON.parse(redoStack.pop());
-    recalculateStats();
+    undoStack.push(createCompactSnapshot());
+    restoreCompactSnapshot(redoStack.pop());
+    recalculateStats(true);
     renderMatrix();
     if (activeSelectedCell) updateSelectionUI();
     syncBulkData();
@@ -2206,18 +2256,97 @@
     }
     toast.textContent = msg;
     toast.style.opacity = '1';
-    setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+    clearTimeout(toast._hideTimer);
+    toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+  }
+
+  function isAnyCellFilterActive() {
+    const selContent = document.getElementById('contentSelect')?.value || 'ALL';
+    const selA = document.getElementById('statusSelect')?.value || 'ALL';
+    const selC = document.getElementById('cathSelect')?.value || 'ALL';
+    const selE = document.getElementById('electrolyteSelect')?.value || 'ALL';
+    return selContent !== 'ALL' || selA !== 'ALL' || selC !== 'ALL' || selE !== 'ALL';
   }
 
   db.ref('tankhouseData').on('value', (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-      plantData = mergeFirebaseData(data);
-      saveLocalData();
+    if (!data) {
+      if (isInitialFirebaseSync) {
+        isInitialFirebaseSync = false;
+        populateGroupSelect();
+        recalculateStats(true);
+        renderMatrix();
+      }
+      return;
     }
-    populateGroupSelect();
-    recalculateStats();
-    renderMatrix();
+
+    const mergedData = mergeFirebaseData(data);
+
+    if (isInitialFirebaseSync) {
+      isInitialFirebaseSync = false;
+      plantData = mergedData;
+      saveLocalData();
+      populateGroupSelect();
+      recalculateStats(true);
+      renderMatrix();
+      return;
+    }
+
+    let changedCells = [];
+    let cropChanged = false;
+
+    for (let i = 0; i < mergedData.length; i++) {
+      const newGrp = mergedData[i];
+      const oldGrp = plantData[i];
+      if (!newGrp || !oldGrp) continue;
+
+      if (oldGrp.cropStatus !== newGrp.cropStatus) {
+        oldGrp.cropStatus = newGrp.cropStatus;
+        cropChanged = true;
+      }
+
+      const isMach = isMachineGroupObj(oldGrp);
+      for (let j = 0; j < newGrp.cells.length; j++) {
+        const newCell = newGrp.cells[j];
+        const oldCell = oldGrp.cells[j];
+        if (!newCell || !oldCell) continue;
+
+        const oldEl = isMach ? 0 : (Number(oldCell.electrolyteLevel) || 0);
+        const newEl = isMach ? 0 : (Number(newCell.electrolyteLevel) || 0);
+
+        if (
+          oldCell.anodeStatus !== newCell.anodeStatus ||
+          oldCell.cathodeStatus !== newCell.cathodeStatus ||
+          oldEl !== newEl ||
+          oldCell.pcs !== newCell.pcs
+        ) {
+          oldCell.anodeStatus = newCell.anodeStatus;
+          oldCell.cathodeStatus = newCell.cathodeStatus;
+          if (!isMach) oldCell.electrolyteLevel = newEl;
+          oldCell.pcs = newCell.pcs;
+          changedCells.push({ groupId: oldGrp.groupId, cellNum: oldCell.cellNum });
+        }
+      }
+    }
+
+    if (changedCells.length === 0 && !cropChanged) {
+      return;
+    }
+
+    saveLocalData();
+    recalculateStats(true);
+
+    if (cropChanged || isAnyCellFilterActive()) {
+      renderMatrix();
+    } else {
+      for (let k = 0; k < changedCells.length; k++) {
+        updateCellDOM(changedCells[k].groupId, changedCells[k].cellNum);
+      }
+    }
+
+    if (activeSelectedCell) {
+      updateSelectionUI();
+    }
   });
 
   db.ref('lastUpdated').on('value', (snapshot) => {
@@ -2233,9 +2362,15 @@
     if (data) {
       const nowMs = Date.now();
       const logs = Array.isArray(data) ? data : Object.values(data);
-      changesLog = logs.filter(item => item && item.msg && (nowMs - item.time) <= THREE_DAYS_MS);
-      localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
-      renderChangesLogList();
+      const filtered = logs.filter(item => item && item.msg && (nowMs - item.time) <= THREE_DAYS_MS);
+      if (JSON.stringify(filtered) !== JSON.stringify(changesLog)) {
+        changesLog = filtered;
+        localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
+        const changesModal = document.getElementById('changesModal');
+        if (changesModal && changesModal.style.display === 'flex') {
+          renderChangesLogList();
+        }
+      }
     }
   });
 
@@ -2279,7 +2414,7 @@
       }
     });
 
-    recalculateStats();
+    recalculateStats(true);
     renderMatrix();
     syncBulkData();
     showToast(`Cleared ${phaseLabel}`);
@@ -2494,7 +2629,7 @@
 
       let activeEl = getCellElement(activeSelectedCell.groupId, activeSelectedCell.cellNum);
       if (activeEl) {
-        activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+        activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
       }
     }
   }
@@ -2885,6 +3020,139 @@
     syncCellTargets(targets);
   }
 
+  /* ====== COPY & PASTE KEYBOARD PC (ELECTROLYTE, ANODE, SS BLANK, CATHODE) ====== */
+  function copySelectedCells() {
+    const targets = getActiveTargets();
+    if (targets.length === 0) return;
+
+    const items = [];
+    targets.forEach(t => {
+      const grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
+      if (!grp) return;
+      const cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+      if (!cell) return;
+      const isMach = isMachineGroupObj(grp);
+      items.push({
+        anodeStatus: cell.anodeStatus || 'NONE',
+        cathodeStatus: cell.cathodeStatus || 'NONE',
+        electrolyteLevel: isMach ? null : (Number(cell.electrolyteLevel) || 0),
+        pcs: Number(cell.pcs) || 0
+      });
+    });
+
+    if (items.length === 0) return;
+    copiedCellsBuffer = items;
+
+    let toastText = '';
+    if (items.length === 1) {
+      const it = items[0];
+      const parts = [];
+      if (it.anodeStatus !== 'NONE') parts.push(it.anodeStatus.replace(' ', ''));
+      if (it.cathodeStatus !== 'NONE') parts.push(it.cathodeStatus === 'SS' ? 'SS BLANK' : it.cathodeStatus);
+      if (it.electrolyteLevel !== null) parts.push(`${it.electrolyteLevel}%`);
+      const summary = parts.length > 0 ? parts.join(' • ') : (currentLang === 'id' ? 'Kosong' : 'Empty');
+      toastText = currentLang === 'id' ? `Disalin: ${summary}` : `Copied: ${summary}`;
+    } else {
+      toastText = currentLang === 'id' ? `${items.length} cell disalin` : `Copied ${items.length} cells`;
+    }
+
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(toastText).catch(() => {});
+      }
+    } catch (err) {}
+
+    showToast(`📋 ${toastText}`);
+  }
+
+  function pasteCopiedCells() {
+    if (!copiedCellsBuffer || copiedCellsBuffer.length === 0) {
+      showToast(currentLang === 'id' ? 'Belum ada cell yang disalin (Ctrl+C)' : 'Nothing copied yet (Ctrl+C)');
+      return;
+    }
+
+    const activeTargets = getActiveTargets();
+    if (activeTargets.length === 0) return;
+
+    const pastePairs = [];
+
+    if (copiedCellsBuffer.length === 1) {
+      const src = copiedCellsBuffer[0];
+      activeTargets.forEach(t => {
+        pastePairs.push({ target: t, source: src });
+      });
+    } else if (activeTargets.length === 1) {
+      const allCardEls = Array.from(document.querySelectorAll('.cell-card'));
+      const startEl = getCellElement(activeTargets[0].groupId, activeTargets[0].cellNum);
+      const startIdx = startEl ? allCardEls.indexOf(startEl) : -1;
+
+      if (startIdx !== -1) {
+        const newSelected = [];
+        for (let i = 0; i < copiedCellsBuffer.length && (startIdx + i) < allCardEls.length; i++) {
+          const el = allCardEls[startIdx + i];
+          const gIdAttr = el.getAttribute('data-group');
+          const parsedGId = (isNaN(gIdAttr) || gIdAttr.startsWith('Rack') || gIdAttr.includes(' ')) ? gIdAttr : parseInt(gIdAttr);
+          const targetObj = {
+            groupId: parsedGId,
+            cellNum: parseInt(el.getAttribute('data-cell'))
+          };
+          pastePairs.push({ target: targetObj, source: copiedCellsBuffer[i] });
+          newSelected.push(targetObj);
+        }
+        if (newSelected.length > 0) {
+          selectedCellsList = newSelected;
+        }
+      } else {
+        pastePairs.push({ target: activeTargets[0], source: copiedCellsBuffer[0] });
+      }
+    } else {
+      for (let i = 0; i < activeTargets.length; i++) {
+        pastePairs.push({
+          target: activeTargets[i],
+          source: copiedCellsBuffer[i % copiedCellsBuffer.length]
+        });
+      }
+    }
+
+    if (pastePairs.length === 0) return;
+
+    saveState();
+
+    const affectedTargets = [];
+    pastePairs.forEach(pair => {
+      const t = pair.target;
+      const src = pair.source;
+      const grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
+      if (!grp) return;
+      const cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+      if (!cell) return;
+
+      cell.anodeStatus = src.anodeStatus;
+      cell.pcs = src.pcs;
+      cell.cathodeStatus = src.cathodeStatus;
+      if (!isMachineGroupObj(grp) && src.electrolyteLevel !== null) {
+        cell.electrolyteLevel = Number(src.electrolyteLevel) || 0;
+      }
+
+      updateCellDOM(t.groupId, t.cellNum);
+      affectedTargets.push({ groupId: t.groupId, cellNum: t.cellNum });
+    });
+
+    if (affectedTargets.length === 0) return;
+
+    const actionTxt = currentLang === 'id'
+      ? `Menempel (Paste) status ke ${affectedTargets.length} cell`
+      : `Pasted status onto ${affectedTargets.length} cell(s)`;
+    logChange(actionTxt, affectedTargets);
+
+    updateSelectionUI();
+    recalculateStats();
+    syncCellTargets(affectedTargets);
+
+    showToast(currentLang === 'id' ? `📌 Paste ke ${affectedTargets.length} cell` : `📌 Pasted to ${affectedTargets.length} cell(s)`);
+  }
+  /* ============================================================================ */
+
   function updateActiveGroupCrop(val) {
     if(!activeSelectedCell) return;
     saveState();
@@ -2944,77 +3212,7 @@
     return ranges.join(', ');
   }
 
-  function recalculateStats() {
-    let stats = {
-      tA: 0, tAN: 0, tAS: 0,
-      c63: 0, c63N: 0, c63S: 0,
-      c62ku: 0, c62kuN: 0, c62kuS: 0,
-      c62ks: 0, c62ksN: 0, c62ksS: 0,
-      c62sa: 0, c62saN: 0, c62saS: 0,
-      cCA: 0, cCAN: 0, cCAS: 0,
-      cSS: 0, cSSN: 0, cSSS: 0
-    };
-
-    plantData.forEach(g => {
-      if (!g) return;
-      const isNorth = (g.zone === 'North' || g.zone === 'Utara');
-      g.cells.forEach(c => {
-        if (!c) return;
-        stats.tA += c.pcs;
-        if (isNorth) stats.tAN += c.pcs;
-        else stats.tAS += c.pcs;
-
-        if (c.anodeStatus === '63 FL') {
-          stats.c63++;
-          if (isNorth) stats.c63N++;
-          else stats.c63S++;
-        }
-        if (c.anodeStatus === '62 KU') {
-          stats.c62ku++;
-          if (isNorth) stats.c62kuN++;
-          else stats.c62kuS++;
-        }
-        if (c.anodeStatus === '62 KS') {
-          stats.c62ks++;
-          if (isNorth) stats.c62ksN++;
-          else stats.c62ksS++;
-        }
-        if (c.anodeStatus === '62 SA') {
-          stats.c62sa++;
-          if (isNorth) stats.c62saN++;
-          else stats.c62saS++;
-        }
-        if (c.cathodeStatus === 'CATH') {
-          stats.cCA++;
-          if (isNorth) stats.cCAN++;
-          else stats.cCAS++;
-        }
-        if (c.cathodeStatus === 'SS') {
-          stats.cSS++;
-          if (isNorth) stats.cSSN++;
-          else stats.cSSS++;
-        }
-      });
-    });
-
-    document.getElementById('kpiCount63').textContent = stats.c63.toLocaleString('en-US');
-    document.getElementById('kpiCount63NS').textContent = `N: ${stats.c63N.toLocaleString('en-US')} • S: ${stats.c63S.toLocaleString('en-US')}`;
-
-    document.getElementById('kpiCount62KU').textContent = stats.c62ku.toLocaleString('en-US');
-    document.getElementById('kpiCount62KUNS').textContent = `N: ${stats.c62kuN.toLocaleString('en-US')} • S: ${stats.c62kuS.toLocaleString('en-US')}`;
-
-    document.getElementById('kpiCount62KS').textContent = stats.c62ks.toLocaleString('en-US');
-    document.getElementById('kpiCount62KSNS').textContent = `N: ${stats.c62ksN.toLocaleString('en-US')} • S: ${stats.c62ksS.toLocaleString('en-US')}`;
-
-    document.getElementById('kpiCount62SA').textContent = stats.c62sa.toLocaleString('en-US');
-    document.getElementById('kpiCount62SANS').textContent = `N: ${stats.c62saN.toLocaleString('en-US')} • S: ${stats.c62saS.toLocaleString('en-US')}`;
-
-    document.getElementById('kpiCathodeCount').textContent = stats.cCA.toLocaleString('en-US');
-    document.getElementById('kpiCathodeNS').textContent = `N: ${stats.cCAN.toLocaleString('en-US')} • S: ${stats.cCAS.toLocaleString('en-US')}`;
-
-    document.getElementById('kpiSSCount').textContent = stats.cSS.toLocaleString('en-US');
-    document.getElementById('kpiSSNS').textContent = `N: ${stats.cSSN.toLocaleString('en-US')} • S: ${stats.cSSS.toLocaleString('en-US')}`;
-
+  function buildWAReportText(stats) {
     const now = new Date();
     const isEn = currentLang === 'en';
     const loc = isEn ? 'en-US' : 'id-ID';
@@ -3111,7 +3309,88 @@
     });
 
     let text = reportBlocks.join('\n\n');
-    document.getElementById('waText').value = text.trim();
+    const waEl = document.getElementById('waText');
+    if (waEl) waEl.value = text.trim();
+  }
+
+  function recalculateStats(immediateWA = false) {
+    let stats = {
+      tA: 0, tAN: 0, tAS: 0,
+      c63: 0, c63N: 0, c63S: 0,
+      c62ku: 0, c62kuN: 0, c62kuS: 0,
+      c62ks: 0, c62ksN: 0, c62ksS: 0,
+      c62sa: 0, c62saN: 0, c62saS: 0,
+      cCA: 0, cCAN: 0, cCAS: 0,
+      cSS: 0, cSSN: 0, cSSS: 0
+    };
+
+    for (let i = 0; i < plantData.length; i++) {
+      const g = plantData[i];
+      if (!g) continue;
+      const isNorth = (g.zone === 'North' || g.zone === 'Utara');
+      const cells = g.cells;
+      for (let j = 0; j < cells.length; j++) {
+        const c = cells[j];
+        if (!c) continue;
+        stats.tA += c.pcs;
+        if (isNorth) stats.tAN += c.pcs;
+        else stats.tAS += c.pcs;
+
+        if (c.anodeStatus === '63 FL') {
+          stats.c63++;
+          if (isNorth) stats.c63N++;
+          else stats.c63S++;
+        } else if (c.anodeStatus === '62 KU') {
+          stats.c62ku++;
+          if (isNorth) stats.c62kuN++;
+          else stats.c62kuS++;
+        } else if (c.anodeStatus === '62 KS') {
+          stats.c62ks++;
+          if (isNorth) stats.c62ksN++;
+          else stats.c62ksS++;
+        } else if (c.anodeStatus === '62 SA') {
+          stats.c62sa++;
+          if (isNorth) stats.c62saN++;
+          else stats.c62saS++;
+        }
+
+        if (c.cathodeStatus === 'CATH') {
+          stats.cCA++;
+          if (isNorth) stats.cCAN++;
+          else stats.cCAS++;
+        } else if (c.cathodeStatus === 'SS') {
+          stats.cSS++;
+          if (isNorth) stats.cSSN++;
+          else stats.cSSS++;
+        }
+      }
+    }
+
+    document.getElementById('kpiCount63').textContent = stats.c63.toLocaleString('en-US');
+    document.getElementById('kpiCount63NS').textContent = `N: ${stats.c63N.toLocaleString('en-US')} • S: ${stats.c63S.toLocaleString('en-US')}`;
+
+    document.getElementById('kpiCount62KU').textContent = stats.c62ku.toLocaleString('en-US');
+    document.getElementById('kpiCount62KUNS').textContent = `N: ${stats.c62kuN.toLocaleString('en-US')} • S: ${stats.c62kuS.toLocaleString('en-US')}`;
+
+    document.getElementById('kpiCount62KS').textContent = stats.c62ks.toLocaleString('en-US');
+    document.getElementById('kpiCount62KSNS').textContent = `N: ${stats.c62ksN.toLocaleString('en-US')} • S: ${stats.c62ksS.toLocaleString('en-US')}`;
+
+    document.getElementById('kpiCount62SA').textContent = stats.c62sa.toLocaleString('en-US');
+    document.getElementById('kpiCount62SANS').textContent = `N: ${stats.c62saN.toLocaleString('en-US')} • S: ${stats.c62saS.toLocaleString('en-US')}`;
+
+    document.getElementById('kpiCathodeCount').textContent = stats.cCA.toLocaleString('en-US');
+    document.getElementById('kpiCathodeNS').textContent = `N: ${stats.cCAN.toLocaleString('en-US')} • S: ${stats.cCAS.toLocaleString('en-US')}`;
+
+    document.getElementById('kpiSSCount').textContent = stats.cSS.toLocaleString('en-US');
+    document.getElementById('kpiSSNS').textContent = `N: ${stats.cSSN.toLocaleString('en-US')} • S: ${stats.cSSS.toLocaleString('en-US')}`;
+
+    if (immediateWA) {
+      if (waReportTimer) clearTimeout(waReportTimer);
+      buildWAReportText(stats);
+    } else {
+      if (waReportTimer) clearTimeout(waReportTimer);
+      waReportTimer = setTimeout(() => buildWAReportText(stats), 90);
+    }
   }
 
   function copyWAReport() {
@@ -3187,6 +3466,22 @@
 
   document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.key.toLowerCase() === 'c' || e.code === 'KeyC')) {
+      if (activeSelectedCell || selectedCellsList.length > 0) {
+        e.preventDefault();
+        copySelectedCells();
+      }
+      return;
+    }
+
+    if ((e.ctrlKey || e.metaKey) && !e.shiftKey && !e.altKey && (e.key.toLowerCase() === 'v' || e.code === 'KeyV')) {
+      if (activeSelectedCell || selectedCellsList.length > 0) {
+        e.preventDefault();
+        pasteCopiedCells();
+      }
+      return;
+    }
 
     if ((e.ctrlKey || e.metaKey) && !e.shiftKey && e.key.toLowerCase() === 'z') {
       e.preventDefault();
