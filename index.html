@@ -1331,7 +1331,7 @@
     updateThemeButtonLabel(document.documentElement.getAttribute('data-theme'));
     populateGroupSelect();
     recalculateStats();
-    if (activeSelectedCell) updateSelectionUI();
+    if (activeSelectedCell) updateSelectionUI(false);
   }
 
   function toggleLanguage() {
@@ -1345,6 +1345,7 @@
   const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
   let rawLog = JSON.parse(localStorage.getItem('tankhouse_changes_log')) || [];
   let changesLog = rawLog.filter(item => item && item.msg && (Date.now() - item.time) <= THREE_DAYS_MS);
+  let logSyncTimer = null;
 
   function renderChangesLogList() {
     const list = document.getElementById('changesLogList');
@@ -1366,7 +1367,7 @@
     
     let resultParts = [];
     for (let gId in groups) {
-      let grp = plantData.find(g => String(g.groupId) === String(gId));
+      let grp = getGroupById(gId);
       if (grp) {
         let phaseText = grp.phase === 'Machine' ? tr('machine') : `${tr('phaseLabel')} ${grp.phase}`;
         let groupName = (typeof grp.groupId === 'string' && isNaN(grp.groupId)) ? grp.groupId : `Group ${grp.groupId}`;
@@ -1400,12 +1401,19 @@
     
     if (changesLog.length > 50) changesLog.pop();
     
-    localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
-    renderChangesLogList();
+    if (document.getElementById('changesModal').style.display === 'flex') {
+      renderChangesLogList();
+    }
 
-    db.ref().update({ tankhouseLogs: changesLog }).catch(err => {
-      console.warn("Firebase log sync failed:", err);
-    });
+    clearTimeout(logSyncTimer);
+    logSyncTimer = setTimeout(() => {
+      try {
+        localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
+      } catch(e) {}
+      db.ref().update({ tankhouseLogs: changesLog }).catch(err => {
+        console.warn("Firebase log sync failed:", err);
+      });
+    }, 350);
   }
 
   function openModal(id) {
@@ -1456,16 +1464,39 @@
   const LOCAL_STORAGE_LAST_UPDATED = 'tankhouse_last_updated';
 
   let plantData = [];
+  let plantGroupMap = new Map();
+  let plantGroupIdxMap = new Map();
   let currentPhaseFilter = 'ALL';
   let activeSelectedCell = null;
   let selectionAnchor = null;
   let selectedCellsList = [];
+  let renderedSelectedEls = [];
 
   let undoStack = [];
   let redoStack = [];
   const MAX_HISTORY = 50;
   
-  let isDbConnected = false; 
+  let isDbConnected = false;
+  let isInitialRenderDone = false;
+  let saveLocalTimer = null;
+  let statsFramePending = false;
+
+  function rebuildGroupMaps() {
+    plantGroupMap.clear();
+    plantGroupIdxMap.clear();
+    for (let i = 0; i < plantData.length; i++) {
+      const g = plantData[i];
+      if (g) {
+        const key = String(g.groupId);
+        plantGroupMap.set(key, g);
+        plantGroupIdxMap.set(key, i);
+      }
+    }
+  }
+
+  function getGroupById(gId) {
+    return plantGroupMap.get(String(gId));
+  }
 
   function updateLastUpdatedUI(ts) {
     const badge = document.getElementById('lastUpdatedBadge');
@@ -1562,16 +1593,51 @@
   }
 
   function saveLocalData() {
-    try {
-      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(plantData));
-    } catch(e) {}
+    clearTimeout(saveLocalTimer);
+    saveLocalTimer = setTimeout(() => {
+      try {
+        localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(plantData));
+      } catch(e) {}
+    }, 250);
   }
 
-  plantData = generateDefaultPlantData();
+  function scheduleRecalculateStats() {
+    if (statsFramePending) return;
+    statsFramePending = true;
+    requestAnimationFrame(() => {
+      statsFramePending = false;
+      recalculateStats();
+    });
+  }
+
+  function hasActiveCellLevelFilter() {
+    const selContent = document.getElementById('contentSelect').value;
+    const selA = document.getElementById('statusSelect').value;
+    const selC = document.getElementById('cathSelect').value;
+    return selContent !== 'ALL' || selA !== 'ALL' || selC !== 'ALL';
+  }
+
+  // Muat cache lokal segera agar startup tidak delay menunggu jaringan
+  (() => {
+    try {
+      const cached = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (cached) {
+        plantData = mergeFirebaseData(JSON.parse(cached));
+      } else {
+        plantData = generateDefaultPlantData();
+      }
+    } catch(e) {
+      plantData = generateDefaultPlantData();
+    }
+    rebuildGroupMaps();
+  })();
 
   function mergeFirebaseData(fbData) {
     let baseData = generateDefaultPlantData();
     if (!fbData) return baseData;
+
+    let baseMap = new Map();
+    baseData.forEach(g => baseMap.set(String(g.groupId), g));
 
     let fbGroups = Array.isArray(fbData) ? fbData : Object.values(fbData);
 
@@ -1580,8 +1646,7 @@
       let localGroup = null;
 
       if (fbGroup.groupId !== undefined) {
-        localGroup = baseData.find(g => 
-          String(g.groupId) === String(fbGroup.groupId) ||
+        localGroup = baseMap.get(String(fbGroup.groupId)) || baseData.find(g => 
           (fbGroup.groupId === 'CSM 1 (Utara)' && g.groupId === 'CSM 1 North') ||
           (fbGroup.groupId === 'CSM 1 (Selatan)' && g.groupId === 'CSM 1 South') ||
           (fbGroup.groupId === 'ASM 1 (Utara)' && g.groupId === 'ASM 1 North') ||
@@ -1609,7 +1674,10 @@
           let fbCells = Array.isArray(fbGroup.cells) ? fbGroup.cells : Object.values(fbGroup.cells);
           fbCells.forEach(fbCell => {
             if (!fbCell || fbCell.cellNum === undefined) return;
-            let localCell = localGroup.cells.find(c => c.cellNum === fbCell.cellNum);
+            let localCell = localGroup.cells[fbCell.cellNum - 1];
+            if (!localCell || localCell.cellNum !== fbCell.cellNum) {
+              localCell = localGroup.cells.find(c => c.cellNum === fbCell.cellNum);
+            }
             if (localCell) {
               if (fbCell.anodeStatus !== undefined) localCell.anodeStatus = fbCell.anodeStatus;
               if (fbCell.cathodeStatus !== undefined) localCell.cathodeStatus = fbCell.cathodeStatus;
@@ -1630,11 +1698,14 @@
     updates['lastUpdated'] = ts;
     localStorage.setItem(LOCAL_STORAGE_LAST_UPDATED, ts);
     targets.forEach(t => {
-      let gIdx = plantData.findIndex(g => g && String(g.groupId) === String(t.groupId));
-      if (gIdx !== -1) {
-        let cIdx = plantData[gIdx].cells.findIndex(c => c && c.cellNum === t.cellNum);
-        if (cIdx !== -1) {
-          let cell = plantData[gIdx].cells[cIdx];
+      let gIdx = plantGroupIdxMap.get(String(t.groupId));
+      if (gIdx !== undefined) {
+        let cell = plantData[gIdx].cells[t.cellNum - 1];
+        if (!cell || cell.cellNum !== t.cellNum) {
+          cell = plantData[gIdx].cells.find(c => c && c.cellNum === t.cellNum);
+        }
+        if (cell) {
+          let cIdx = plantData[gIdx].cells.indexOf(cell);
           updates[`tankhouseData/${gIdx}/groupId`] = plantData[gIdx].groupId;
           updates[`tankhouseData/${gIdx}/cells/${cIdx}`] = {
             cellNum: cell.cellNum,
@@ -1656,8 +1727,8 @@
 
   function syncGroupCrop(groupId, cropStatus) {
     saveLocalData();
-    let gIdx = plantData.findIndex(g => g && String(g.groupId) === String(groupId));
-    if (gIdx !== -1) {
+    let gIdx = plantGroupIdxMap.get(String(groupId));
+    if (gIdx !== undefined) {
       const ts = Date.now();
       let updates = {};
       updates[`tankhouseData/${gIdx}/cropStatus`] = cropStatus;
@@ -1679,30 +1750,52 @@
     updateLastUpdatedUI(ts);
   }
 
+  function createCompactSnapshot() {
+    return plantData.map(g => ({
+      c: g.cropStatus,
+      l: g.cells.map(c => [c.anodeStatus, c.cathodeStatus, c.pcs])
+    }));
+  }
+
+  function restoreCompactSnapshot(snap) {
+    for (let i = 0; i < plantData.length; i++) {
+      if (!snap[i]) continue;
+      plantData[i].cropStatus = snap[i].c;
+      const cells = plantData[i].cells;
+      const snapCells = snap[i].l;
+      for (let j = 0; j < cells.length; j++) {
+        if (!snapCells[j]) continue;
+        cells[j].anodeStatus = snapCells[j][0];
+        cells[j].cathodeStatus = snapCells[j][1];
+        cells[j].pcs = snapCells[j][2];
+      }
+    }
+  }
+
   function saveState() {
-    undoStack.push(JSON.stringify(plantData));
+    undoStack.push(createCompactSnapshot());
     if (undoStack.length > MAX_HISTORY) undoStack.shift();
     redoStack = [];
   }
 
   function undo() {
     if (undoStack.length === 0) return;
-    redoStack.push(JSON.stringify(plantData));
-    plantData = JSON.parse(undoStack.pop());
+    redoStack.push(createCompactSnapshot());
+    restoreCompactSnapshot(undoStack.pop());
     recalculateStats();
     renderMatrix();
-    if (activeSelectedCell) updateSelectionUI();
+    if (activeSelectedCell) updateSelectionUI(false);
     syncBulkData();
     logChange(currentLang === 'id' ? `Melakukan Undo (Batal) aksi sebelumnya.` : `Performed Undo on last action.`);
   }
 
   function redo() {
     if (redoStack.length === 0) return;
-    undoStack.push(JSON.stringify(plantData));
-    plantData = JSON.parse(redoStack.pop());
+    undoStack.push(createCompactSnapshot());
+    restoreCompactSnapshot(redoStack.pop());
     recalculateStats();
     renderMatrix();
-    if (activeSelectedCell) updateSelectionUI();
+    if (activeSelectedCell) updateSelectionUI(false);
     syncBulkData();
     logChange(currentLang === 'id' ? `Melakukan Redo (Ulangi).` : `Performed Redo.`);
   }
@@ -1719,7 +1812,7 @@
         ${tr('clickCell')}
       </div>
     `;
-    updateSelectionUI();
+    updateSelectionUI(false);
   }
 
   function getActiveTargets() {
@@ -1743,13 +1836,72 @@
 
   db.ref('tankhouseData').on('value', (snapshot) => {
     const data = snapshot.val();
-    if (data) {
-      plantData = mergeFirebaseData(data);
-      saveLocalData();
+    if (!data) {
+      if (!isInitialRenderDone) {
+        populateGroupSelect();
+        recalculateStats();
+        renderMatrix();
+        isInitialRenderDone = true;
+      }
+      return;
     }
-    populateGroupSelect();
-    recalculateStats();
-    renderMatrix();
+
+    const merged = mergeFirebaseData(data);
+
+    if (!isInitialRenderDone) {
+      plantData = merged;
+      rebuildGroupMaps();
+      saveLocalData();
+      populateGroupSelect();
+      recalculateStats();
+      renderMatrix();
+      isInitialRenderDone = true;
+      return;
+    }
+
+    // Incremental diff: hanya perbarui cell/grup yang benar-benar berubah, cegah rebuild DOM 1.300+ cell
+    let changedCells = [];
+    let cropChanged = false;
+
+    for (let i = 0; i < merged.length; i++) {
+      const newG = merged[i];
+      const oldG = plantData[i];
+      if (!oldG) {
+        cropChanged = true;
+        continue;
+      }
+      if (oldG.cropStatus !== newG.cropStatus) {
+        cropChanged = true;
+      }
+      for (let j = 0; j < newG.cells.length; j++) {
+        const nc = newG.cells[j];
+        const oc = oldG.cells[j];
+        if (!oc || oc.anodeStatus !== nc.anodeStatus || oc.cathodeStatus !== nc.cathodeStatus || oc.pcs !== nc.pcs) {
+          changedCells.push({ groupId: newG.groupId, cellNum: nc.cellNum });
+        }
+      }
+    }
+
+    if (!cropChanged && changedCells.length === 0) {
+      return;
+    }
+
+    plantData = merged;
+    rebuildGroupMaps();
+    saveLocalData();
+
+    if (cropChanged || hasActiveCellLevelFilter() || changedCells.length > 40) {
+      renderMatrix();
+    } else {
+      for (let k = 0; k < changedCells.length; k++) {
+        updateCellDOM(changedCells[k].groupId, changedCells[k].cellNum);
+      }
+      scheduleRecalculateStats();
+    }
+
+    if (activeSelectedCell) {
+      updateSelectionUI(false);
+    }
   });
 
   db.ref('lastUpdated').on('value', (snapshot) => {
@@ -1766,8 +1918,12 @@
       const nowMs = Date.now();
       const logs = Array.isArray(data) ? data : Object.values(data);
       changesLog = logs.filter(item => item && item.msg && (nowMs - item.time) <= THREE_DAYS_MS);
-      localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
-      renderChangesLogList();
+      try {
+        localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
+      } catch(e) {}
+      if (document.getElementById('changesModal').style.display === 'flex') {
+        renderChangesLogList();
+      }
     }
   });
 
@@ -1845,9 +2001,9 @@
 
   function removeCellTag(e, gId, cNum, tagType) {
     if (e) e.stopPropagation();
-    let grp = plantData.find(g => g && String(g.groupId) === String(gId));
+    let grp = getGroupById(gId);
     if (!grp) return;
-    let cell = grp.cells.find(c => c && c.cellNum === cNum);
+    let cell = grp.cells[cNum - 1] || grp.cells.find(c => c && c.cellNum === cNum);
     if (!cell) return;
 
     saveState();
@@ -1863,15 +2019,19 @@
     }
 
     selectCell(gId, cNum, null, true);
-    updateCellDOM(gId, cNum);
-    recalculateStats();
+    if (hasActiveCellLevelFilter()) {
+      renderMatrix();
+    } else {
+      updateCellDOM(gId, cNum);
+      scheduleRecalculateStats();
+    }
     syncCellTargets([{ groupId: gId, cellNum: cNum }]);
   }
 
   function updateCellDOM(gId, cNum) {
-    let grp = plantData.find(g => g && String(g.groupId) === String(gId));
+    let grp = getGroupById(gId);
     if (!grp) return;
-    let c = grp.cells.find(cell => cell && cell.cellNum === cNum);
+    let c = grp.cells[cNum - 1] || grp.cells.find(cell => cell && cell.cellNum === cNum);
     if (!c) return;
 
     let cellEl = getCellElement(gId, cNum);
@@ -1900,16 +2060,14 @@
     let anodeClass = c.anodeStatus === '63 FL' ? 'tag-63' : (c.anodeStatus === '62 KU' ? 'tag-62ku' : (c.anodeStatus === '62 KS' ? 'tag-62ks' : 'tag-62sa'));
     let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
 
-    let safeGIdStr = String(gId).replace(/'/g, "\\'");
-
     let html = `<div class="cell-id">${c.cellId}</div>`;
     if (!isBlank) {
       html += `<div class="tags-wrapper">`;
       if (shortA) {
-        html += `<div class="anode-tag ${anodeClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${cNum}, 'anode')">${shortA}</div>`;
+        html += `<div class="anode-tag ${anodeClass}" data-tag="anode">${shortA}</div>`;
       }
       if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
-        html += `<div class="cathode-tag ${cathClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${cNum}, 'cathode')">${c.cathodeStatus}</div>`;
+        html += `<div class="cathode-tag ${cathClass}" data-tag="cathode">${c.cathodeStatus}</div>`;
       }
       html += `</div>`;
     }
@@ -1917,22 +2075,25 @@
     cellEl.innerHTML = html;
   }
 
-  function updateSelectionUI() {
-    const prevSelected = document.querySelectorAll('.cell-card.selected');
-    for (let i = 0; i < prevSelected.length; i++) {
-      prevSelected[i].classList.remove('selected');
+  function updateSelectionUI(shouldScroll = false) {
+    for (let i = 0; i < renderedSelectedEls.length; i++) {
+      renderedSelectedEls[i].classList.remove('selected');
     }
+    renderedSelectedEls = [];
 
     const targets = getActiveTargets();
-    targets.forEach(t => {
-      let el = getCellElement(t.groupId, t.cellNum);
-      if (el) el.classList.add('selected');
-    });
+    for (let i = 0; i < targets.length; i++) {
+      let el = getCellElement(targets[i].groupId, targets[i].cellNum);
+      if (el) {
+        el.classList.add('selected');
+        renderedSelectedEls.push(el);
+      }
+    }
 
     if (activeSelectedCell) {
-      let grp = plantData.find(g => g && String(g.groupId) === String(activeSelectedCell.groupId));
+      let grp = getGroupById(activeSelectedCell.groupId);
       if (grp) {
-        let cell = grp.cells.find(c => c && c.cellNum === activeSelectedCell.cellNum);
+        let cell = grp.cells[activeSelectedCell.cellNum - 1] || grp.cells.find(c => c && c.cellNum === activeSelectedCell.cellNum);
         if (cell) {
           let isBlank = (cell.anodeStatus === 'NONE' || !cell.anodeStatus) && (cell.cathodeStatus === 'NONE' || !cell.cathodeStatus);
           let insContent = document.getElementById('inspectorContent');
@@ -1958,12 +2119,36 @@
         }
       }
 
-      let activeEl = getCellElement(activeSelectedCell.groupId, activeSelectedCell.cellNum);
-      if (activeEl) {
-        activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'smooth' });
+      if (shouldScroll) {
+        let activeEl = getCellElement(activeSelectedCell.groupId, activeSelectedCell.cellNum);
+        if (activeEl) {
+          activeEl.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'auto' });
+        }
       }
     }
   }
+
+  function parseGroupIdAttr(gIdAttr) {
+    return (isNaN(gIdAttr) || gIdAttr.startsWith('Rack') || gIdAttr.includes(' ')) ? gIdAttr : parseInt(gIdAttr);
+  }
+
+  // Event delegation tunggal pada #matrixContainer untuk menghindari ribuan closure onclick
+  document.getElementById('matrixContainer').addEventListener('click', function(e) {
+    const tagEl = e.target.closest('.anode-tag, .cathode-tag');
+    const cardEl = e.target.closest('.cell-card');
+    if (!cardEl) return;
+
+    const gId = parseGroupIdAttr(cardEl.getAttribute('data-group'));
+    const cNum = parseInt(cardEl.getAttribute('data-cell'));
+
+    if (tagEl) {
+      const tagType = tagEl.getAttribute('data-tag');
+      removeCellTag(e, gId, cNum, tagType);
+      return;
+    }
+
+    selectCell(gId, cNum, e);
+  });
 
   function renderMatrix() {
     const container = document.getElementById('matrixContainer');
@@ -2017,6 +2202,15 @@
 
     let fragment = document.createDocumentFragment();
     let renderedCount = 0;
+    renderedSelectedEls = [];
+
+    const isIdLang = currentLang === 'id';
+    const lblNoHarv = isIdLang ? 'Tanpa Panen' : 'No Harvest';
+    const lblHarvestPrefix = isIdLang ? 'Panen' : 'Harvest';
+    const lblRackUnit = isIdLang ? 'Rak' : 'Racks';
+    const lblStationUnit = isIdLang ? 'Stasiun' : 'Stations';
+    const trNorth = tr('optNorth');
+    const trSouth = tr('optSouth');
 
     filteredGroups.forEach(g => {
       let visibleCells = g.cells.filter(c => {
@@ -2038,13 +2232,11 @@
       grpSec.className = 'group-section';
 
       let cropClass = g.cropStatus === 'Crop 1' ? 'crop-c1' : (g.cropStatus === 'Crop 2' ? 'crop-c2' : (g.cropStatus === 'Crop 3' ? 'crop-c3' : 'crop-none'));
-      
-      let lblNoHarv = currentLang === 'id' ? 'Tanpa Panen' : 'No Harvest';
-      let cropLabel = g.cropStatus !== '-' ? `${currentLang==='id'?'Panen':'Harvest'}: ${g.cropStatus}` : lblNoHarv;
+      let cropLabel = g.cropStatus !== '-' ? `${lblHarvestPrefix}: ${g.cropStatus}` : lblNoHarv;
       
       let isStringGroup = typeof g.groupId === 'string' && isNaN(g.groupId);
       let isRackGroup = isStringGroup && String(g.groupId).startsWith('Rack');
-      let lblSpecialUnit = isRackGroup ? (currentLang==='id'?'Rak':'Racks') : (isStringGroup ? (currentLang==='id'?'Stasiun':'Stations') : 'Cells');
+      let lblSpecialUnit = isRackGroup ? lblRackUnit : (isStringGroup ? lblStationUnit : 'Cells');
       let tagSpecial = g.groupId === 33 ? 'EW0' : `${g.cellCount} ${lblSpecialUnit}`;
 
       let isSpecialGroup = (g.groupId >= 13 && g.groupId <= 20);
@@ -2059,8 +2251,7 @@
 
       let groupDisplayName = g.displayName ? g.displayName : (isStringGroup ? g.groupId : `Group ${g.groupId}`);
       let safeGId = String(g.groupId).replace(/[^a-zA-Z0-9_-]/g, '_');
-      
-      let trZone = g.zone === 'North' ? tr('optNorth') : tr('optSouth');
+      let trZone = g.zone === 'North' ? trNorth : trSouth;
 
       let isMachineGroup = (g.phase === 'Machine' || isStringGroup);
       let cropHtml = isMachineGroup ? '' : `<div class="crop-tag ${cropClass}" onclick="toggleCrop('${String(g.groupId).replace(/'/g, "\\'")}')">${cropLabel}</div>`;
@@ -2110,18 +2301,19 @@
         cellDiv.className = `cell-card ${statusClass} ${isSelected ? 'selected' : ''}`;
         cellDiv.setAttribute('data-group', g.groupId);
         cellDiv.setAttribute('data-cell', c.cellNum);
-        cellDiv.onclick = (e) => selectCell(g.groupId, c.cellNum, e);
 
-        let safeGIdStr = String(g.groupId).replace(/'/g, "\\'");
+        if (isSelected) {
+          renderedSelectedEls.push(cellDiv);
+        }
 
         let html = `<div class="cell-id">${c.cellId}</div>`;
         if (!isBlank) {
           html += `<div class="tags-wrapper">`;
           if (shortA) {
-            html += `<div class="anode-tag ${anodeClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${c.cellNum}, 'anode')">${shortA}</div>`;
+            html += `<div class="anode-tag ${anodeClass}" data-tag="anode">${shortA}</div>`;
           }
           if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
-            html += `<div class="cathode-tag ${cathClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${c.cellNum}, 'cathode')">${c.cathodeStatus}</div>`;
+            html += `<div class="cathode-tag ${cathClass}" data-tag="cathode">${c.cathodeStatus}</div>`;
           }
           html += `</div>`;
         }
@@ -2166,10 +2358,10 @@
       });
     }
 
-    recalculateStats();
+    scheduleRecalculateStats();
   }
 
-  function selectRangeTo(targetGId, targetCNum) {
+  function selectRangeTo(targetGId, targetCNum, shouldScroll = false) {
     if (!selectionAnchor) {
       selectionAnchor = { groupId: targetGId, cellNum: targetCNum };
     }
@@ -2187,10 +2379,8 @@
       selectedCellsList = [];
       for (let i = minIdx; i <= maxIdx; i++) {
         let el = allCardEls[i];
-        let gIdAttr = el.getAttribute('data-group');
-        let parsedGId = (isNaN(gIdAttr) || gIdAttr.startsWith('Rack') || gIdAttr.includes(' ')) ? gIdAttr : parseInt(gIdAttr);
         selectedCellsList.push({
-          groupId: parsedGId,
+          groupId: parseGroupIdAttr(el.getAttribute('data-group')),
           cellNum: parseInt(el.getAttribute('data-cell'))
         });
       }
@@ -2204,12 +2394,12 @@
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'flex';
 
-    updateSelectionUI();
+    updateSelectionUI(shouldScroll);
   }
 
-  function selectCell(gId, cNum, event, skipRangeLogic = false) {
+  function selectCell(gId, cNum, event, skipRangeLogic = false, shouldScroll = false) {
     if (!skipRangeLogic && event && event.shiftKey && selectionAnchor) {
-      selectRangeTo(gId, cNum);
+      selectRangeTo(gId, cNum, shouldScroll);
       return;
     }
 
@@ -2221,7 +2411,7 @@
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'flex';
 
-    updateSelectionUI();
+    updateSelectionUI(shouldScroll);
   }
 
   function updateActiveCellAnode(val) {
@@ -2229,23 +2419,32 @@
     if(targets.length === 0) return;
     saveState();
     
-    let actionTxt = currentLang === 'id' 
-      ? `Mengatur Anoda menjadi [${val}] pada ${targets.length} cell` 
-      : `Set Anode to [${val}] on ${targets.length} cell(s)`;
-    logChange(actionTxt, targets); 
-    
+    let needFullRender = hasActiveCellLevelFilter();
     targets.forEach(t => {
-      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
+      let grp = getGroupById(t.groupId);
       if (grp) {
-        let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+        let cell = grp.cells[t.cellNum - 1] || grp.cells.find(c => c && c.cellNum === t.cellNum);
         if (cell) {
           cell.anodeStatus = val;
           cell.pcs = val === '63 FL' ? 63 : ((val === '62 KU' || val === '62 KS' || val === '62 SA') ? 62 : 0);
-          updateCellDOM(t.groupId, t.cellNum);
+          if (!needFullRender) {
+            updateCellDOM(t.groupId, t.cellNum);
+          }
         }
       }
     });
-    recalculateStats();
+
+    if (needFullRender) {
+      renderMatrix();
+    } else {
+      scheduleRecalculateStats();
+    }
+    updateSelectionUI(false);
+
+    let actionTxt = currentLang === 'id' 
+      ? `Mengatur Anoda menjadi [${val}] pada ${targets.length} cell` 
+      : `Set Anode to [${val}] on ${targets.length} cell(s)`;
+    logChange(actionTxt, targets);
     syncCellTargets(targets);
   }
 
@@ -2254,22 +2453,31 @@
     if(targets.length === 0) return;
     saveState();
     
-    let actionTxt = currentLang === 'id' 
-      ? `Mengatur Katoda menjadi [${val}] pada ${targets.length} cell` 
-      : `Set Cathode to [${val}] on ${targets.length} cell(s)`;
-    logChange(actionTxt, targets); 
-    
+    let needFullRender = hasActiveCellLevelFilter();
     targets.forEach(t => {
-      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
+      let grp = getGroupById(t.groupId);
       if (grp) {
-        let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+        let cell = grp.cells[t.cellNum - 1] || grp.cells.find(c => c && c.cellNum === t.cellNum);
         if (cell) {
           cell.cathodeStatus = val;
-          updateCellDOM(t.groupId, t.cellNum);
+          if (!needFullRender) {
+            updateCellDOM(t.groupId, t.cellNum);
+          }
         }
       }
     });
-    recalculateStats();
+
+    if (needFullRender) {
+      renderMatrix();
+    } else {
+      scheduleRecalculateStats();
+    }
+    updateSelectionUI(false);
+
+    let actionTxt = currentLang === 'id' 
+      ? `Mengatur Katoda menjadi [${val}] pada ${targets.length} cell` 
+      : `Set Cathode to [${val}] on ${targets.length} cell(s)`;
+    logChange(actionTxt, targets);
     syncCellTargets(targets);
   }
 
@@ -2277,25 +2485,34 @@
     let targets = getActiveTargets();
     if(targets.length === 0) return;
     saveState();
-    
-    let actionTxt = currentLang === 'id' 
-      ? `Menghapus isi data (Clear Cell) pada ${targets.length} cell` 
-      : `Cleared all data on ${targets.length} cell(s)`;
-    logChange(actionTxt, targets);
 
+    let needFullRender = hasActiveCellLevelFilter();
     targets.forEach(t => {
-      let grp = plantData.find(g => g && String(g.groupId) === String(t.groupId));
+      let grp = getGroupById(t.groupId);
       if (grp) {
-        let cell = grp.cells.find(c => c && c.cellNum === t.cellNum);
+        let cell = grp.cells[t.cellNum - 1] || grp.cells.find(c => c && c.cellNum === t.cellNum);
         if (cell) {
           cell.anodeStatus = 'NONE';
           cell.cathodeStatus = 'NONE';
           cell.pcs = 0;
-          updateCellDOM(t.groupId, t.cellNum);
+          if (!needFullRender) {
+            updateCellDOM(t.groupId, t.cellNum);
+          }
         }
       }
     });
-    recalculateStats();
+
+    if (needFullRender) {
+      renderMatrix();
+    } else {
+      scheduleRecalculateStats();
+    }
+    updateSelectionUI(false);
+
+    let actionTxt = currentLang === 'id' 
+      ? `Menghapus isi data (Clear Cell) pada ${targets.length} cell` 
+      : `Cleared all data on ${targets.length} cell(s)`;
+    logChange(actionTxt, targets);
     showToast(`Cleared (${targets.length})`);
     syncCellTargets(targets);
   }
@@ -2303,7 +2520,7 @@
   function updateActiveGroupCrop(val) {
     if(!activeSelectedCell) return;
     saveState();
-    let grp = plantData.find(g => g && String(g.groupId) === String(activeSelectedCell.groupId));
+    let grp = getGroupById(activeSelectedCell.groupId);
     if (grp) {
       grp.cropStatus = val;
       let actionTxt = currentLang === 'id' 
@@ -2317,7 +2534,7 @@
 
   function toggleCrop(gId) {
     saveState();
-    let grp = plantData.find(g => g && String(g.groupId) === String(gId));
+    let grp = getGroupById(gId);
     if (grp) {
       let crops = ['-', 'Crop 1', 'Crop 2', 'Crop 3'];
       grp.cropStatus = crops[(crops.indexOf(grp.cropStatus) + 1) % crops.length];
@@ -2547,8 +2764,8 @@
     let curG = activeSelectedCell.groupId;
     let curC = activeSelectedCell.cellNum;
 
-    let grpIdx = plantData.findIndex(g => String(g.groupId) === String(curG));
-    if (grpIdx === -1) return null;
+    let grpIdx = plantGroupIdxMap.get(String(curG));
+    if (grpIdx === undefined) return null;
     let grp = plantData[grpIdx];
 
     let isSpecialGroup = (grp.groupId >= 13 && grp.groupId <= 20);
@@ -2631,7 +2848,7 @@
 
     if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(e.key)) {
       if (!activeSelectedCell) {
-        selectCell(1, 1, null, true);
+        selectCell(1, 1, null, true, true);
         return;
       }
       e.preventDefault();
@@ -2645,7 +2862,7 @@
         if (curC > 1) {
           targetC = curC - 1;
         } else {
-          let curIdx = plantData.findIndex(g => String(g.groupId) === String(curG));
+          let curIdx = plantGroupIdxMap.get(String(curG));
           if (curIdx > 0) {
             let prevGroup = plantData[curIdx - 1];
             if (prevGroup) {
@@ -2655,7 +2872,7 @@
           }
         }
       } else if (e.key === 'ArrowRight') {
-        let curIdx = plantData.findIndex(g => String(g.groupId) === String(curG));
+        let curIdx = plantGroupIdxMap.get(String(curG));
         let grp = plantData[curIdx];
         if (grp && curC < grp.cellCount) {
           targetC = curC + 1;
@@ -2676,9 +2893,9 @@
       }
 
       if (e.shiftKey) {
-        selectRangeTo(targetG, targetC);
+        selectRangeTo(targetG, targetC, true);
       } else {
-        selectCell(targetG, targetC, null, true);
+        selectCell(targetG, targetC, null, true, true);
       }
       return;
     }
@@ -2726,9 +2943,11 @@
 
   setInterval(updateLiveClock, 1000);
 
-  // Initialize
+  // Initialize langsung dari cache lokal agar tampil instan tanpa menunggu Firebase
   initTheme();
   applyLanguage();
+  renderMatrix();
+  isInitialRenderDone = true;
 </script>
 </body>
 </html>
