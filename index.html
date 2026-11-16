@@ -1520,7 +1520,7 @@
       backdrop-filter: blur(8px) saturate(140%);
       -webkit-backdrop-filter: blur(8px) saturate(140%);
       border: 1px solid rgba(255, 255, 255, 0.14);
-      box-shadow:
+      box-shadow: 
         0 12px 32px rgba(0, 0, 0, 0.45),
         0 2px 8px rgba(0, 0, 0, 0.25),
         inset 0 1px 0 rgba(255, 255, 255, 0.10);
@@ -1549,7 +1549,7 @@
     [data-theme="light"] .mobile-quick-bar {
       background: rgba(255, 255, 255, 0.92);
       border: 1px solid rgba(15, 23, 42, 0.12);
-      box-shadow:
+      box-shadow: 
         0 12px 32px rgba(15, 23, 42, 0.16),
         0 2px 8px rgba(15, 23, 42, 0.06),
         inset 0 1px 0 rgba(255, 255, 255, 0.95);
@@ -2446,6 +2446,8 @@
   /* ====== FULL 1-SCREEN PLANT PREVIEW (HMI / PI VISION BLOCK STYLE) ====== */
   let previewSpotlight = null;
   let previewZoomLevel = 1;
+  let pvLongPressTimer = null;
+  let pvLongPressActive = false;
 
   function applyPreviewZoom() {
     const bodyEl = document.getElementById('fullPreviewBody');
@@ -2777,17 +2779,61 @@
     if (tip) tip.style.display = 'none';
   }
 
-  document.getElementById('fullPreviewBody').addEventListener('mousemove', function(e) {
-    const card = e.target.closest('[data-pv-group]');
-    if (card) {
-      showPreviewHoverTip(e, card.getAttribute('data-pv-group'));
-    } else {
-      hidePreviewHoverTip();
-    }
-  });
-  document.getElementById('fullPreviewBody').addEventListener('mouseleave', hidePreviewHoverTip);
+  const pvBodyElem = document.getElementById('fullPreviewBody');
+  if (pvBodyElem) {
+    pvBodyElem.addEventListener('mousemove', function(e) {
+      const card = e.target.closest('[data-pv-group]');
+      if (card) {
+        showPreviewHoverTip(e, card.getAttribute('data-pv-group'));
+      } else {
+        hidePreviewHoverTip();
+      }
+    });
+    pvBodyElem.addEventListener('mouseleave', hidePreviewHoverTip);
+
+    pvBodyElem.addEventListener('touchstart', function(e) {
+      pvLongPressActive = false;
+      if (pvLongPressTimer) clearTimeout(pvLongPressTimer);
+      const card = e.target.closest('[data-pv-group]');
+      if (!card) return;
+      const touch = e.touches[0];
+      const startX = touch.clientX;
+      const startY = touch.clientY;
+      const gIdAttr = card.getAttribute('data-pv-group');
+
+      pvLongPressTimer = setTimeout(() => {
+        pvLongPressActive = true;
+        showPreviewHoverTip({ clientX: startX, clientY: startY }, gIdAttr);
+      }, 450);
+    }, { passive: true });
+
+    pvBodyElem.addEventListener('touchmove', function(e) {
+      if (pvLongPressTimer) {
+        clearTimeout(pvLongPressTimer);
+        pvLongPressTimer = null;
+      }
+    }, { passive: true });
+
+    pvBodyElem.addEventListener('touchend', function(e) {
+      if (pvLongPressTimer) {
+        clearTimeout(pvLongPressTimer);
+        pvLongPressTimer = null;
+      }
+      if (pvLongPressActive) {
+        e.preventDefault();
+        setTimeout(() => {
+          hidePreviewHoverTip();
+          pvLongPressActive = false;
+        }, 3000);
+      }
+    }, { passive: false });
+  }
 
   function jumpToGroupFromPreview(rawGroupId) {
+    if (pvLongPressActive) {
+      pvLongPressActive = false;
+      return;
+    }
     const gId = parseGroupIdAttr(rawGroupId);
     closeModal('previewModal');
     const grp = getGroupById(gId);
