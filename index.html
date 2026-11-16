@@ -202,7 +202,7 @@
 
   .kpi-grid {
     display: grid;
-    grid-template-columns: repeat(6, 1fr);
+    grid-template-columns: repeat(8, 1fr);
     gap: 8px;
   }
   
@@ -230,7 +230,7 @@
   }
   
   .kpi-value {
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 800;
     letter-spacing: -0.5px;
     margin: 2px 0;
@@ -351,6 +351,8 @@
     margin-bottom: 16px;
     display: flex;
     flex-direction: column;
+    content-visibility: auto;
+    contain-intrinsic-size: auto 166px;
   }
 
   .group-header {
@@ -494,7 +496,7 @@
   }
 
   /* =====================================================================
-     LIGHTWEIGHT ELECTROLYTE VISUALIZATION (ZERO ANIMATION / ZERO SHADOW LAG)
+     SINGLE-NODE CSS GRADIENT ELECTROLYTE & ELECTRODE VISUALIZATION
      ===================================================================== */
   .electrolyte-layer {
     position: absolute;
@@ -513,55 +515,59 @@
   }
 
   .electrode-shadow-layer {
+    --anode-edge: rgba(251, 146, 60, 0.35);
+    --cath-bar: rgba(234, 88, 12, 0.72);
     position: absolute;
     left: 4px;
     right: 4px;
     bottom: 0;
     height: 48px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
     z-index: 2;
     pointer-events: none;
+    opacity: 0.92;
   }
 
   .cell-card.has-electrolyte .electrode-shadow-layer {
     right: 7px;
   }
 
-  .plate-anode {
-    width: 4px;
-    height: 100%;
-    border-radius: 2px 2px 0 0;
-    background: linear-gradient(180deg, rgba(15, 23, 42, 0.5) 0%, var(--plate-shadow) 100%);
-    border-left: 1px solid rgba(251, 146, 60, 0.35);
-    border-right: 1px solid rgba(56, 189, 248, 0.35);
-  }
-  .anode-tone-63fl {
-    border-left-color: rgba(52, 211, 153, 0.5);
-  }
-  .anode-tone-62ku {
-    border-left-color: rgba(56, 189, 248, 0.5);
-  }
-  .anode-tone-62ks {
-    border-left-color: rgba(192, 132, 252, 0.5);
-  }
-  .anode-tone-62sa {
-    border-left-color: rgba(168, 162, 158, 0.45);
+  .electrode-shadow-layer.anode-tone-63fl { --anode-edge: rgba(52, 211, 153, 0.5); }
+  .electrode-shadow-layer.anode-tone-62ku { --anode-edge: rgba(56, 189, 248, 0.5); }
+  .electrode-shadow-layer.anode-tone-62ks { --anode-edge: rgba(192, 132, 252, 0.5); }
+  .electrode-shadow-layer.anode-tone-62sa { --anode-edge: rgba(168, 162, 158, 0.45); }
+  .electrode-shadow-layer.cath-tone-ss { --cath-bar: rgba(148, 163, 184, 0.72); }
+
+  .electrode-shadow-layer.mode-both {
+    background-image: repeating-linear-gradient(
+      90deg,
+      var(--anode-edge) 0 1px,
+      var(--plate-shadow) 1px 3px,
+      rgba(56, 189, 248, 0.35) 3px 4px,
+      transparent 4px 7.5px,
+      var(--cath-bar) 7.5px 9.5px,
+      transparent 9.5px 13px
+    );
   }
 
-  .plate-cathode {
-    width: 2px;
-    height: 96%;
-    border-radius: 1.5px 1.5px 0 0;
-    background: linear-gradient(180deg, rgba(251, 146, 60, 0.48) 0%, rgba(234, 88, 12, 0.74) 100%);
+  .electrode-shadow-layer.mode-anode {
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent 0 4px,
+      var(--anode-edge) 4px 5px,
+      var(--plate-shadow) 5px 7px,
+      rgba(56, 189, 248, 0.35) 7px 8px,
+      transparent 8px 13px
+    );
   }
 
-  .plate-ss {
-    width: 2px;
-    height: 96%;
-    border-radius: 1.5px 1.5px 0 0;
-    background: linear-gradient(180deg, rgba(203, 213, 225, 0.48) 0%, rgba(148, 163, 184, 0.74) 100%);
+  .electrode-shadow-layer.mode-cath {
+    height: 46px;
+    background-image: repeating-linear-gradient(
+      90deg,
+      transparent 0 3.5px,
+      var(--cath-bar) 3.5px 5.5px,
+      transparent 5.5px 10.5px
+    );
   }
 
   .side-gauge-track {
@@ -571,19 +577,15 @@
     right: 2.5px;
     width: 3px;
     border-radius: 99px;
-    background: rgba(148, 163, 184, 0.22);
+    background: linear-gradient(
+      to top,
+      var(--meniscus-color) 0%,
+      var(--meniscus-color) var(--lvl, 0%),
+      rgba(148, 163, 184, 0.22) var(--lvl, 0%),
+      rgba(148, 163, 184, 0.22) 100%
+    );
     z-index: 5;
-    overflow: hidden;
     pointer-events: none;
-  }
-
-  .side-gauge-fill {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--meniscus-color);
-    border-radius: 99px;
   }
 
   .cell-header-row {
@@ -623,6 +625,16 @@
     color: var(--lvl-pill-text);
     border: 1px solid var(--lvl-pill-border);
     cursor: pointer;
+  }
+
+  .lvl-corner-badge.is-storage {
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.7);
+  }
+  [data-theme="light"] .lvl-corner-badge.is-storage {
+    color: #b45309;
+    border-color: rgba(217, 119, 6, 0.65);
+    background: rgba(254, 243, 199, 0.95);
   }
 
   .tags-wrapper {
@@ -895,7 +907,7 @@
     }
 
     .kpi-grid {
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(2, 1fr);
       gap: 6px;
     }
 
@@ -1008,6 +1020,10 @@
       height: 52px;
     }
 
+    .electrode-shadow-layer.mode-cath {
+      height: 50px;
+    }
+
     .cell-card.has-electrolyte .electrode-shadow-layer {
       right: 8px;
     }
@@ -1043,8 +1059,8 @@
       width: fit-content;
       max-width: calc(100vw - 14px);
       background: rgba(18, 22, 31, 0.90);
-      backdrop-filter: blur(16px) saturate(180%);
-      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      backdrop-filter: blur(8px) saturate(140%);
+      -webkit-backdrop-filter: blur(8px) saturate(140%);
       border: 1px solid rgba(255, 255, 255, 0.14);
       box-shadow:
         0 12px 32px rgba(0, 0, 0, 0.45),
@@ -1244,6 +1260,16 @@
         <div class="kpi-value" id="kpiSSCount" style="color: var(--stainless);">0</div>
         <div class="kpi-sub" id="kpiSSNS">N: 0 • S: 0</div>
       </div>
+      <div class="kpi-card">
+        <div class="kpi-label" data-i18n="kpiel">Electrolyte (m³)</div>
+        <div class="kpi-value" id="kpiElectrolyteTotal" style="color: #0ea5e9;">0 m³</div>
+        <div class="kpi-sub" id="kpiElectrolyteNS">N: 0 m³ • S: 0 m³</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label" data-i18n="kpistorage">Storage (10%)</div>
+        <div class="kpi-value" id="kpiStorageCount" style="color: #f59e0b;">0 Cell</div>
+        <div class="kpi-sub" id="kpiStorageNS">N: 0 • S: 0</div>
+      </div>
     </div>
 
     <div class="controls-bar">
@@ -1269,6 +1295,8 @@
             <option value="ALL" selected data-i18n="optAllCells">All Cells</option>
             <option value="FILLED" data-i18n="optFilled">Filled Cells Only</option>
             <option value="EMPTY" data-i18n="optEmpty">Empty Cells Only</option>
+            <option value="CHARGING" data-i18n="optGroupCharging">Group Charging</option>
+            <option value="STORAGE" data-i18n="optStorage">Storage</option>
           </select>
         </div>
 
@@ -1365,6 +1393,7 @@
             <button style="background:var(--stainless); color:#ffffff; font-weight:bold; border-color:var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS [S]</button>
             <button style="grid-column: span 2;" onclick="updateActiveCellCathode('NONE')" data-i18n="btnClearCathode">Clear Cathode</button>
           </div>
+          <div id="cathodeLockHint" style="display:none; font-size:9.5px; color:#f59e0b; line-height:1.3;"></div>
 
           <div id="electrolyteControlSection" style="display: flex; flex-direction: column; gap: 6px;">
             <h4 data-i18n="hElectrolyte">Electrolyte Level (Cell Only):</h4>
@@ -1477,6 +1506,8 @@
       optAllCells: "All Cells",
       optFilled: "Filled Cells Only",
       optEmpty: "Empty Cells Only",
+      optGroupCharging: "Group Charging",
+      optStorage: "Storage",
       zoneLabel: "Zone",
       optAllZones: "All Zones",
       optNorth: "North",
@@ -1526,6 +1557,8 @@
       kpi62sa: "Spent Anode (62SA)",
       kpicath: "Cathodes (CATH)",
       kpiss: "SS Blanks (SS)",
+      kpiel: "Electrolyte (m³)",
+      kpistorage: "Storage (0-10%)",
       txtSelection: "Selection",
       txtFocus: "Focus Cell",
       txtArea: "Area",
@@ -1537,7 +1570,8 @@
       txtEmptyStr: "Empty",
       txtFilledStr: "FILLED",
       txtCompEmpty: "COMPLETELY EMPTY",
-      instBody: `<b>1. Filter & Navigation:</b><br>- Use <b>Phase</b>, <b>Cell View</b>, <b>Zone</b>, <b>Group</b>, and <b>Electrolyte</b> menus above to filter the grid.<br><br><b>2. Selecting Cells & Electrolyte Level:</b><br>- Click any cell to select it.<br>- Click the selected cell again (or click the <b>%</b> badge) to cycle Electrolyte Level: <b>0% → 10% → 50% → 70% → 100%</b> (Group Cells only).<br>- <b>Shift + Click</b> another cell to select a range.<br>- Use <b>Arrow Keys</b> to navigate.<br><br><b>3. Changing Status:</b><br>- Use <b>Cell Settings</b> on the right (PC) or <b>Quick Bar</b> at the bottom (Mobile).<br>- Or use <b>Keyboard Shortcuts</b>:<br>  • <b>1</b> : 63 FL<br>  • <b>2</b> : 62 KU<br>  • <b>3</b> : 62 KS<br>  • <b>4</b> : 62 SA<br>  • <b>C</b> : CATH (Cathode)<br>  • <b>S</b> : SS (SS Blank)<br>  • <b>0 / Del</b> : Clear Data<br><br><b>4. WA Report:</b><br>- Generates automatically. Click <b>"Copy WA Text"</b>.<br><br><b>5. Undo/Redo & Changes:</b><br>- Press <b>Ctrl+Z</b> (Undo) and <b>Ctrl+Y</b> (Redo).<br>- Click <b>"Show Changes"</b> to view modification history.`
+      cathLockHint: "⚠️ Electrolyte > 10%: Anode only. Set 0–10% (Storage) or Harvest (Crop 1–3) to store CATH / SS.",
+      instBody: `<b>1. PC (Desktop) vs. Mobile View Differences:</b><br>• <b>PC (Desktop):</b> Top header places Language &amp; Show Changes on the left; all Filter dropdowns are expanded in one bar; the Cell Grid sits on the left side-by-side with <b>Cell Settings</b> and <b>WA Report</b> on the right.<br>• <b>Mobile (Phone):</b> Top header is centered with Show Changes &amp; Language at the bottom row; Filter menus are tucked inside the <b>🔍 Show Filters</b> button to save screen space; tapping a cell pops up a floating <b>Quick Toolbar</b> at the bottom; <b>Cell Settings</b> and <b>WA Report</b> are located below the Cell Grid (scroll down).<br><br><b>2. Switching Theme (Light / Dark Mode):</b><br>• Click the <b>☀️ Light</b> or <b>🌙 Dark</b> button in the top header to toggle between Light and Dark themes. Your theme preference is saved automatically.<br><br><b>3. Switching Language (Indonesian / English):</b><br>• Click <b>🌐 English (US)</b> or <b>🌐 Bahasa Indonesia</b> in the header to translate all menus, filters, instructions, and the WA Report format.<br>• <i>Position:</i> On <b>PC</b>, it is on the far left of the header actions; on <b>Mobile</b>, it is next to <b>🔄 Show Changes</b>.<br><br><b>4. Show Changes (Modification History):</b><br>• Click <b>🔄 Show Changes</b> in the top header.<br>• <b>Function:</b> Automatically logs every change in real time (date, time, action type, Phase, Group, and exact Cell numbers). Logs sync with the database and are retained for <b>3 days</b>.<br><br><b>5. Top Summary Cards (KPI Overview):</b><br>• Displays real-time totals with <b>North (N)</b> and <b>South (S)</b> zone breakdowns:<br>  • <b>Anode 63 FL (63FL)</b>, <b>Anode 62 KU (62KU)</b>, <b>Anode 62 KS (62KS)</b>, <b>Spent Anode (62SA)</b>, <b>Cathodes (CATH)</b>, and <b>SS Blanks (SS)</b>.<br>  • <b>Electrolyte (m³):</b> Calculated as <b>10% = 1 m³</b> up to <b>100% = 10 m³</b> across all Group cells (including <b>Group Charging</b>), shown in KPI only and excluded from WA Report.<br>  • <b>Storage (0-10%):</b> Counts non-charging Group cells with <b>0% to 10% electrolyte</b> (including empty cells, Anode only, SS only, or Cathode only). Cells with <b>&gt; 10% electrolyte</b> and <b>Machine</b> (Rack/Station) are NOT Storage.<br>  • <i>Note:</i> Groups set to <b>Harvest (Crop 1 ⚡ / Crop 2 ⚡ / Crop 3 ⚡)</b> are <b>Charging / Energized</b> — their electrodes are excluded from KPI and WA Report, while their Electrolyte (m³) remains counted.<br><br><b>6. Phase Navigation:</b><br>• Use the <b>Phase</b> pills (<b>All</b>, <b>P1</b>, <b>P2</b>, <b>P3</b>, <b>Machine</b>) to view the entire plant or focus on Phase 1 (G1–G16), Phase 2 (G17–G32), Phase 3 (G33–G48), or <b>Machine</b> racks/stations (CSM, ASM, APM).<br><br><b>7. Filtering Cells:</b><br>• On <b>PC</b>, filters are always visible; on <b>Mobile</b>, tap <b>🔍 Show Filters</b> first:<br>  • <b>Cell View:</b> All Cells, Filled Cells Only, Empty Cells Only, <b>Group Charging</b> (groups with Harvest: Crop 1 ⚡, 2 ⚡, or 3 ⚡), or <b>Storage</b>.<br>  • <b>Zone &amp; Group:</b> Narrow down by North/South zone or a specific Group/Machine.<br>  • <b>Anode, Cathode &amp; Electrolyte Filters:</b> Filter by specific electrode types or electrolyte levels.<br><br><b>8. Clear Cell Data (Bulk Reset per Phase):</b><br>• Clicking <b>Clear P1</b>, <b>Clear P2</b>, <b>Clear P3</b>, or <b>Clear Machine</b> wipes all Anode, Cathode, Electrolyte, and Harvest data for that entire Phase/Machine after a confirmation prompt.<br><br><b>9. Storage (0–10%), Charging Groups &amp; Editing Cells:</b><br>• <b>Storage Rule (0% – 10% Electrolyte):</b> Group cells with <b>0% to 10% Electrolyte</b> are Storage (including empty, Anode only, SS only, or Cathode only). Cells with <b>&gt; 10% Electrolyte</b> or in <b>Machine</b> (Rack/Station) are NOT Storage.<br>• <b>Electrolyte &gt; 10% Rule (Non-Harvest):</b> When a group has no Harvest (<b>-</b>), cells with <b>&gt; 10% Electrolyte</b> can <b>ONLY hold Anode</b> and cannot store CATH or SS Blank.<br>• <b>Group Charging / Energized (Harvest: Crop 1 ⚡, 2 ⚡, or 3 ⚡):</b> Updating a group's Harvest to <b>Crop 1</b>, <b>Crop 2</b>, or <b>Crop 3</b> marks it with <b>⚡</b> as <b>Charging / Energized</b> — allowing both <b>Cathode</b> and <b>Anode</b> to be filled at any electrolyte level, keeping Electrolyte (m³) counted while excluding its electrodes from KPI and WA Report.<br>• <b>Selecting &amp; Setting Electrodes:</b> Click/tap a cell, then choose <b>63FL</b>, <b>62KU</b>, <b>62KS</b>, <b>62SA</b>, <b>CATH</b>, or <b>SS</b> via <b>Cell Settings</b> (PC), <b>Quick Toolbar</b> (Mobile), or shortcuts (<b>1, 2, 3, 4, C, S</b>). Tap a colored tag inside a cell directly to remove just that tag.<br>• <b>Setting Electrolyte Level:</b> Click/tap a selected cell again (or its corner <b>%</b> badge) to cycle <b>0% → 10% → 50% → 70% → 100% → 0%</b>, or click a percentage button directly.<br><br><b>10. WA Report (Copying &amp; How to Read):</b><br>• <b>Copying:</b> Click <b>Copy WA Text</b> to copy the auto-generated report to your clipboard.<br>• <b>How to Read the Report:</b><br>  - Lists active non-charging categories in order: <b>1. CATHODE</b>, <b>2. ANODE 63</b>, <b>3. ANODE 62 KU</b>, <b>4. ANODE 62 KS</b>, <b>5. SPENT ANODE</b>, <b>6. SS BLANK</b>, and <b>7. STORAGE</b> (non-machine, non-charging cells with 0%–10% electrolyte), split by <b>NORTH (total)</b> and <b>SOUTH (total)</b>.`
     },
     id: {
       appTitle: "Inventaris Cell",
@@ -1557,6 +1591,8 @@
       optAllCells: "Semua Cell",
       optFilled: "Hanya Cell Terisi",
       optEmpty: "Hanya Cell Kosong",
+      optGroupCharging: "Group Charging",
+      optStorage: "Storage",
       zoneLabel: "Zona",
       optAllZones: "Semua Zona",
       optNorth: "Utara",
@@ -1606,6 +1642,8 @@
       kpi62sa: "Spent Anode (62SA)",
       kpicath: "Cathodes (CATH)",
       kpiss: "SS Blanks (SS)",
+      kpiel: "Electrolyte (m³)",
+      kpistorage: "Storage (0-10%)",
       txtSelection: "Seleksi",
       txtFocus: "Fokus Cell",
       txtArea: "Area",
@@ -1617,7 +1655,8 @@
       txtEmptyStr: "Kosong",
       txtFilledStr: "TERISI",
       txtCompEmpty: "KOSONG TOTAL",
-      instBody: `<b>1. Filter & Navigasi:</b><br>- Gunakan menu <b>Phase</b>, <b>Cell View</b>, <b>Zone</b>, <b>Group</b>, dan <b>Filter Elektrolit</b> di atas untuk menyaring tampilan grid.<br><br><b>2. Memilih Cell & Level Elektrolit:</b><br>- Klik cell mana saja untuk memilihnya.<br>- Klik ulang cell yang sudah terpilih (atau klik indikator <b>%</b>) untuk menaikkan level Elektrolit: <b>0% → 10% → 50% → 70% → 100%</b> (khusus Cell, tidak berlaku di Rack/Station Machine).<br>- <b>Shift + Klik</b> pada cell lain untuk memilih rentang banyak cell sekaligus.<br>- Gunakan <b>tombol Panah (Keyboard Arrows)</b> untuk berpindah antar cell.<br><br><b>3. Mengubah Status (Anode / Cathode):</b><br>- Setelah memilih cell, atur via <b>Cell Settings</b> di panel kanan (PC) atau <b>Quick Bar</b> di bawah (Mobile).<br>- Atau gunakan <b>Shortcut Keyboard</b>:<br>  • <b>1</b> : 63 FL<br>  • <b>2</b> : 62 KU<br>  • <b>3</b> : 62 KS<br>  • <b>4</b> : 62 SA<br>  • <b>C</b> : CATH (Cathode)<br>  • <b>S</b> : SS (SS Blank)<br>  • <b>0 / Delete</b> : Clear / Hapus Data Cell<br><br><b>4. Laporan Otomatis (WA Report):</b><br>- Format WA ter-generate otomatis di kanan bawah. Klik <b>"Copy WA Text"</b>.<br><br><b>5. Riwayat Perubahan:</b><br>- Gunakan shortcut <b>Ctrl+Z</b> (Undo) dan <b>Ctrl+Y</b> (Redo).<br>- Gunakan tombol <b>"Show Changes"</b> untuk melihat riwayat modifikasi data.`
+      cathLockHint: "⚠️ Elektrolit > 10%: Hanya untuk Anode. Atur 0–10% (Storage) atau Panen (Crop 1–3) untuk CATH / SS.",
+      instBody: `<b>1. Perbedaan Tampilan PC &amp; Mobile (HP):</b><br>• <b>Tampilan PC:</b> Tombol Bahasa &amp; Riwayat Perubahan berada di sisi kiri header; seluruh menu Filter tampil terbuka dalam satu baris; Grid Cell berada di kiri berdampingan langsung dengan panel <b>Pengaturan Cell</b> &amp; <b>Laporan WA</b> di kanan.<br>• <b>Tampilan Mobile (HP):</b> Header tersusun terpusat dengan tombol Riwayat Perubahan &amp; Bahasa di bagian bawah header; menu Filter disembunyikan di dalam tombol <b>🔍 Tampilkan Filter</b> agar grid lebih luas; saat cell diklik akan muncul <b>Quick Toolbar</b> melayang di bawah layar; panel <b>Pengaturan Cell</b> &amp; <b>Laporan WA</b> berada di bawah Grid Cell (gulir ke bawah).<br><br><b>2. Mengganti Tema (Light / Dark Mode):</b><br>• Klik tombol <b>☀️ Light</b> atau <b>🌙 Dark</b> di bagian atas (Header) untuk beralih antara mode terang dan mode gelap. Pilihan tema otomatis tersimpan.<br><br><b>3. Mengganti Bahasa (Indonesia / English):</b><br>• Klik tombol <b>🌐 English (US)</b> atau <b>🌐 Bahasa Indonesia</b> pada Header untuk mengubah bahasa seluruh menu, filter, panduan, serta format Laporan WA.<br>• <i>Posisi Tombol:</i> Di <b>PC</b> terletak di paling kiri barisan tombol header; di <b>Mobile</b> terletak di sebelah kanan tombol <b>🔄 Riwayat Perubahan</b>.<br><br><b>4. Show Changes (Riwayat Perubahan):</b><br>• Klik tombol <b>🔄 Riwayat Perubahan</b> / <b>🔄 Show Changes</b> pada Header.<br>• <b>Fungsi:</b> Mencatat setiap perubahan data secara otomatis &amp; <i>real-time</i> (lengkap dengan tanggal, jam, jenis perubahan status/elektrolit/panen/hapus, serta lokasi Phase, Group, dan nomor Cell). Riwayat tersinkron ke server dan tersimpan selama <b>3 hari</b>.<br><br><b>5. Ringkasan Jumlah (Kartu KPI Atas):</b><br>• Menampilkan total jumlah secara <i>real-time</i> beserta rincian zona <b>Utara (N)</b> dan <b>Selatan (S)</b>:<br>  • <b>Anode 63 FL (63FL)</b>, <b>Anode 62 KU (62KU)</b>, <b>Anode 62 KS (62KS)</b>, <b>Spent Anode (62SA)</b>, <b>Cathodes (CATH)</b>, dan <b>SS Blanks (SS)</b>.<br>  • <b>Electrolyte (m³):</b> Dihitung dengan rumus <b>10% = 1 m³</b> hingga <b>100% = 10 m³</b> di seluruh Group (termasuk <b>Group Charging</b>), tampil di KPI atas saja dan tidak masuk Laporan WA.<br>  • <b>Storage (0-10%):</b> Menghitung cell Group (non-Charging) dengan <b>0% sampai 10% elektrolit</b> (termasuk yang kosong, ada Anode saja, SS saja, atau Cathode saja). Cell dengan <b>elektrolit &gt; 10%</b> dan bagian <b>Machine</b> (Rack/Station) bukan Storage.<br>  • <i>Catatan:</i> Group dengan status <b>Panen (Crop 1 ⚡ / Crop 2 ⚡ / Crop 3 ⚡)</b> berstatus <b>Charging / Energized</b> — elektrodanya tidak masuk ke KPI &amp; Laporan WA, namun volume Electrolyte (m³) tetap terhitung.<br><br><b>6. Navigasi Phase:</b><br>• Gunakan pilihan <b>Fase / Phase</b> (<b>Semua</b>, <b>P1</b>, <b>P2</b>, <b>P3</b>, <b>Mesin</b>) untuk menampilkan seluruh area atau memfilter khusus Phase 1 (G1–G16), Phase 2 (G17–G32), Phase 3 (G33–G48), atau area <b>Mesin</b> (Rack &amp; Station CSM/ASM/APM).<br><br><b>7. Filter Data Grid:</b><br>• Di <b>PC</b>, filter langsung terlihat; di <b>Mobile</b>, tekan <b>🔍 Tampilkan Filter</b> terlebih dahulu:<br>  • <b>Tampilan Cell:</b> Semua Cell, Hanya Cell Terisi, Hanya Cell Kosong, <b>Group Charging</b> (Group dengan Panen: Crop 1 ⚡, 2 ⚡, atau 3 ⚡), atau <b>Storage</b>.<br>  • <b>Zona &amp; Grup:</b> Menyaring zona Utara/Selatan atau memilih Group/Mesin tertentu.<br>  • <b>Filter Anoda, Katoda &amp; Elektrolit:</b> Menyaring jenis elektroda atau level elektrolit.<br><br><b>8. Clear Cell Data (Hapus Data Per Fase/Mesin):</b><br>• Tombol <b>Hapus P1</b>, <b>Hapus P2</b>, <b>Hapus P3</b>, dan <b>Hapus Mesin</b> berfungsi menghapus total seluruh data Anoda, Katoda, Elektrolit, dan Panen pada Fase/Mesin tersebut (dilengkapi konfirmasi sebelum menghapus).<br><br><b>9. Aturan Storage (0–10%), Group Charging &amp; Pengisian Cell:</b><br>• <b>Aturan Storage (0% – 10% Elektrolit):</b> Cell Group dengan <b>0% sampai 10% Elektrolit</b> terhitung sebagai Storage (termasuk jika tanpa elektrolit 0%, ada Anode saja, SS saja, atau Cathode saja). Ketika elektrolit <b>di atas 10%</b> atau berada di <b>Machine</b> (Rack/Station), bukan terhitung Storage.<br>• <b>Aturan Elektrolit &gt; 10% (Non-Panen):</b> Jika Group belum di-set Panen (<b>-</b>), cell dengan <b>Elektrolit &gt; 10%</b> <b>HANYA bisa menyimpan Anode</b> dan tidak bisa menyimpan CATH atau SS Blank.<br>• <b>Group Charging / Energized (Panen: Crop 1 ⚡, 2 ⚡, atau 3 ⚡):</b> Saat Group di-update menjadi <b>Crop 1</b>, <b>Crop 2</b>, atau <b>Crop 3</b>, muncul ikon petir <b>⚡</b> dan cell berstatus <b>Charging / Energized</b> sehingga bisa diisi <b>Cathode</b> maupun <b>Anode</b> pada level elektrolit berapa pun, dengan Electrolyte (m³) tetap terhitung.<br>• <b>Mengisi &amp; Menghapus Tag Status:</b> Klik/tap cell, lalu pilih <b>63FL</b>, <b>62KU</b>, <b>62KS</b>, <b>62SA</b>, <b>CATH</b>, atau <b>SS</b> melalui <b>Pengaturan Cell</b> (PC), <b>Quick Toolbar</b> (Mobile), atau shortcut keyboard (<b>1, 2, 3, 4, C, S</b>). Klik/tap langsung pada tag berwarna di dalam cell untuk menghapus tag tersebut.<br>• <b>Mengisi Level Elektrolit:</b> Klik/tap ulang cell yang sudah terpilih (atau tap indikator <b>%</b>) untuk menaikkan level secara bertahap: <b>0% → 10% → 50% → 70% → 100% → 0%</b>, atau pilih langsung angkanya.<br><br><b>10. Laporan WA (Cara Copy &amp; Pembacaan):</b><br>• <b>Cara Copy:</b> Klik tombol <b>Salin Teks WA</b> untuk menyalin laporan otomatis ke clipboard.<br>• <b>Cara Membaca Laporan WA:</b><br>  - Menampilkan kategori aktif secara berurutan: <b>1. CATHODE</b>, <b>2. ANODE 63</b>, <b>3. ANODE 62 KU</b>, <b>4. ANODE 62 KS</b>, <b>5. SPENT ANODE</b>, <b>6. SS BLANK</b>, dan <b>7. STORAGE</b> (cell Group non-Charging dengan elektrolit 0%–10%), dipisah menjadi zona <b>UTARA (total)</b> dan <b>SELATAN (total)</b>.`
     }
   };
 
@@ -1633,43 +1672,46 @@
     return !grp || grp.phase === 'Machine' || (typeof grp.groupId === 'string' && isNaN(grp.groupId));
   }
 
+  function isGroupCharging(grp) {
+    if (!grp || isMachineGroupObj(grp)) return false;
+    return Boolean(grp.cropStatus && grp.cropStatus !== '-');
+  }
+
+  function parseGroupIdAttr(raw) {
+    if (raw === null || raw === undefined) return raw;
+    return (isNaN(raw) || raw.startsWith('Rack') || raw.includes(' ')) ? raw : parseInt(raw, 10);
+  }
+
   /* =====================================================================
-     LIGHTWEIGHT ELECTRODE SHADOW & ELEKTROLIT RENDERER
+     SINGLE-NODE CSS GRADIENT ELECTRODE & ELECTROLYTE RENDERER
      ===================================================================== */
   function buildElectrodePlatesHTML(cell) {
     const hasAnode = cell.anodeStatus && cell.anodeStatus !== 'NONE';
     const hasCath = cell.cathodeStatus && cell.cathodeStatus !== 'NONE';
-
     if (!hasAnode && !hasCath) return '';
 
-    let toneClass = '';
-    if (cell.anodeStatus === '63 FL') toneClass = 'anode-tone-63fl';
-    else if (cell.anodeStatus === '62 KU') toneClass = 'anode-tone-62ku';
-    else if (cell.anodeStatus === '62 KS') toneClass = 'anode-tone-62ks';
-    else if (cell.anodeStatus === '62 SA') toneClass = 'anode-tone-62sa';
+    let classes = 'electrode-shadow-layer ';
+    if (hasAnode && hasCath) classes += 'mode-both';
+    else if (hasAnode) classes += 'mode-anode';
+    else classes += 'mode-cath';
 
-    const cathPlateClass = cell.cathodeStatus === 'SS' ? 'plate-ss' : 'plate-cathode';
+    if (cell.anodeStatus === '63 FL') classes += ' anode-tone-63fl';
+    else if (cell.anodeStatus === '62 KU') classes += ' anode-tone-62ku';
+    else if (cell.anodeStatus === '62 KS') classes += ' anode-tone-62ks';
+    else if (cell.anodeStatus === '62 SA') classes += ' anode-tone-62sa';
 
-    if (hasAnode && hasCath) {
-      return `<div class="electrode-shadow-layer"><span class="plate-anode ${toneClass}"></span><span class="${cathPlateClass}"></span><span class="plate-anode ${toneClass}"></span><span class="${cathPlateClass}"></span><span class="plate-anode ${toneClass}"></span><span class="${cathPlateClass}"></span><span class="plate-anode ${toneClass}"></span></div>`;
-    }
+    if (cell.cathodeStatus === 'SS') classes += ' cath-tone-ss';
 
-    if (hasAnode && !hasCath) {
-      return `<div class="electrode-shadow-layer" style="justify-content:space-evenly;"><span class="plate-anode ${toneClass}"></span><span class="plate-anode ${toneClass}"></span><span class="plate-anode ${toneClass}"></span><span class="plate-anode ${toneClass}"></span></div>`;
-    }
-
-    return `<div class="electrode-shadow-layer" style="justify-content:space-evenly;"><span class="${cathPlateClass}"></span><span class="${cathPlateClass}"></span><span class="${cathPlateClass}"></span><span class="${cathPlateClass}"></span><span class="${cathPlateClass}"></span></div>`;
+    return `<div class="${classes}"></div>`;
   }
 
   function buildElectrolyteOverlayHTML(grp, cell) {
     if (isMachineGroupObj(grp)) return '';
     const platesHtml = buildElectrodePlatesHTML(cell);
     const lvl = Number(cell.electrolyteLevel) || 0;
-    if (lvl <= 0) {
-      return platesHtml;
-    }
+    if (lvl <= 0) return platesHtml;
 
-    return `${platesHtml}<div class="electrolyte-layer" style="height:${lvl}%;"></div><div class="side-gauge-track"><div class="side-gauge-fill" style="height:${lvl}%;"></div></div>`;
+    return `${platesHtml}<div class="electrolyte-layer" style="height:${lvl}%;"></div><div class="side-gauge-track" style="--lvl:${lvl}%;"></div>`;
   }
 
   function toggleMobileFilters() {
@@ -1706,6 +1748,7 @@
     updateMobileFiltersUI();
     updateDbStatusUI();
     updateLastUpdatedUI(localStorage.getItem(LOCAL_STORAGE_LAST_UPDATED));
+    lastClockText = '';
     updateLiveClock();
     renderChangesLogList();
 
@@ -1725,11 +1768,61 @@
 
   /* ====== FITUR LOG PERUBAHAN (SHOW CHANGES DETAIL) ====== */
   const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000;
-  let rawLog = JSON.parse(localStorage.getItem('tankhouse_changes_log')) || [];
-  let changesLog = rawLog.filter(item => item && item.msg && (Date.now() - item.time) <= THREE_DAYS_MS);
+  let pendingLogSync = false;
+
+  function normalizeLogList(rawItems) {
+    if (!rawItems) return [];
+    const arr = Array.isArray(rawItems) ? rawItems : Object.values(rawItems);
+    const nowTime = Date.now();
+    const cleaned = [];
+    for (let i = 0; i < arr.length; i++) {
+      const item = arr[i];
+      if (!item || typeof item.msg !== 'string' || !item.msg.trim()) continue;
+      const t = Number(item.time);
+      const validTime = Number.isFinite(t) && t > 0 ? t : nowTime;
+      if ((nowTime - validTime) <= THREE_DAYS_MS) {
+        cleaned.push({ msg: item.msg, time: validTime });
+      }
+    }
+    return cleaned;
+  }
+
+  function mergeLogs(listA, listB) {
+    const combined = [...normalizeLogList(listA), ...normalizeLogList(listB)];
+    const uniqueMap = new Map();
+    for (let i = 0; i < combined.length; i++) {
+      const entry = combined[i];
+      const key = `${entry.time}::${entry.msg}`;
+      if (!uniqueMap.has(key)) {
+        uniqueMap.set(key, entry);
+      }
+    }
+    return Array.from(uniqueMap.values())
+      .sort((a, b) => b.time - a.time)
+      .slice(0, 50);
+  }
+
+  function loadInitialLogs() {
+    try {
+      const parsed = JSON.parse(localStorage.getItem('tankhouse_changes_log'));
+      return mergeLogs(parsed, []);
+    } catch (e) {
+      return [];
+    }
+  }
+
+  let changesLog = loadInitialLogs();
   let logFlushTimer = null;
 
-  function renderChangesLogList() {
+  function saveLogsLocal() {
+    try {
+      localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
+    } catch (e) {}
+  }
+
+  function renderChangesLogList(force = false) {
+    const modal = document.getElementById('changesModal');
+    if (!force && modal && modal.style.display === 'none') return;
     const list = document.getElementById('changesLogList');
     if (!list) return;
     if (changesLog.length === 0) {
@@ -1768,12 +1861,24 @@
       clearTimeout(logFlushTimer);
       logFlushTimer = null;
     }
-    try {
-      localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
-    } catch (e) {}
-    db.ref().update({ tankhouseLogs: changesLog }).catch(err => {
-      console.warn("Firebase log sync failed:", err);
-    });
+    changesLog = mergeLogs(changesLog, []);
+    saveLogsLocal();
+    if (typeof db === 'undefined') return;
+
+    pendingLogSync = true;
+    const payload = changesLog.map(item => ({
+      msg: String(item.msg || ''),
+      time: Number(item.time) || Date.now()
+    }));
+
+    db.ref().update({ tankhouseLogs: payload })
+      .then(() => {
+        pendingLogSync = false;
+      })
+      .catch(err => {
+        pendingLogSync = false;
+        console.warn("Firebase log sync failed:", err);
+      });
   }
 
   function logChange(actionTxt, targets = null) {
@@ -1788,26 +1893,31 @@
     const timeFmt = `[${dd}/${mm}/${yy}, ${hh}:${mins}]`;
     const targetStr = targets ? ` ${formatLogTargets(targets)}` : "";
 
-    changesLog = changesLog.filter(item => item && item.msg && (nowTime - item.time) <= THREE_DAYS_MS);
-    changesLog.unshift({
+    const newEntry = {
       msg: `<b>${timeFmt}</b> ${actionTxt} ${targetStr}`,
       time: nowTime
-    });
-    
-    if (changesLog.length > 50) changesLog.pop();
-    
-    const changesModal = document.getElementById('changesModal');
-    if (changesModal && changesModal.style.display === 'flex') {
-      renderChangesLogList();
-    }
+    };
 
-    if (logFlushTimer) clearTimeout(logFlushTimer);
-    logFlushTimer = setTimeout(flushChangesLog, 350);
+    changesLog = mergeLogs([newEntry], changesLog);
+    saveLogsLocal();
+    renderChangesLogList(false);
+    flushChangesLog();
   }
 
   function openModal(id) {
     if (id === 'changesModal') {
-      renderChangesLogList();
+      if (logFlushTimer) flushChangesLog();
+      renderChangesLogList(true);
+      if (typeof db !== 'undefined') {
+        db.ref('tankhouseLogs').once('value').then(snapshot => {
+          const data = snapshot.val();
+          if (data) {
+            changesLog = mergeLogs(changesLog, data);
+            saveLogsLocal();
+            renderChangesLogList(true);
+          }
+        }).catch(() => {});
+      }
     }
     document.getElementById(id).style.display = 'flex';
   }
@@ -1821,6 +1931,8 @@
   const groupIndexMap = new Map();
   const cellElementMap = new Map();
   const selectedDomElements = new Set();
+  let renderedCellOrder = [];
+  const renderedCellPosMap = new Map();
 
   function getGroupById(gId) {
     return groupMap.get(String(gId)) || null;
@@ -2229,7 +2341,7 @@
     toast.textContent = msg;
     toast.style.opacity = '1';
     clearTimeout(toast._hideTimer);
-    toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2000);
+    toast._hideTimer = setTimeout(() => { toast.style.opacity = '0'; }, 2400);
   }
 
   function isAnyCellFilterActive() {
@@ -2277,7 +2389,6 @@
           const localCell = localGroup.cells[fbCell.cellNum - 1];
           if (!localCell) continue;
 
-          // Skip overwriting a cell that still has an unsent local user edit in flight
           if (pendingSyncKeys.has(`${localGroup.groupId}::${localCell.cellNum}`)) continue;
 
           const newA = fbCell.anodeStatus !== undefined ? fbCell.anodeStatus : localCell.anodeStatus;
@@ -2292,7 +2403,7 @@
             oldEl !== newEl ||
             localCell.pcs !== newPcs
           ) {
-            if (localCell.anodeStatus !== newA || localCell.cathodeStatus !== newC || localCell.pcs !== newPcs) {
+            if (localCell.anodeStatus !== newA || localCell.cathodeStatus !== newC || localCell.pcs !== newPcs || oldEl !== newEl) {
               structuralChanged = true;
             }
             localCell.anodeStatus = newA;
@@ -2308,9 +2419,10 @@
     if (isInitialFirebaseSync) {
       isInitialFirebaseSync = false;
       saveLocalData();
-      populateGroupSelect();
-      recalculateStats(true);
-      renderMatrix();
+      if (changedCells.length > 0 || cropChanged) {
+        recalculateStats(true);
+        renderMatrix();
+      }
       return;
     }
 
@@ -2347,21 +2459,18 @@
   db.ref('tankhouseLogs').on('value', (snapshot) => {
     const data = snapshot.val();
     if (data) {
-      const nowMs = Date.now();
-      const logs = Array.isArray(data) ? data : Object.values(data);
-      const filtered = logs.filter(item => item && item.msg && (nowMs - item.time) <= THREE_DAYS_MS);
-      const isSame = filtered.length === changesLog.length &&
-        (filtered.length === 0 || (filtered[0].time === changesLog[0].time && filtered[0].msg === changesLog[0].msg));
+      const merged = mergeLogs(changesLog, data);
+      const isSame = merged.length === changesLog.length &&
+        merged.every((item, idx) => item.time === changesLog[idx].time && item.msg === changesLog[idx].msg);
       if (!isSame) {
-        changesLog = filtered;
-        try {
-          localStorage.setItem('tankhouse_changes_log', JSON.stringify(changesLog));
-        } catch (e) {}
-        const changesModal = document.getElementById('changesModal');
-        if (changesModal && changesModal.style.display === 'flex') {
-          renderChangesLogList();
-        }
+        changesLog = merged;
+        saveLogsLocal();
+        renderChangesLogList(false);
       }
+    } else if (!pendingLogSync && changesLog.length > 0) {
+      changesLog = [];
+      saveLogsLocal();
+      renderChangesLogList(false);
     }
   });
 
@@ -2475,6 +2584,12 @@
     const nextLvl = ELECTROLYTE_STEPS.find(step => step > currentLvl) ?? 0;
     cell.electrolyteLevel = nextLvl;
 
+    let clearedCathode = false;
+    if (!isGroupCharging(grp) && nextLvl > 10 && cell.cathodeStatus && cell.cathodeStatus !== 'NONE') {
+      cell.cathodeStatus = 'NONE';
+      clearedCathode = true;
+    }
+
     selectionAnchor = { groupId: gId, cellNum: cNum };
     activeSelectedCell = { groupId: gId, cellNum: cNum };
     selectedCellsList = [{ groupId: gId, cellNum: cNum }];
@@ -2485,6 +2600,13 @@
 
     updateCellDOM(gId, cNum);
     updateSelectionUI(false);
+    recalculateStats();
+
+    if (clearedCathode) {
+      showToast(currentLang === 'id'
+        ? 'ℹ️ Elektrolit > 10% hanya untuk Anode: CATH/SS dihapus'
+        : 'ℹ️ Electrolyte > 10% is Anode-only: CATH/SS cleared');
+    }
 
     let actionTxt = currentLang === 'id'
       ? `Mengatur Level Elektrolit menjadi [${nextLvl}%] pada 1 cell`
@@ -2500,14 +2622,14 @@
     let isMachine = isMachineGroupObj(grp);
     let elLevel = isMachine ? 0 : (Number(c.electrolyteLevel) || 0);
     let hasElectrolyte = elLevel > 0;
+    let isStorage = elLevel <= 10 && !isMachine && !isGroupCharging(grp);
 
     let shortA = c.anodeStatus === '63 FL' ? '63FL' : (c.anodeStatus === '62 KU' ? '62KU' : (c.anodeStatus === '62 KS' ? '62KS' : (c.anodeStatus === '62 SA' ? '62SA' : '')));
     let anodeClass = c.anodeStatus === '63 FL' ? 'tag-63' : (c.anodeStatus === '62 KU' ? 'tag-62ku' : (c.anodeStatus === '62 KS' ? 'tag-62ks' : 'tag-62sa'));
     let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
-    let safeGIdStr = String(grp.groupId).replace(/'/g, "\\'");
 
     let headerHtml = hasElectrolyte
-      ? `<div class="cell-header-row"><div class="cell-id">${c.cellId}</div><span class="lvl-corner-badge" onclick="cycleCellElectrolyteClick(event, '${safeGIdStr}', ${c.cellNum})">${elLevel}%</span></div>`
+      ? `<div class="cell-header-row"><div class="cell-id">${c.cellId}</div><span class="lvl-corner-badge ${isStorage ? 'is-storage' : ''}">${elLevel}%</span></div>`
       : `<div class="cell-id">${c.cellId}</div>`;
 
     let html = buildElectrolyteOverlayHTML(grp, c) + headerHtml;
@@ -2515,10 +2637,10 @@
     if (!isBlank) {
       html += `<div class="tags-wrapper">`;
       if (shortA) {
-        html += `<div class="anode-tag ${anodeClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${c.cellNum}, 'anode')">${shortA}</div>`;
+        html += `<div class="anode-tag ${anodeClass}" data-remove-tag="anode">${shortA}</div>`;
       }
       if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
-        html += `<div class="cathode-tag ${cathClass}" onclick="removeCellTag(event, '${safeGIdStr}', ${c.cellNum}, 'cathode')">${c.cathodeStatus}</div>`;
+        html += `<div class="cathode-tag ${cathClass}" data-remove-tag="cathode">${c.cathodeStatus}</div>`;
       }
       html += `</div>`;
     }
@@ -2578,6 +2700,23 @@
       return grp && !isMachineGroupObj(grp);
     });
 
+    const hasElectrolyteOver10 = targets.some(t => {
+      let grp = getGroupById(t.groupId);
+      if (!grp || isMachineGroupObj(grp) || isGroupCharging(grp)) return false;
+      let cell = grp.cells[t.cellNum - 1];
+      return cell && (Number(cell.electrolyteLevel) || 0) > 10;
+    });
+
+    const lockHintEl = document.getElementById('cathodeLockHint');
+    if (lockHintEl) {
+      if (hasElectrolyteOver10) {
+        lockHintEl.textContent = tr('cathLockHint');
+        lockHintEl.style.display = 'block';
+      } else {
+        lockHintEl.style.display = 'none';
+      }
+    }
+
     const elControlSec = document.getElementById('electrolyteControlSection');
     if (elControlSec) {
       elControlSec.style.display = hasGroupCellTarget ? 'flex' : 'none';
@@ -2597,7 +2736,9 @@
         let cell = grp.cells[activeSelectedCell.cellNum - 1];
         if (cell) {
           let isMachine = isMachineGroupObj(grp);
+          let isCharging = isGroupCharging(grp);
           let curElLevel = isMachine ? 0 : (Number(cell.electrolyteLevel) || 0);
+          let elDisplayStr = (curElLevel <= 10 && !isCharging) ? `${curElLevel}% (Storage)` : `${curElLevel}%`;
 
           document.querySelectorAll('.el-preset-btn, .mq-el-btn').forEach(btn => {
             btn.classList.toggle('is-active', Number(btn.getAttribute('data-el')) === curElLevel);
@@ -2607,20 +2748,21 @@
           let insContent = document.getElementById('inspectorContent');
           let groupName = grp.displayName || ((typeof grp.groupId === 'string' && isNaN(grp.groupId)) ? grp.groupId : `G${grp.groupId}`);
           let phaseText = (grp.phase === 'Machine') ? tr('machine') : `P${grp.phase}`;
-          let trZone = (grp.zone === 'North' || grp.zone === 'Utara') ? tr('optNorth') : tr('optSouth');
-          let electrolyteRow = isMachine ? '' : `<div class="detail-row"><span class="detail-label">${tr('txtElectrolyte')}:</span><span class="detail-val" style="color:var(--primary);">${curElLevel}%</span></div>`;
+          let trZone = (g => (g.zone === 'North' || g.zone === 'Utara') ? tr('optNorth') : tr('optSouth'))(grp);
+          let chargingBadge = isCharging ? ` • <span style="color:var(--positive);">⚡ Charging (${grp.cropStatus})</span>` : '';
+          let electrolyteRow = isMachine ? '' : `<div class="detail-row"><span class="detail-label">${tr('txtElectrolyte')}:</span><span class="detail-val" style="color:${(curElLevel <= 10 && !isCharging) ? '#f59e0b' : 'var(--primary)'};">${elDisplayStr}</span></div>`;
 
           if (selectedCellsList.length > 1) {
             insContent.innerHTML = `
               <div class="detail-row"><span class="detail-label">${tr('txtSelection')}:</span><span class="detail-val" style="color:var(--primary);">${selectedCellsList.length} ${tr('txtMarked')}</span></div>
               <div class="detail-row"><span class="detail-label">${tr('txtFocus')}:</span><span class="detail-val">${groupName} - ${cell.cellId}</span></div>
-              <div class="detail-row"><span class="detail-label">${tr('txtArea')}:</span><span class="detail-val">${phaseText} / ${trZone}</span></div>
+              <div class="detail-row"><span class="detail-label">${tr('txtArea')}:</span><span class="detail-val">${phaseText} / ${trZone}${chargingBadge}</span></div>
               ${electrolyteRow}
             `;
           } else {
             insContent.innerHTML = `
               <div class="detail-row"><span class="detail-label">Cell ID:</span><span class="detail-val">${groupName} - ${cell.cellId}</span></div>
-              <div class="detail-row"><span class="detail-label">${tr('txtArea')}:</span><span class="detail-val">${phaseText} / ${trZone}</span></div>
+              <div class="detail-row"><span class="detail-label">${tr('txtArea')}:</span><span class="detail-val">${phaseText} / ${trZone}${chargingBadge}</span></div>
               <div class="detail-row"><span class="detail-label">${tr('txtAnode')}:</span><span class="detail-val">${cell.anodeStatus !== 'NONE' ? cell.pcs + ' Pcs (' + cell.anodeStatus + ')' : '<span style="color:var(--on-surface-variant);">'+tr('txtEmptyStr')+'</span>'}</span></div>
               <div class="detail-row"><span class="detail-label">${tr('txtCathode')}:</span><span class="detail-val">${cell.cathodeStatus !== 'NONE' ? cell.cathodeStatus : '<span style="color:var(--on-surface-variant);">'+tr('txtEmptyStr')+'</span>'}</span></div>
               ${electrolyteRow}
@@ -2650,117 +2792,83 @@
 
     const matrixScrollTop = container ? container.scrollTop : 0;
     const groupScrollLeftMap = {};
-    if (container) {
-      container.querySelectorAll('.group-section').forEach(sec => {
-        const wrapper = sec.querySelector('.group-grid-wrapper');
-        const firstCell = sec.querySelector('.cell-card');
-        if (wrapper && firstCell) {
-          const gId = firstCell.getAttribute('data-group');
-          if (gId) {
-            groupScrollLeftMap[gId] = wrapper.scrollLeft;
-          }
+    if (container && container.children.length > 0) {
+      const wrappers = container.getElementsByClassName('group-grid-wrapper');
+      for (let i = 0; i < wrappers.length; i++) {
+        const gId = wrappers[i].getAttribute('data-group');
+        if (gId && wrappers[i].scrollLeft > 0) {
+          groupScrollLeftMap[gId] = wrappers[i].scrollLeft;
         }
-      });
+      }
     }
 
     cellElementMap.clear();
     selectedDomElements.clear();
+    renderedCellOrder = [];
+    renderedCellPosMap.clear();
 
-    let filteredGroups = plantData.filter(g => {
-      if (!g) return false;
-      if (currentPhaseFilter !== 'ALL' && String(g.phase) !== String(currentPhaseFilter)) return false;
-      if (selZone !== 'ALL' && g.zone !== selZone) return false;
-      if (selG !== 'ALL' && String(g.groupId) !== String(selG)) return false;
-
-      if (selContent === 'FILLED') {
-        let hasFilled = g.cells.some(c => c && ((c.anodeStatus && c.anodeStatus !== 'NONE') || (c.cathodeStatus && c.cathodeStatus !== 'NONE')));
-        if (!hasFilled) return false;
-      } else if (selContent === 'EMPTY') {
-        let hasEmpty = g.cells.some(c => c && ((!c.anodeStatus || c.anodeStatus === 'NONE') && (!c.cathodeStatus || c.cathodeStatus === 'NONE')));
-        if (!hasEmpty) return false;
-      }
-
-      if (selA !== 'ALL') {
-        let hasAnode = g.cells.some(c => c && c.anodeStatus === selA);
-        if (!hasAnode) return false;
-      }
-
-      if (selC !== 'ALL') {
-        let hasCathode = g.cells.some(c => c && c.cathodeStatus === selC);
-        if (!hasCathode) return false;
-      }
-
-      if (selE !== 'ALL') {
-        if (isMachineGroupObj(g)) return false;
-        let hasEl = g.cells.some(c => {
-          if (!c) return false;
-          let lvl = Number(c.electrolyteLevel) || 0;
-          if (selE === 'FILLED') return lvl > 0;
-          if (selE === 'EMPTY') return lvl === 0;
-          return lvl === Number(selE);
-        });
-        if (!hasEl) return false;
-      }
-
-      return true;
-    });
+    const activeSelG = activeSelectedCell ? String(activeSelectedCell.groupId) : null;
+    const activeSelC = activeSelectedCell ? activeSelectedCell.cellNum : null;
+    const selectedKeySet = new Set(selectedCellsList.map(sc => `${sc.groupId}::${sc.cellNum}`));
 
     let fragment = document.createDocumentFragment();
     let renderedCount = 0;
 
-    filteredGroups.forEach(g => {
-      let visibleCells = g.cells.filter(c => {
-        if (!c) return false;
-        let isBlank = (c.anodeStatus === 'NONE' || !c.anodeStatus) && (c.cathodeStatus === 'NONE' || !c.cathodeStatus);
+    for (let gi = 0; gi < plantData.length; gi++) {
+      const g = plantData[gi];
+      if (!g) continue;
+      if (currentPhaseFilter !== 'ALL' && String(g.phase) !== String(currentPhaseFilter)) continue;
+      if (selZone !== 'ALL' && g.zone !== selZone) continue;
+      if (selG !== 'ALL' && String(g.groupId) !== String(selG)) continue;
+      if (selE !== 'ALL' && isMachineGroupObj(g)) continue;
+      if (selContent === 'CHARGING' && !isGroupCharging(g)) continue;
+      if (selContent === 'STORAGE' && (isMachineGroupObj(g) || isGroupCharging(g))) continue;
 
-        if (selContent === 'EMPTY' && !isBlank) return false;
-        if (selA !== 'ALL' && c.anodeStatus !== selA) return false;
-        if (selC !== 'ALL' && c.cathodeStatus !== selC) return false;
+      const visibleCells = [];
+      for (let ci = 0; ci < g.cells.length; ci++) {
+        const c = g.cells[ci];
+        if (!c) continue;
+        const hasA = c.anodeStatus && c.anodeStatus !== 'NONE';
+        const hasC = c.cathodeStatus && c.cathodeStatus !== 'NONE';
+        const isBlank = !hasA && !hasC;
+
+        if (selContent === 'FILLED' && isBlank) continue;
+        if (selContent === 'EMPTY' && !isBlank) continue;
+        if (selContent === 'STORAGE' && (Number(c.electrolyteLevel) || 0) > 10) continue;
+        if (selA !== 'ALL' && c.anodeStatus !== selA) continue;
+        if (selC !== 'ALL' && c.cathodeStatus !== selC) continue;
         if (selE !== 'ALL') {
-          if (isMachineGroupObj(g)) return false;
-          let lvl = Number(c.electrolyteLevel) || 0;
-          if (selE === 'FILLED' && lvl <= 0) return false;
-          if (selE === 'EMPTY' && lvl !== 0) return false;
-          if (selE !== 'FILLED' && selE !== 'EMPTY' && lvl !== Number(selE)) return false;
+          const lvl = Number(c.electrolyteLevel) || 0;
+          if (selE === 'FILLED' && lvl <= 0) continue;
+          if (selE === 'EMPTY' && lvl !== 0) continue;
+          if (selE !== 'FILLED' && selE !== 'EMPTY' && lvl !== Number(selE)) continue;
         }
+        visibleCells.push(c);
+      }
 
-        return true;
-      });
-
-      if (!visibleCells || visibleCells.length === 0) return;
-
+      if (visibleCells.length === 0) continue;
       renderedCount++;
 
-      let grpSec = document.createElement('div');
+      const grpSec = document.createElement('div');
       grpSec.className = 'group-section';
 
-      let cropClass = g.cropStatus === 'Crop 1' ? 'crop-c1' : (g.cropStatus === 'Crop 2' ? 'crop-c2' : (g.cropStatus === 'Crop 3' ? 'crop-c3' : 'crop-none'));
+      const cropClass = g.cropStatus === 'Crop 1' ? 'crop-c1' : (g.cropStatus === 'Crop 2' ? 'crop-c2' : (g.cropStatus === 'Crop 3' ? 'crop-c3' : 'crop-none'));
+      const lblNoHarv = currentLang === 'id' ? 'Tanpa Panen' : 'No Harvest';
+      const cropLabel = g.cropStatus !== '-' ? `${currentLang==='id'?'Panen':'Harvest'}: ${g.cropStatus} ⚡` : lblNoHarv;
       
-      let lblNoHarv = currentLang === 'id' ? 'Tanpa Panen' : 'No Harvest';
-      let cropLabel = g.cropStatus !== '-' ? `${currentLang==='id'?'Panen':'Harvest'}: ${g.cropStatus}` : lblNoHarv;
-      
-      let isStringGroup = typeof g.groupId === 'string' && isNaN(g.groupId);
-      let isRackGroup = isStringGroup && String(g.groupId).startsWith('Rack');
-      let lblSpecialUnit = isRackGroup ? (currentLang==='id'?'Rak':'Racks') : (isStringGroup ? (currentLang==='id'?'Stasiun':'Stations') : 'Cells');
-      let tagSpecial = g.groupId === 33 ? 'EW0' : `${g.cellCount} ${lblSpecialUnit}`;
+      const isStringGroup = typeof g.groupId === 'string' && isNaN(g.groupId);
+      const isRackGroup = isStringGroup && String(g.groupId).startsWith('Rack');
+      const lblSpecialUnit = isRackGroup ? (currentLang==='id'?'Rak':'Racks') : (isStringGroup ? (currentLang==='id'?'Stasiun':'Stations') : 'Cells');
+      const tagSpecial = g.groupId === 33 ? 'EW0' : `${g.cellCount} ${lblSpecialUnit}`;
 
-      let isSpecialGroup = (g.groupId >= 13 && g.groupId <= 20);
-      let splitCutoff = isSpecialGroup ? 14 : 13;
-      if (isStringGroup) {
-        splitCutoff = g.cellCount;
-      }
-      let rowClass = isSpecialGroup ? 'cell-row-28' : 'cell-row-26';
+      const isSpecialGroup = (g.groupId >= 13 && g.groupId <= 20);
+      const splitCutoff = isStringGroup ? g.cellCount : (isSpecialGroup ? 14 : 13);
+      const rowClass = isSpecialGroup ? 'cell-row-28' : 'cell-row-26';
 
-      let row1Cells = visibleCells.filter(c => c.cellNum <= splitCutoff);
-      let row2Cells = visibleCells.filter(c => c.cellNum > splitCutoff);
-
-      let groupDisplayName = g.displayName ? g.displayName : (isStringGroup ? g.groupId : `Group ${g.groupId}`);
-      let safeGId = String(g.groupId).replace(/[^a-zA-Z0-9_-]/g, '_');
-      
-      let trZone = (g.zone === 'North' || g.zone === 'Utara') ? tr('optNorth') : tr('optSouth');
-
-      let isMachineGroup = (g.phase === 'Machine' || isStringGroup);
-      let cropHtml = isMachineGroup ? '' : `<div class="crop-tag ${cropClass}" onclick="toggleCrop('${String(g.groupId).replace(/'/g, "\\'")}')">${cropLabel}</div>`;
+      const groupDisplayName = g.displayName ? g.displayName : (isStringGroup ? g.groupId : `Group ${g.groupId}`);
+      const trZone = (g.zone === 'North' || g.zone === 'Utara') ? tr('optNorth') : tr('optSouth');
+      const isMachineGroup = (g.phase === 'Machine' || isStringGroup);
+      const cropHtml = isMachineGroup ? '' : `<div class="crop-tag ${cropClass}" data-toggle-crop="${String(g.groupId).replace(/"/g, '&quot;')}">${cropLabel}</div>`;
 
       grpSec.innerHTML = `
         <div class="group-header">
@@ -2771,22 +2879,25 @@
           </div>
           ${cropHtml}
         </div>
-        <div class="group-grid-wrapper">
-          <div class="cell-row ${rowClass}" id="grid-g-${safeGId}-r1"></div>
-          <div class="cell-row ${rowClass}" id="grid-g-${safeGId}-r2"></div>
+        <div class="group-grid-wrapper" data-group="${g.groupId}">
+          <div class="cell-row ${rowClass}"></div>
+          <div class="cell-row ${rowClass}"></div>
         </div>
       `;
 
-      const gridBox1 = grpSec.querySelector(`#grid-g-${safeGId}-r1`);
-      const gridBox2 = grpSec.querySelector(`#grid-g-${safeGId}-r2`);
+      const wrapperEl = grpSec.lastElementChild;
+      const gridBox1 = wrapperEl.firstElementChild;
+      const gridBox2 = wrapperEl.lastElementChild;
+      let row1Count = 0;
+      let row2Count = 0;
 
-      function createCellElement(c) {
-        let cellDiv = document.createElement('div');
-        
-        let hasAnode = c.anodeStatus && c.anodeStatus !== 'NONE';
-        let hasCathode = c.cathodeStatus && c.cathodeStatus !== 'NONE';
-        let isBlank = !hasAnode && !hasCathode;
-        let hasElectrolyte = !isMachineGroupObj(g) && (Number(c.electrolyteLevel) || 0) > 0;
+      for (let vi = 0; vi < visibleCells.length; vi++) {
+        const c = visibleCells[vi];
+        const cellDiv = document.createElement('div');
+        const hasAnode = c.anodeStatus && c.anodeStatus !== 'NONE';
+        const hasCathode = c.cathodeStatus && c.cathodeStatus !== 'NONE';
+        const isBlank = !hasAnode && !hasCathode;
+        const hasElectrolyte = !isMachineGroup && (Number(c.electrolyteLevel) || 0) > 0;
         
         let statusClass = 'cell-blank';
         if (!isBlank) {
@@ -2799,31 +2910,43 @@
           else if (c.cathodeStatus === 'SS') statusClass += ' cell-ss-only';
         }
 
-        let isSelected = selectedCellsList.some(sc => String(sc.groupId) === String(g.groupId) && sc.cellNum === c.cellNum) || (activeSelectedCell && String(activeSelectedCell.groupId) === String(g.groupId) && activeSelectedCell.cellNum === c.cellNum);
+        const key = `${g.groupId}::${c.cellNum}`;
+        const isSelected = selectedKeySet.has(key) || (activeSelG === String(g.groupId) && activeSelC === c.cellNum);
 
         cellDiv.className = `cell-card ${statusClass} ${hasElectrolyte ? 'has-electrolyte' : ''} ${isSelected ? 'selected' : ''}`;
         cellDiv.setAttribute('data-group', g.groupId);
         cellDiv.setAttribute('data-cell', c.cellNum);
-        cellDiv.onclick = (e) => selectCell(g.groupId, c.cellNum, e);
         cellDiv.innerHTML = buildCellInnerHTML(g, c);
 
-        cellElementMap.set(`${g.groupId}::${c.cellNum}`, cellDiv);
+        cellElementMap.set(key, cellDiv);
+        renderedCellPosMap.set(key, renderedCellOrder.length);
+        renderedCellOrder.push({ groupId: g.groupId, cellNum: c.cellNum });
         if (isSelected) selectedDomElements.add(cellDiv);
-        return cellDiv;
+
+        if (c.cellNum <= splitCutoff) {
+          gridBox1.appendChild(cellDiv);
+          row1Count++;
+        } else {
+          gridBox2.appendChild(cellDiv);
+          row2Count++;
+        }
       }
 
-      row1Cells.forEach(c => gridBox1.appendChild(createCellElement(c)));
-      row2Cells.forEach(c => gridBox2.appendChild(createCellElement(c)));
-
-      if (row1Cells.length === 0) gridBox1.style.display = 'none';
-      if (row2Cells.length === 0) gridBox2.style.display = 'none';
+      if (row1Count === 0) gridBox1.style.display = 'none';
+      if (row2Count === 0) gridBox2.style.display = 'none';
 
       fragment.appendChild(grpSec);
-    });
+    }
 
     container.innerHTML = '';
     if (renderedCount === 0) {
-      if (selContent === 'FILLED') {
+      if (selContent === 'CHARGING') {
+        let msg = currentLang==='id'?'Tidak ada Group Charging (Panen: Crop 1/2/3).':'No Group Charging (Harvest: Crop 1/2/3) found.';
+        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">${msg}</div>`;
+      } else if (selContent === 'STORAGE') {
+        let msg = currentLang==='id'?'Tidak ada cell Storage (0%–10% elektrolit).':'No Storage cells (0%–10% electrolyte) found.';
+        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">${msg}</div>`;
+      } else if (selContent === 'FILLED') {
         let msg = currentLang==='id'?'Tidak ada cell yang terisi.':'No filled cells found.';
         container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">${msg}</div>`;
       } else if (selContent === 'EMPTY') {
@@ -2836,16 +2959,13 @@
     } else {
       container.appendChild(fragment);
       container.scrollTop = matrixScrollTop;
-      container.querySelectorAll('.group-section').forEach(sec => {
-        const wrapper = sec.querySelector('.group-grid-wrapper');
-        const firstCell = sec.querySelector('.cell-card');
-        if (wrapper && firstCell) {
-          const gId = firstCell.getAttribute('data-group');
-          if (gId && groupScrollLeftMap[gId] !== undefined) {
-            wrapper.scrollLeft = groupScrollLeftMap[gId];
-          }
+      const newWrappers = container.getElementsByClassName('group-grid-wrapper');
+      for (let i = 0; i < newWrappers.length; i++) {
+        const gId = newWrappers[i].getAttribute('data-group');
+        if (gId && groupScrollLeftMap[gId] !== undefined) {
+          newWrappers[i].scrollLeft = groupScrollLeftMap[gId];
         }
-      });
+      }
     }
 
     recalculateStats();
@@ -2856,26 +2976,16 @@
       selectionAnchor = { groupId: targetGId, cellNum: targetCNum };
     }
     
-    let allCardEls = Array.from(document.querySelectorAll('.cell-card'));
-    let anchorEl = getCellElement(selectionAnchor.groupId, selectionAnchor.cellNum);
-    let targetEl = getCellElement(targetGId, targetCNum);
+    const idx1 = renderedCellPosMap.get(`${selectionAnchor.groupId}::${selectionAnchor.cellNum}`);
+    const idx2 = renderedCellPosMap.get(`${targetGId}::${targetCNum}`);
 
-    if (anchorEl && targetEl) {
-      let idx1 = allCardEls.indexOf(anchorEl);
-      let idx2 = allCardEls.indexOf(targetEl);
-      let minIdx = Math.min(idx1, idx2);
-      let maxIdx = Math.max(idx1, idx2);
-
-      selectedCellsList = [];
-      for (let i = minIdx; i <= maxIdx; i++) {
-        let el = allCardEls[i];
-        let gIdAttr = el.getAttribute('data-group');
-        let parsedGId = (isNaN(gIdAttr) || gIdAttr.startsWith('Rack') || gIdAttr.includes(' ')) ? gIdAttr : parseInt(gIdAttr);
-        selectedCellsList.push({
-          groupId: parsedGId,
-          cellNum: parseInt(el.getAttribute('data-cell'))
-        });
-      }
+    if (idx1 !== undefined && idx2 !== undefined) {
+      const minIdx = Math.min(idx1, idx2);
+      const maxIdx = Math.max(idx1, idx2);
+      selectedCellsList = renderedCellOrder.slice(minIdx, maxIdx + 1).map(item => ({
+        groupId: item.groupId,
+        cellNum: item.cellNum
+      }));
     } else {
       selectedCellsList = [{ groupId: targetGId, cellNum: targetCNum }];
     }
@@ -2951,15 +3061,40 @@
 
   function updateActiveCellCathode(val) {
     let targets = getActiveTargets();
-    if(targets.length === 0) return;
+    if (targets.length === 0) return;
+
+    const validTargets = [];
+    let skippedOver10 = 0;
+
+    for (let i = 0; i < targets.length; i++) {
+      const t = targets[i];
+      const grp = getGroupById(t.groupId);
+      if (!grp) continue;
+      const cell = grp.cells[t.cellNum - 1];
+      if (!cell) continue;
+
+      if (val !== 'NONE' && !isMachineGroupObj(grp) && !isGroupCharging(grp) && (Number(cell.electrolyteLevel) || 0) > 10) {
+        skippedOver10++;
+        continue;
+      }
+      validTargets.push(t);
+    }
+
+    if (validTargets.length === 0) {
+      showToast(currentLang === 'id'
+        ? '⚠️ Elektrolit > 10% hanya bisa menyimpan Anode (atur 0–10% untuk Storage)'
+        : '⚠️ Electrolyte > 10% can only store Anode (set 0–10% for Storage)');
+      return;
+    }
+
     saveState();
-    
-    let actionTxt = currentLang === 'id' 
-      ? `Mengatur Katoda menjadi [${val}] pada ${targets.length} cell` 
-      : `Set Cathode to [${val}] on ${targets.length} cell(s)`;
-    logChange(actionTxt, targets); 
-    
-    targets.forEach(t => {
+
+    let actionTxt = currentLang === 'id'
+      ? `Mengatur Katoda menjadi [${val}] pada ${validTargets.length} cell`
+      : `Set Cathode to [${val}] on ${validTargets.length} cell(s)`;
+    logChange(actionTxt, validTargets);
+
+    validTargets.forEach(t => {
       let grp = getGroupById(t.groupId);
       if (grp) {
         let cell = grp.cells[t.cellNum - 1];
@@ -2969,9 +3104,16 @@
         }
       }
     });
+
+    if (skippedOver10 > 0) {
+      showToast(currentLang === 'id'
+        ? `⚠️ ${skippedOver10} cell dilewati (Elektrolit > 10% khusus Anode)`
+        : `⚠️ ${skippedOver10} cell(s) skipped (Electrolyte > 10% is Anode-only)`);
+    }
+
     updateSelectionUI();
     recalculateStats();
-    syncCellTargets(targets);
+    syncCellTargets(validTargets);
   }
 
   function updateActiveCellElectrolyte(val) {
@@ -2983,6 +3125,7 @@
     saveState();
 
     const lvl = Number(val) || 0;
+    let clearedCathodeCount = 0;
 
     for (let i = 0; i < targets.length; i++) {
       const t = targets[i];
@@ -2991,11 +3134,22 @@
         let cell = grp.cells[t.cellNum - 1];
         if (cell) {
           cell.electrolyteLevel = lvl;
+          if (!isGroupCharging(grp) && lvl > 10 && cell.cathodeStatus && cell.cathodeStatus !== 'NONE') {
+            cell.cathodeStatus = 'NONE';
+            clearedCathodeCount++;
+          }
           updateCellDOM(t.groupId, t.cellNum);
         }
       }
     }
     updateSelectionUI(false);
+    recalculateStats();
+
+    if (clearedCathodeCount > 0) {
+      showToast(currentLang === 'id'
+        ? `ℹ️ Elektrolit > 10% hanya untuk Anode: CATH/SS dihapus (${clearedCathodeCount} cell)`
+        : `ℹ️ Electrolyte > 10% is Anode-only: CATH/SS cleared (${clearedCathodeCount} cell)`);
+    }
 
     let actionTxt = currentLang === 'id'
       ? `Mengatur Level Elektrolit menjadi [${lvl}%] pada ${targets.length} cell`
@@ -3095,19 +3249,15 @@
         pastePairs.push({ target: t, source: src });
       });
     } else if (activeTargets.length === 1) {
-      const allCardEls = Array.from(document.querySelectorAll('.cell-card'));
-      const startEl = getCellElement(activeTargets[0].groupId, activeTargets[0].cellNum);
-      const startIdx = startEl ? allCardEls.indexOf(startEl) : -1;
+      const startIdx = renderedCellPosMap.get(`${activeTargets[0].groupId}::${activeTargets[0].cellNum}`);
 
-      if (startIdx !== -1) {
+      if (startIdx !== undefined) {
         const newSelected = [];
-        for (let i = 0; i < copiedCellsBuffer.length && (startIdx + i) < allCardEls.length; i++) {
-          const el = allCardEls[startIdx + i];
-          const gIdAttr = el.getAttribute('data-group');
-          const parsedGId = (isNaN(gIdAttr) || gIdAttr.startsWith('Rack') || gIdAttr.includes(' ')) ? gIdAttr : parseInt(gIdAttr);
+        for (let i = 0; i < copiedCellsBuffer.length && (startIdx + i) < renderedCellOrder.length; i++) {
+          const item = renderedCellOrder[startIdx + i];
           const targetObj = {
-            groupId: parsedGId,
-            cellNum: parseInt(el.getAttribute('data-cell'))
+            groupId: item.groupId,
+            cellNum: item.cellNum
           };
           pastePairs.push({ target: targetObj, source: copiedCellsBuffer[i] });
           newSelected.push(targetObj);
@@ -3142,10 +3292,11 @@
 
       cell.anodeStatus = src.anodeStatus;
       cell.pcs = src.pcs;
-      cell.cathodeStatus = src.cathodeStatus;
       if (!isMachineGroupObj(grp) && src.electrolyteLevel !== null) {
         cell.electrolyteLevel = Number(src.electrolyteLevel) || 0;
       }
+      const curEl = isMachineGroupObj(grp) ? 0 : (Number(cell.electrolyteLevel) || 0);
+      cell.cathodeStatus = (!isMachineGroupObj(grp) && !isGroupCharging(grp) && curEl > 10) ? 'NONE' : src.cathodeStatus;
 
       updateCellDOM(t.groupId, t.cellNum);
       affectedTargets.push({ groupId: t.groupId, cellNum: t.cellNum });
@@ -3177,6 +3328,7 @@
         : `Changed harvest cycle for Group ${grp.groupId} to [${val}]`;
       logChange(actionTxt);
       renderMatrix();
+      if (activeSelectedCell) updateSelectionUI();
       syncGroupCrop(grp.groupId, val);
     }
   }
@@ -3192,6 +3344,7 @@
         : `Toggled harvest for Group ${grp.groupId} to [${grp.cropStatus}]`;
       logChange(actionTxt);
       renderMatrix();
+      if (activeSelectedCell) updateSelectionUI();
       syncGroupCrop(grp.groupId, grp.cropStatus);
     }
   }
@@ -3241,89 +3394,88 @@
       ? `📅 ${dayName}, ${dateNum} ${monthName} ${yearNum} | ${waTimeStr}` 
       : `📅 ${dayName}, ${monthName} ${dateNum}, ${yearNum} | ${waTimeStr}`;
 
-    function getItemsForCategory(filterFn, isCathode = false) {
-      let north = { total: 0, lines: [] };
-      let south = { total: 0, lines: [] };
+    const buckets = {
+      CATH: { title: 'CATHODE', total: stats.cCA, isCathode: true, north: { total: 0, lines: [] }, south: { total: 0, lines: [] } },
+      '63 FL': { title: 'ANODE 63', total: stats.c63, isCathode: false, north: { total: 0, lines: [] }, south: { total: 0, lines: [] } },
+      '62 KU': { title: 'ANODE 62 KU', total: stats.c62ku, isCathode: false, north: { total: 0, lines: [] }, south: { total: 0, lines: [] } },
+      '62 KS': { title: 'ANODE 62 KS', total: stats.c62ks, isCathode: false, north: { total: 0, lines: [] }, south: { total: 0, lines: [] } },
+      '62 SA': { title: 'SPENT ANODE', total: stats.c62sa, isCathode: false, north: { total: 0, lines: [] }, south: { total: 0, lines: [] } },
+      SS: { title: 'SS BLANK', total: stats.cSS, isCathode: false, north: { total: 0, lines: [] }, south: { total: 0, lines: [] } },
+      STORAGE: { title: 'STORAGE', total: stats.storageTotal, isCathode: false, north: { total: 0, lines: [] }, south: { total: 0, lines: [] } }
+    };
 
-      plantData.forEach(g => {
-        if (!g) return;
-        const isNorth = (g.zone === 'North' || g.zone === 'Utara');
-        let matchedCells = g.cells.filter(c => c && filterFn(c));
-        if (matchedCells.length > 0) {
-          let matchedNums = matchedCells.map(c => c.cellNum);
-          let target = isNorth ? north : south;
-          target.total += matchedCells.length;
+    const unitRack = currentLang === 'id' ? 'Rak' : 'Rack';
+    const unitStation = currentLang === 'id' ? 'Stasiun' : 'Station';
 
-          let isStringGroup = (typeof g.groupId === 'string' && isNaN(g.groupId));
-          let isRackGroup = isStringGroup && String(g.groupId).startsWith('Rack');
-          
-          let groupLabel = (typeof g.groupId === 'number' || !isNaN(g.groupId)) 
-            ? `G${g.groupId}` 
-            : (g.displayName || g.groupId);
+    for (let gi = 0; gi < plantData.length; gi++) {
+      const g = plantData[gi];
+      if (!g || isGroupCharging(g)) continue;
+      const isNorth = (g.zone === 'North' || g.zone === 'Utara');
+      const isStringGroup = (typeof g.groupId === 'string' && isNaN(g.groupId));
+      const isMachine = isMachineGroupObj(g);
+      const isRackGroup = isStringGroup && String(g.groupId).startsWith('Rack');
+      const groupLabel = !isStringGroup ? `G${g.groupId}` : (g.displayName || g.groupId);
+      const unitLabel = isRackGroup ? unitRack : (isStringGroup ? unitStation : 'Cell');
 
-          let unitLabel = isRackGroup ? (currentLang==='id'?'Rak':'Rack') : (isStringGroup ? (currentLang==='id'?'Stasiun':'Station') : 'Cell');
+      const grpMatched = { CATH: [], '63 FL': [], '62 KU': [], '62 KS': [], '62 SA': [], SS: [], STORAGE: [] };
 
-          let rangeStr = '';
-          if (matchedCells.length < g.cellCount) {
-            let fmt = isStringGroup 
-              ? matchedCells.map(c => c.cellId).join(', ') 
-              : formatCellNumbers(matchedNums);
-            rangeStr = ` [${fmt}]`;
-          }
+      for (let ci = 0; ci < g.cells.length; ci++) {
+        const c = g.cells[ci];
+        if (!c) continue;
+        if (c.cathodeStatus === 'CATH') grpMatched.CATH.push(c);
+        else if (c.cathodeStatus === 'SS') grpMatched.SS.push(c);
 
-          let suffixStr = isCathode ? ' ()' : '';
-
-          target.lines.push(`- ${groupLabel} : ${matchedCells.length} ${unitLabel}${rangeStr}${suffixStr}`);
+        if (c.anodeStatus && grpMatched[c.anodeStatus]) {
+          grpMatched[c.anodeStatus].push(c);
         }
-      });
 
-      return { north, south };
-    }
-
-    function buildZoneSection(catIndex, title, totalCount, itemsNorth, itemsSouth) {
-      if (totalCount === 0) return null;
-      let textNorth = tr('waNorth');
-      let textSouth = tr('waSouth');
-
-      let block = `*${catIndex}. ${title}*`;
-      
-      if (itemsNorth.total > 0) {
-        block += `\n${textNorth} (${itemsNorth.total})\n` + itemsNorth.lines.join('\n');
-      }
-      if (itemsSouth.total > 0) {
-        block += `\n${textSouth} (${itemsSouth.total})\n` + itemsSouth.lines.join('\n');
+        if (!isMachine && (Number(c.electrolyteLevel) || 0) <= 10) {
+          grpMatched.STORAGE.push(c);
+        }
       }
 
-      return block;
+      for (const key in grpMatched) {
+        const matchedCells = grpMatched[key];
+        if (matchedCells.length === 0) continue;
+        const b = buckets[key];
+        const target = isNorth ? b.north : b.south;
+        target.total += matchedCells.length;
+
+        let rangeStr = '';
+        if (matchedCells.length < g.cellCount) {
+          const fmt = isStringGroup
+            ? matchedCells.map(c => c.cellId).join(', ')
+            : formatCellNumbers(matchedCells.map(c => c.cellNum));
+          rangeStr = ` [${fmt}]`;
+        }
+        const suffixStr = b.isCathode ? ' ()' : '';
+        target.lines.push(`- ${groupLabel} : ${matchedCells.length} ${unitLabel}${rangeStr}${suffixStr}`);
+      }
     }
 
-    let headerBlock = `*${tr('waTitle')}*\n${timeHeader}`;
-    let reportBlocks = [headerBlock];
+    const textNorth = tr('waNorth');
+    const textSouth = tr('waSouth');
+    const order = ['CATH', '63 FL', '62 KU', '62 KS', '62 SA', 'SS', 'STORAGE'];
+    const reportBlocks = [`*${tr('waTitle')}*\n${timeHeader}`];
     let catNum = 1;
 
-    const categories = [
-      { title: 'CATHODE', total: stats.cCA, filter: c => c.cathodeStatus === 'CATH', isCathode: true },
-      { title: 'ANODE 63', total: stats.c63, filter: c => c.anodeStatus === '63 FL', isCathode: false },
-      { title: 'ANODE 62 KU', total: stats.c62ku, filter: c => c.anodeStatus === '62 KU', isCathode: false },
-      { title: 'ANODE 62 KS', total: stats.c62ks, filter: c => c.anodeStatus === '62 KS', isCathode: false },
-      { title: 'SPENT ANODE', total: stats.c62sa, filter: c => c.anodeStatus === '62 SA', isCathode: false },
-      { title: 'SS BLANK', total: stats.cSS, filter: c => c.cathodeStatus === 'SS', isCathode: false }
-    ];
-
-    categories.forEach(cat => {
+    for (let i = 0; i < order.length; i++) {
+      const cat = buckets[order[i]];
       if (cat.total > 0) {
-        let items = getItemsForCategory(cat.filter, cat.isCathode);
-        let block = buildZoneSection(catNum, cat.title, cat.total, items.north, items.south);
-        if (block) {
-          reportBlocks.push(block);
-          catNum++;
+        let block = `*${catNum}. ${cat.title}*`;
+        if (cat.north.total > 0) {
+          block += `\n${textNorth} (${cat.north.total})\n` + cat.north.lines.join('\n');
         }
+        if (cat.south.total > 0) {
+          block += `\n${textSouth} (${cat.south.total})\n` + cat.south.lines.join('\n');
+        }
+        reportBlocks.push(block);
+        catNum++;
       }
-    });
+    }
 
-    let text = reportBlocks.join('\n\n');
     const waEl = document.getElementById('waText');
-    if (waEl) waEl.value = text.trim();
+    if (waEl) waEl.value = reportBlocks.join('\n\n').trim();
   }
 
   function recalculateStats(immediateWA = false) {
@@ -3334,47 +3486,72 @@
       c62ks: 0, c62ksN: 0, c62ksS: 0,
       c62sa: 0, c62saN: 0, c62saS: 0,
       cCA: 0, cCAN: 0, cCAS: 0,
-      cSS: 0, cSSN: 0, cSSS: 0
+      cSS: 0, cSSN: 0, cSSS: 0,
+      elM3Total: 0, elM3N: 0, elM3S: 0,
+      storageTotal: 0, storageN: 0, storageS: 0,
+      storageFree: 0
     };
 
     for (let i = 0; i < plantData.length; i++) {
       const g = plantData[i];
       if (!g) continue;
       const isNorth = (g.zone === 'North' || g.zone === 'Utara');
+      const isMachine = isMachineGroupObj(g);
+      const isCharging = isGroupCharging(g);
       const cells = g.cells;
       for (let j = 0; j < cells.length; j++) {
         const c = cells[j];
         if (!c) continue;
-        stats.tA += c.pcs;
-        if (isNorth) stats.tAN += c.pcs;
-        else stats.tAS += c.pcs;
 
-        if (c.anodeStatus === '63 FL') {
-          stats.c63++;
-          if (isNorth) stats.c63N++;
-          else stats.c63S++;
-        } else if (c.anodeStatus === '62 KU') {
-          stats.c62ku++;
-          if (isNorth) stats.c62kuN++;
-          else stats.c62kuS++;
-        } else if (c.anodeStatus === '62 KS') {
-          stats.c62ks++;
-          if (isNorth) stats.c62ksN++;
-          else stats.c62ksS++;
-        } else if (c.anodeStatus === '62 SA') {
-          stats.c62sa++;
-          if (isNorth) stats.c62saN++;
-          else stats.c62saS++;
+        if (!isCharging) {
+          stats.tA += c.pcs;
+          if (isNorth) stats.tAN += c.pcs;
+          else stats.tAS += c.pcs;
+
+          if (c.anodeStatus === '63 FL') {
+            stats.c63++;
+            if (isNorth) stats.c63N++;
+            else stats.c63S++;
+          } else if (c.anodeStatus === '62 KU') {
+            stats.c62ku++;
+            if (isNorth) stats.c62kuN++;
+            else stats.c62kuS++;
+          } else if (c.anodeStatus === '62 KS') {
+            stats.c62ks++;
+            if (isNorth) stats.c62ksN++;
+            else stats.c62ksS++;
+          } else if (c.anodeStatus === '62 SA') {
+            stats.c62sa++;
+            if (isNorth) stats.c62saN++;
+            else stats.c62saS++;
+          }
+
+          if (c.cathodeStatus === 'CATH') {
+            stats.cCA++;
+            if (isNorth) stats.cCAN++;
+            else stats.cCAS++;
+          } else if (c.cathodeStatus === 'SS') {
+            stats.cSS++;
+            if (isNorth) stats.cSSN++;
+            else stats.cSSS++;
+          }
         }
 
-        if (c.cathodeStatus === 'CATH') {
-          stats.cCA++;
-          if (isNorth) stats.cCAN++;
-          else stats.cCAS++;
-        } else if (c.cathodeStatus === 'SS') {
-          stats.cSS++;
-          if (isNorth) stats.cSSN++;
-          else stats.cSSS++;
+        if (!isMachine) {
+          const elPct = Number(c.electrolyteLevel) || 0;
+          if (elPct > 0) {
+            const m3Val = elPct / 10;
+            stats.elM3Total += m3Val;
+            if (isNorth) stats.elM3N += m3Val;
+            else stats.elM3S += m3Val;
+          }
+          if (!isCharging && elPct <= 10) {
+            stats.storageTotal++;
+            if (isNorth) stats.storageN++;
+            else stats.storageS++;
+            const isFreeSlot = (!c.anodeStatus || c.anodeStatus === 'NONE') && (!c.cathodeStatus || c.cathodeStatus === 'NONE');
+            if (isFreeSlot) stats.storageFree++;
+          }
         }
       }
     }
@@ -3396,6 +3573,29 @@
 
     document.getElementById('kpiSSCount').textContent = stats.cSS.toLocaleString('en-US');
     document.getElementById('kpiSSNS').textContent = `N: ${stats.cSSN.toLocaleString('en-US')} • S: ${stats.cSSS.toLocaleString('en-US')}`;
+
+    document.getElementById('kpiElectrolyteTotal').textContent = `${stats.elM3Total.toLocaleString('en-US')} m³`;
+    document.getElementById('kpiElectrolyteNS').textContent = `N: ${stats.elM3N.toLocaleString('en-US')} m³ • S: ${stats.elM3S.toLocaleString('en-US')} m³`;
+
+    const storageValEl = document.getElementById('kpiStorageCount');
+    const storageSubEl = document.getElementById('kpiStorageNS');
+    if (storageValEl && storageSubEl) {
+      storageValEl.textContent = `${stats.storageTotal.toLocaleString('en-US')} Cell`;
+      if (stats.storageTotal === 0) {
+        storageValEl.style.color = 'var(--error)';
+        storageSubEl.textContent = currentLang === 'id' ? 'N: 0 • S: 0 (Butuh 0-10%)' : 'N: 0 • S: 0 (Need 0-10%)';
+      } else if (stats.storageFree === 0) {
+        storageValEl.style.color = 'var(--error)';
+        storageSubEl.textContent = currentLang === 'id'
+          ? `N: ${stats.storageN} • S: ${stats.storageS} (Penuh!)`
+          : `N: ${stats.storageN} • S: ${stats.storageS} (Full!)`;
+      } else {
+        storageValEl.style.color = '#f59e0b';
+        storageSubEl.textContent = currentLang === 'id'
+          ? `N: ${stats.storageN} • S: ${stats.storageS} (${stats.storageFree} Kosong)`
+          : `N: ${stats.storageN} • S: ${stats.storageS} (${stats.storageFree} Free)`;
+      }
+    }
 
     if (immediateWA) {
       if (waReportTimer) clearTimeout(waReportTimer);
@@ -3476,6 +3676,38 @@
 
     return null;
   }
+
+  /* Delegated Grid Event Listener (replaces thousands of per-cell closures) */
+  document.getElementById('matrixContainer').addEventListener('click', function(e) {
+    const lvlBadge = e.target.closest('.lvl-corner-badge');
+    if (lvlBadge) {
+      const card = lvlBadge.closest('.cell-card');
+      if (card) {
+        cycleCellElectrolyteClick(e, parseGroupIdAttr(card.getAttribute('data-group')), parseInt(card.getAttribute('data-cell'), 10));
+      }
+      return;
+    }
+
+    const tagEl = e.target.closest('[data-remove-tag]');
+    if (tagEl) {
+      const card = tagEl.closest('.cell-card');
+      if (card) {
+        removeCellTag(e, parseGroupIdAttr(card.getAttribute('data-group')), parseInt(card.getAttribute('data-cell'), 10), tagEl.getAttribute('data-remove-tag'));
+      }
+      return;
+    }
+
+    const card = e.target.closest('.cell-card');
+    if (card) {
+      selectCell(parseGroupIdAttr(card.getAttribute('data-group')), parseInt(card.getAttribute('data-cell'), 10), e);
+      return;
+    }
+
+    const cropTag = e.target.closest('[data-toggle-crop]');
+    if (cropTag) {
+      toggleCrop(parseGroupIdAttr(cropTag.getAttribute('data-toggle-crop')));
+    }
+  });
 
   document.addEventListener('keydown', function(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
@@ -3602,7 +3834,9 @@
     }
   });
 
+  let lastClockText = '';
   function updateLiveClock() {
+    if (document.hidden) return;
     const clockEl = document.getElementById('liveClock');
     if (!clockEl) return;
     const now = new Date();
@@ -3613,7 +3847,11 @@
       ? now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true })
       : now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false });
     
-    clockEl.textContent = `${dateStr} • ${timeStr}`;
+    const nextText = `${dateStr} • ${timeStr}`;
+    if (nextText !== lastClockText) {
+      lastClockText = nextText;
+      clockEl.textContent = nextText;
+    }
   }
 
   setInterval(updateLiveClock, 1000);
