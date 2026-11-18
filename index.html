@@ -87,6 +87,47 @@
     touch-action: manipulation;
   }
 
+  /* =====================================================================
+     PEMISAHAN SELEKSI TEKS:
+     1. Tombol & Kontrol Fungsional -> Anti-Select (tidak terblok saat diklik)
+     2. Konten Teks & Laporan WA -> Tetap Bisa Di-select & Di-copy
+     ===================================================================== */
+  button,
+  .lumi-chip,
+  .crop-tag,
+  .anode-tag,
+  .cathode-tag,
+  .lvl-corner-badge,
+  .cell-card,
+  .pv-leg-item,
+  .pv-zoom-label,
+  .pv-hmi-item,
+  select.lumi-select,
+  .header .title-area,
+  .kpi-card,
+  .control-group label,
+  .inspector-title,
+  .action-box h4,
+  .group-title,
+  .pv-phase-banner {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+  }
+
+  .wa-textarea,
+  #inspectorContent,
+  #inspectorContent .detail-row,
+  #inspectorContent .detail-val,
+  .modal-body,
+  .update-badge {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+  }
+
   html, body {
     width: 100vw;
     height: 100vh;
@@ -160,6 +201,7 @@
     font-weight: 600;
     color: var(--on-surface-variant);
     white-space: nowrap;
+    cursor: text;
   }
 
   button {
@@ -175,7 +217,7 @@
     border: 1px solid var(--stroke-default);
     border-radius: var(--r-full);
     cursor: pointer;
-    transition: background 0.15s ease, border-color 0.15s ease;
+    transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
     outline: none;
     white-space: nowrap;
   }
@@ -198,6 +240,11 @@
     color: #ffffff;
     border-color: transparent;
     font-weight: 700;
+  }
+
+  .btn-cath-locked {
+    opacity: 0.45;
+    filter: grayscale(0.4);
   }
 
   .kpi-grid {
@@ -422,7 +469,6 @@
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    user-select: none;
     outline: none !important;
   }
 
@@ -817,6 +863,7 @@
     resize: none;
     outline: none;
     line-height: 1.4;
+    cursor: text;
   }
 
   .mobile-quick-bar {
@@ -843,7 +890,7 @@
     padding: 12px 16px; border-bottom: 1px solid var(--stroke-default);
     display: flex; justify-content: space-between; align-items: center;
   }
-  .modal-header h2 { font-size: 14px; font-weight: 800; margin: 0; }
+  .modal-header h2 { font-size: 14px; font-weight: 800; margin: 0; user-select: none; -webkit-user-select: none; }
   .modal-header button {
     background: transparent; border: none; color: var(--error);
     font-size: 16px; font-weight: bold; cursor: pointer; padding: 4px; outline: none;
@@ -857,6 +904,7 @@
     -webkit-overflow-scrolling: touch;
     flex: 1 1 auto;
     min-height: 0;
+    cursor: text;
   }
   .modal-body b { color: var(--on-surface); }
   
@@ -904,6 +952,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    user-select: none;
+    -webkit-user-select: none;
   }
   .pv-title-wrap h2 {
     font-size: 12.5px;
@@ -929,7 +979,6 @@
     border: 1px solid #334155;
     color: #f8fafc;
     cursor: pointer;
-    user-select: none;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
     white-space: nowrap;
   }
@@ -979,6 +1028,7 @@
     border: 1px solid transparent;
     background: transparent;
     color: inherit;
+    cursor: pointer;
   }
   .pv-zoom-btn:hover {
     background: rgba(56, 189, 248, 0.18);
@@ -990,6 +1040,7 @@
     padding: 0 4px;
     min-width: 36px;
     text-align: center;
+    cursor: pointer;
   }
 
   /* VIEWPORT SCROLL & PAN AREA */
@@ -1671,23 +1722,23 @@
       </div>
       <div class="header-actions">
         <!-- FITUR LANGUAGE DI PC (KIRI SHOW CHANGES) -->
-        <button class="lumi-chip desktop-only-btn" id="langTogglePC" onclick="toggleLanguage()" style="min-height:24px; font-weight:700; color:var(--on-surface);">🌐 English (US)</button>
+        <button type="button" class="lumi-chip desktop-only-btn" id="langTogglePC" onclick="toggleLanguage()" style="min-height:24px; font-weight:700; color:var(--on-surface);">🌐 English (US)</button>
 
-        <button class="lumi-chip desktop-only-btn" onclick="openModal('previewModal')" data-i18n="previewBtn" style="min-height:24px; font-weight:700; color: var(--positive); border-color: var(--positive);">🗺️ Preview</button>
+        <button type="button" class="lumi-chip desktop-only-btn" onclick="openModal('previewModal')" data-i18n="previewBtn" style="min-height:24px; font-weight:700; color: var(--positive); border-color: var(--positive);">🗺️ Preview</button>
 
-        <button class="lumi-chip desktop-only-btn" onclick="openModal('changesModal')" data-i18n="showChanges" style="min-height:24px; font-weight:700; color: var(--primary); border-color: var(--primary);">🔄 Show Changes</button>
+        <button type="button" class="lumi-chip desktop-only-btn" onclick="openModal('changesModal')" data-i18n="showChanges" style="min-height:24px; font-weight:700; color: var(--primary); border-color: var(--primary);">🔄 Show Changes</button>
         
-        <button class="lumi-chip" id="themeToggleBtn" onclick="toggleTheme()" style="min-height:24px; font-weight:700;">🌙 Dark</button>
+        <button type="button" class="lumi-chip" id="themeToggleBtn" onclick="toggleTheme()" style="min-height:24px; font-weight:700;">🌙 Dark</button>
         <div class="update-badge" id="dbStatus" data-i18n="checking" style="color: var(--positive);">🟢 Checking...</div>
         <div class="update-badge" id="lastUpdatedBadge" style="color: var(--primary);">Last Update: -</div>
         <div class="update-badge" id="liveClock">Nov 5, 2026 • 00:00:00 AM</div>
 
-        <button class="lumi-chip mobile-only-btn" onclick="openModal('previewModal')" data-i18n="previewBtn" style="min-height:24px; font-weight:700; color: var(--positive); border-color: var(--positive);">🗺️ Preview</button>
+        <button type="button" class="lumi-chip mobile-only-btn" onclick="openModal('previewModal')" data-i18n="previewBtn" style="min-height:24px; font-weight:700; color: var(--positive); border-color: var(--positive);">🗺️ Preview</button>
 
-        <button class="lumi-chip mobile-only-btn" onclick="openModal('changesModal')" data-i18n="showChanges" style="min-height:24px; font-weight:700; color: var(--primary); border-color: var(--primary);">🔄 Show Changes</button>
+        <button type="button" class="lumi-chip mobile-only-btn" onclick="openModal('changesModal')" data-i18n="showChanges" style="min-height:24px; font-weight:700; color: var(--primary); border-color: var(--primary);">🔄 Show Changes</button>
 
         <!-- FITUR LANGUAGE DI MOBILE (KANAN SHOW CHANGES) -->
-        <button class="lumi-chip mobile-only-btn" id="langToggleMobile" onclick="toggleLanguage()" style="min-height:24px; font-weight:700; color:var(--on-surface);">🌐 English (US)</button>
+        <button type="button" class="lumi-chip mobile-only-btn" id="langToggleMobile" onclick="toggleLanguage()" style="min-height:24px; font-weight:700; color:var(--on-surface);">🌐 English (US)</button>
       </div>
     </div>
 
@@ -1738,13 +1789,13 @@
       <div class="control-group">
         <label data-i18n="phaseLabel">Phase</label>
         <div class="segmented-pills">
-          <button class="lumi-chip is-active" onclick="setPhaseFilter('ALL', this)" data-i18n="all">All</button>
-          <button class="lumi-chip" onclick="setPhaseFilter(1, this)">P1</button>
-          <button class="lumi-chip" onclick="setPhaseFilter(2, this)">P2</button>
-          <button class="lumi-chip" onclick="setPhaseFilter(3, this)">P3</button>
-          <button class="lumi-chip" onclick="setPhaseFilter('Machine', this)" data-i18n="machine">Machine</button>
+          <button type="button" class="lumi-chip is-active" onclick="setPhaseFilter('ALL', this)" data-i18n="all">All</button>
+          <button type="button" class="lumi-chip" onclick="setPhaseFilter(1, this)">P1</button>
+          <button type="button" class="lumi-chip" onclick="setPhaseFilter(2, this)">P2</button>
+          <button type="button" class="lumi-chip" onclick="setPhaseFilter(3, this)">P3</button>
+          <button type="button" class="lumi-chip" onclick="setPhaseFilter('Machine', this)" data-i18n="machine">Machine</button>
 
-          <button class="lumi-chip mobile-only-btn" onclick="openModal('instructionModal')" data-i18n="instructions" style="background: var(--primary); color: white; border-color: transparent; font-weight: bold;">ℹ️ Instructions for Use</button>
+          <button type="button" class="lumi-chip mobile-only-btn" onclick="openModal('instructionModal')" data-i18n="instructions" style="background: var(--primary); color: white; border-color: transparent; font-weight: bold;">ℹ️ Instructions for Use</button>
         </div>
       </div>
 
@@ -1816,12 +1867,12 @@
         <div class="control-group clear-group">
           <label data-i18n="clearDataLabel">Clear Cell Data</label>
           <div class="segmented-pills">
-            <button onclick="kosongkanIsianPhase(1)" data-i18n="btnClrP1">Clear P1</button>
-            <button onclick="kosongkanIsianPhase(2)" data-i18n="btnClrP2">Clear P2</button>
-            <button onclick="kosongkanIsianPhase(3)" data-i18n="btnClrP3">Clear P3</button>
-            <button onclick="kosongkanIsianPhase('Machine')" data-i18n="btnClrMach">Clear Machine</button>
+            <button type="button" onclick="kosongkanIsianPhase(1)" data-i18n="btnClrP1">Clear P1</button>
+            <button type="button" onclick="kosongkanIsianPhase(2)" data-i18n="btnClrP2">Clear P2</button>
+            <button type="button" onclick="kosongkanIsianPhase(3)" data-i18n="btnClrP3">Clear P3</button>
+            <button type="button" onclick="kosongkanIsianPhase('Machine')" data-i18n="btnClrMach">Clear Machine</button>
 
-            <button class="lumi-chip desktop-only-btn" onclick="openModal('instructionModal')" data-i18n="instructions" style="background: var(--primary); color: white; border-color: transparent; font-weight: bold;">ℹ️ Instructions for Use</button>
+            <button type="button" class="lumi-chip desktop-only-btn" onclick="openModal('instructionModal')" data-i18n="instructions" style="background: var(--primary); color: white; border-color: transparent; font-weight: bold;">ℹ️ Instructions for Use</button>
           </div>
         </div>
       </div>
@@ -1834,7 +1885,7 @@
         <div class="inspector-title" data-i18n="inspTitle">Cell Settings</div>
         
         <div id="inspectorContent">
-          <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11px;" data-i18n="clickCell">
+          <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11px; user-select: none; -webkit-user-select: none;" data-i18n="clickCell">
             Click a cell in the grid to configure status.
           </div>
         </div>
@@ -1842,48 +1893,48 @@
         <div class="action-box" id="inspectorControls" style="display: none;">
           <h4 data-i18n="h1Anode">1. Cell Anode Status:</h4>
           <div class="status-btn-grid">
-            <button style="border-color: rgba(16, 185, 129, 0.5); color: #10b981;" onclick="updateActiveCellAnode('63 FL')">63FL [1]</button>
-            <button style="border-color: rgba(2, 132, 199, 0.5); color: #0284c7;" onclick="updateActiveCellAnode('62 KU')">62KU [2]</button>
-            <button style="border-color: rgba(168, 85, 247, 0.5); color: var(--chart-8);" onclick="updateActiveCellAnode('62 KS')">62KS [3]</button>
-            <button style="background: #57534e; color: #ffffff; font-weight: 700; border: 1px solid #78716c;" onclick="updateActiveCellAnode('62 SA')">62SA [4]</button>
-            <button style="grid-column: span 2;" onclick="updateActiveCellAnode('NONE')" data-i18n="btnClearAnode">Clear Anode</button>
+            <button type="button" style="border-color: rgba(16, 185, 129, 0.5); color: #10b981;" onclick="updateActiveCellAnode('63 FL')">63FL [1]</button>
+            <button type="button" style="border-color: rgba(2, 132, 199, 0.5); color: #0284c7;" onclick="updateActiveCellAnode('62 KU')">62KU [2]</button>
+            <button type="button" style="border-color: rgba(168, 85, 247, 0.5); color: var(--chart-8);" onclick="updateActiveCellAnode('62 KS')">62KS [3]</button>
+            <button type="button" style="background: #57534e; color: #ffffff; font-weight: 700; border: 1px solid #78716c;" onclick="updateActiveCellAnode('62 SA')">62SA [4]</button>
+            <button type="button" style="grid-column: span 2;" onclick="updateActiveCellAnode('NONE')" data-i18n="btnClearAnode">Clear Anode</button>
           </div>
 
           <h4 data-i18n="h2Cathode">2. Cell Cathode Status:</h4>
           <div class="status-btn-grid">
-            <button style="background:var(--copper); color:#ffffff; font-weight:bold; border-color:var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH [C]</button>
-            <button style="background:var(--stainless); color:#ffffff; font-weight:bold; border-color:var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS [S]</button>
-            <button style="grid-column: span 2;" onclick="updateActiveCellCathode('NONE')" data-i18n="btnClearCathode">Clear Cathode</button>
+            <button type="button" data-cath-btn="true" style="background:var(--copper); color:#ffffff; font-weight:bold; border-color:var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH [C]</button>
+            <button type="button" data-cath-btn="true" style="background:var(--stainless); color:#ffffff; font-weight:bold; border-color:var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS [S]</button>
+            <button type="button" style="grid-column: span 2;" onclick="updateActiveCellCathode('NONE')" data-i18n="btnClearCathode">Clear Cathode</button>
           </div>
-          <div id="cathodeLockHint" style="display:none; font-size:9.5px; color:#f59e0b; line-height:1.3;"></div>
+          <div id="cathodeLockHint" style="display:none; font-size:9.5px; color:#f59e0b; line-height:1.3; user-select:none; -webkit-user-select:none;"></div>
 
           <div id="electrolyteControlSection" style="display: flex; flex-direction: column; gap: 6px;">
             <h4 data-i18n="hElectrolyte">Electrolyte Level (Cell Only):</h4>
             <div class="el-preset-grid">
-              <button class="el-preset-btn" data-el="0" onclick="updateActiveCellElectrolyte(0)">0%</button>
-              <button class="el-preset-btn" data-el="10" onclick="updateActiveCellElectrolyte(10)">10%</button>
-              <button class="el-preset-btn" data-el="50" onclick="updateActiveCellElectrolyte(50)">50%</button>
-              <button class="el-preset-btn" data-el="70" onclick="updateActiveCellElectrolyte(70)">70%</button>
-              <button class="el-preset-btn" data-el="100" onclick="updateActiveCellElectrolyte(100)">100%</button>
+              <button type="button" class="el-preset-btn" data-el="0" onclick="updateActiveCellElectrolyte(0)">0%</button>
+              <button type="button" class="el-preset-btn" data-el="10" onclick="updateActiveCellElectrolyte(10)">10%</button>
+              <button type="button" class="el-preset-btn" data-el="50" onclick="updateActiveCellElectrolyte(50)">50%</button>
+              <button type="button" class="el-preset-btn" data-el="70" onclick="updateActiveCellElectrolyte(70)">70%</button>
+              <button type="button" class="el-preset-btn" data-el="100" onclick="updateActiveCellElectrolyte(100)">100%</button>
             </div>
           </div>
 
           <h4 data-i18n="h3Clear">3. Clear Options:</h4>
-          <button style="width: 100%; color: var(--error);" onclick="clearCellCompletely()" data-i18n="btnClearDel">Clear / Delete Cell [Del]</button>
+          <button type="button" style="width: 100%; color: var(--error);" onclick="clearCellCompletely()" data-i18n="btnClearDel">Clear / Delete Cell [Del]</button>
 
           <h4 data-i18n="h4Harvest">4. Set Group Harvest:</h4>
           <div class="status-btn-grid">
-            <button class="crop-c1" onclick="updateActiveGroupCrop('Crop 1')">Crop 1</button>
-            <button class="crop-c2" onclick="updateActiveGroupCrop('Crop 2')">Crop 2</button>
-            <button class="crop-c3" onclick="updateActiveGroupCrop('Crop 3')">Crop 3</button>
-            <button class="crop-none" onclick="updateActiveGroupCrop('-')" data-i18n="btnResetHarvest">Reset Harvest</button>
+            <button type="button" class="crop-c1" onclick="updateActiveGroupCrop('Crop 1')">Crop 1</button>
+            <button type="button" class="crop-c2" onclick="updateActiveGroupCrop('Crop 2')">Crop 2</button>
+            <button type="button" class="crop-c3" onclick="updateActiveGroupCrop('Crop 3')">Crop 3</button>
+            <button type="button" class="crop-none" onclick="updateActiveGroupCrop('-')" data-i18n="btnResetHarvest">Reset Harvest</button>
           </div>
         </div>
 
         <div>
           <div class="inspector-title" style="margin-bottom: 6px;" data-i18n="inspWA">WA Report</div>
           <textarea class="wa-textarea" id="waText" readonly></textarea>
-          <button class="btn-primary" style="width: 100%; margin-top: 6px;" id="btnCopy" onclick="copyWAReport()" data-i18n="btnCopyWa">Copy WA Text</button>
+          <button type="button" class="btn-primary" style="width: 100%; margin-top: 6px;" id="btnCopy" onclick="copyWAReport()" data-i18n="btnCopyWa">Copy WA Text</button>
         </div>
       </div>
     </div>
@@ -1894,27 +1945,27 @@
 <!-- Mobile Quick Toolbar: Terpusat & Terpisah Jelas Electrode | Electrolyte -->
 <div class="mobile-quick-bar" id="mobileQuickBar">
   <div class="mq-section mq-electrode-section">
-    <button style="background: #10b981; color: #ffffff; border: 1px solid #059669;" onclick="updateActiveCellAnode('63 FL')">63FL</button>
-    <button style="background: #0284c7; color: #ffffff; border: 1px solid #0369a1;" onclick="updateActiveCellAnode('62 KU')">62KU</button>
-    <button style="background: #a855f7; color: #ffffff; border: 1px solid #7e22ce;" onclick="updateActiveCellAnode('62 KS')">62KS</button>
-    <button style="background: #57534e; color: #ffffff; border: 1px solid #78716c;" onclick="updateActiveCellAnode('62 SA')">62SA</button>
-    <button style="background: var(--copper); color: #ffffff; border-color: var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH</button>
-    <button style="background: var(--stainless); color: #ffffff; border-color: var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS</button>
+    <button type="button" style="background: #10b981; color: #ffffff; border: 1px solid #059669;" onclick="updateActiveCellAnode('63 FL')">63FL</button>
+    <button type="button" style="background: #0284c7; color: #ffffff; border: 1px solid #0369a1;" onclick="updateActiveCellAnode('62 KU')">62KU</button>
+    <button type="button" style="background: #a855f7; color: #ffffff; border: 1px solid #7e22ce;" onclick="updateActiveCellAnode('62 KS')">62KS</button>
+    <button type="button" style="background: #57534e; color: #ffffff; border: 1px solid #78716c;" onclick="updateActiveCellAnode('62 SA')">62SA</button>
+    <button type="button" data-cath-btn="true" style="background: var(--copper); color: #ffffff; border-color: var(--copper-border);" onclick="updateActiveCellCathode('CATH')">CATH</button>
+    <button type="button" data-cath-btn="true" style="background: var(--stainless); color: #ffffff; border-color: var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS</button>
   </div>
   <div class="mq-bottom-row">
     <div class="mq-section mq-el-group" id="mobileElectrolyteGroup">
-      <button class="mq-el-btn" data-el="0" onclick="updateActiveCellElectrolyte(0)">0%</button>
-      <button class="mq-el-btn" data-el="10" onclick="updateActiveCellElectrolyte(10)">10%</button>
-      <button class="mq-el-btn" data-el="50" onclick="updateActiveCellElectrolyte(50)">50%</button>
-      <button class="mq-el-btn" data-el="70" onclick="updateActiveCellElectrolyte(70)">70%</button>
-      <button class="mq-el-btn" data-el="100" onclick="updateActiveCellElectrolyte(100)">100%</button>
+      <button type="button" class="mq-el-btn" data-el="0" onclick="updateActiveCellElectrolyte(0)">0%</button>
+      <button type="button" class="mq-el-btn" data-el="10" onclick="updateActiveCellElectrolyte(10)">10%</button>
+      <button type="button" class="mq-el-btn" data-el="50" onclick="updateActiveCellElectrolyte(50)">50%</button>
+      <button type="button" class="mq-el-btn" data-el="70" onclick="updateActiveCellElectrolyte(70)">70%</button>
+      <button type="button" class="mq-el-btn" data-el="100" onclick="updateActiveCellElectrolyte(100)">100%</button>
     </div>
     <span class="mq-divider" id="mobileElectrolyteDivider"></span>
     <div class="mq-section mq-actions-group">
-      <button class="mq-icon-btn" onclick="undo()" title="Undo">↩</button>
-      <button class="mq-icon-btn" onclick="redo()" title="Redo">↪</button>
-      <button class="btn-danger" onclick="clearCellCompletely()" data-i18n="del">🗑️ Del</button>
-      <button class="mq-icon-btn" style="background:var(--surface-dim);" onclick="deselectCell()" title="Close">✕</button>
+      <button type="button" class="mq-icon-btn" onclick="undo()" title="Undo">↩</button>
+      <button type="button" class="mq-icon-btn" onclick="redo()" title="Redo">↪</button>
+      <button type="button" class="btn-danger" onclick="clearCellCompletely()" data-i18n="del">🗑️ Del</button>
+      <button type="button" class="mq-icon-btn" style="background:var(--surface-dim);" onclick="deselectCell()" title="Close">✕</button>
     </div>
   </div>
 </div>
@@ -1939,10 +1990,10 @@
         <span class="pv-leg-item" data-spot="STG" onclick="togglePreviewSpotlight('STG')"><span class="pv-leg-swatch" style="background:#f59e0b;"></span>Storage</span>
         <div class="pv-zoom-controls">
           <button type="button" class="pv-zoom-btn" onclick="adjustPreviewZoom(-0.2)" title="Zoom Out">➖</button>
-          <span class="pv-zoom-label" id="pvZoomLabel" onclick="resetPreviewZoom()" style="cursor:pointer;" title="Reset Zoom">100%</span>
+          <span class="pv-zoom-label" id="pvZoomLabel" onclick="resetPreviewZoom()" title="Reset Zoom">100%</span>
           <button type="button" class="pv-zoom-btn" onclick="adjustPreviewZoom(0.2)" title="Zoom In">➕</button>
         </div>
-        <button onclick="closeModal('previewModal')" style="min-height:24px; padding:0 10px; color:var(--error); border-color:var(--error); font-weight:800;">✕</button>
+        <button type="button" onclick="closeModal('previewModal')" style="min-height:24px; padding:0 10px; color:var(--error); border-color:var(--error); font-weight:800;">✕</button>
       </div>
     </div>
     <div class="pv-scroll-viewport" id="pvScrollViewport">
@@ -1961,7 +2012,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <h2 data-i18n="instModalTitle">📖 Panduan Penggunaan (Instructions for Use)</h2>
-      <button onclick="closeModal('instructionModal')">✕</button>
+      <button type="button" onclick="closeModal('instructionModal')">✕</button>
     </div>
     <div class="modal-body" id="instructionBody">
       <!-- Injected from JS Dictionary -->
@@ -1974,7 +2025,7 @@
   <div class="modal-content">
     <div class="modal-header">
       <h2 data-i18n="changeModalTitle">🔄 Riwayat Perubahan (Show Changes)</h2>
-      <button onclick="closeModal('changesModal')">✕</button>
+      <button type="button" onclick="closeModal('changesModal')">✕</button>
     </div>
     <div class="modal-body">
       <ul id="changesLogList" style="list-style-type: disc; padding-left: 15px; margin: 0;">
@@ -2186,7 +2237,6 @@
     if (elPct > 10) return false;
     const hasAnode = Boolean(cell.anodeStatus && cell.anodeStatus !== 'NONE');
     const hasCathode = Boolean(cell.cathodeStatus && cell.cathodeStatus !== 'NONE');
-    // Jika 1 cell diisi Anode & Cathode ataupun Anode & SS Blank, bukan Storage (-1 Cell)
     if (hasAnode && hasCathode) return false;
     return true;
   }
@@ -3327,7 +3377,7 @@
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'none';
     document.getElementById('inspectorContent').innerHTML = `
-      <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11px;">
+      <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11px; user-select: none; -webkit-user-select: none;">
         ${tr('clickCell')}
       </div>
     `;
@@ -3345,7 +3395,7 @@
     if (!toast) {
       toast = document.createElement('div');
       toast.id = 'toastMsg';
-      toast.style.cssText = 'position:fixed; bottom:84px; left:50%; transform:translateX(-50%); background:var(--surface-dim); color:var(--primary); padding:6px 14px; border-radius:20px; border:1px solid var(--primary); font-size:11px; z-index:99999; pointer-events:none; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,0.3); white-space:nowrap;';
+      toast.style.cssText = 'position:fixed; bottom:84px; left:50%; transform:translateX(-50%); background:var(--surface-dim); color:var(--primary); padding:6px 14px; border-radius:20px; border:1px solid var(--primary); font-size:11px; z-index:99999; pointer-events:none; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,0.3); white-space:nowrap; user-select:none; -webkit-user-select:none;';
       document.body.appendChild(toast);
     }
     toast.textContent = msg;
@@ -3758,6 +3808,10 @@
       return cell && (Number(cell.electrolyteLevel) || 0) > 10;
     });
 
+    document.querySelectorAll('[data-cath-btn]').forEach(btn => {
+      btn.classList.toggle('btn-cath-locked', hasElectrolyteOver10);
+    });
+
     const lockHintEl = document.getElementById('cathodeLockHint');
     if (lockHintEl) {
       if (hasElectrolyteOver10) {
@@ -4010,19 +4064,19 @@
     if (renderedCount === 0) {
       if (selContent === 'CHARGING') {
         let msg = currentLang==='id'?'Tidak ada Group Charging (Panen: Crop 1/2/3).':'No Group Charging (Harvest: Crop 1/2/3) found.';
-        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">${msg}</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant); user-select:none; -webkit-user-select:none;">${msg}</div>`;
       } else if (selContent === 'STORAGE') {
         let msg = currentLang==='id'?'Tidak ada cell Storage (0%–10% elektrolit).':'No Storage cells (0%–10% electrolyte) found.';
-        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">${msg}</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant); user-select:none; -webkit-user-select:none;">${msg}</div>`;
       } else if (selContent === 'FILLED') {
         let msg = currentLang==='id'?'Tidak ada cell yang terisi.':'No filled cells found.';
-        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">${msg}</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant); user-select:none; -webkit-user-select:none;">${msg}</div>`;
       } else if (selContent === 'EMPTY') {
         let msg = currentLang==='id'?'Tidak ada cell yang kosong.':'No empty cells found.';
-        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">${msg}</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant); user-select:none; -webkit-user-select:none;">${msg}</div>`;
       } else {
         let msg = currentLang==='id'?'Tidak ada cell yang cocok.':'No cells match the filter.';
-        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant);">${msg}</div>`;
+        container.innerHTML = `<div style="text-align:center; padding: 20px; color:var(--on-surface-variant); user-select:none; -webkit-user-select:none;">${msg}</div>`;
       }
     } else {
       container.appendChild(fragment);
