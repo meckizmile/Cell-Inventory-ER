@@ -1582,11 +1582,16 @@
     }
 
     .matrix-box {
-      max-height: 68vh;
-      height: auto;
+      height: 66vh;
+      max-height: 66vh;
       padding: 8px;
       padding-bottom: 106px;
-      transition: max-height 0.2s ease;
+      overflow-anchor: none;
+    }
+	
+	.group-section {
+      content-visibility: visible;
+      contain-intrinsic-size: auto;
     }
 	
 	/* Area grid lebih fokus saat cell sedang diklik/diisi di Mobile */
@@ -1660,13 +1665,14 @@
 
     /* Quick Toolbar Mobile: Terpusat & Terpisah Jelas Electrode | Electrolyte */
     .mobile-quick-bar {
-     position: fixed;
+    position: fixed;
       bottom: calc(10px + env(safe-area-inset-bottom, 0px));
-      left: 50%;
-      transform: translateX(-50%);
+      left: 0;
+      right: 0;
+      margin: 0 auto;
       width: calc(100vw - 10px);
       max-width: 480px;
-      background: rgba(18, 22, 31, 0.92);
+      background: rgba(18, 22, 31, 0.94);
       backdrop-filter: blur(10px) saturate(145%);
       -webkit-backdrop-filter: blur(10px) saturate(145%);
       border: 1px solid rgba(255, 255, 255, 0.16);
@@ -1682,18 +1688,15 @@
       justify-content: center;
       gap: 6px;
       z-index: 10000;
-      animation: dockSlideUp 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+      transform: translateZ(0);
+      -webkit-transform: translateZ(0);
+      backface-visibility: hidden;
+      animation: dockFadeIn 0.16s ease-out;
     }
 
-    @keyframes dockSlideUp {
-      from {
-        opacity: 0;
-        transform: translate(-50%, 10px) scale(0.97);
-      }
-      to {
-        opacity: 1;
-        transform: translate(-50%, 0) scale(1);
-      }
+    @keyframes dockFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
     }
     
     [data-theme="light"] .mobile-quick-bar {
@@ -1738,8 +1741,8 @@
       flex-direction: row;
       flex-wrap: nowrap;
       align-items: center;
-      justify-content: space-between;
-      gap: 4px;
+      justify-content: center;
+      gap: 5px;
       width: 100%;
     }
 
@@ -3499,23 +3502,76 @@
   }
 
   function restoreCompactSnapshot(snap) {
-    if (!Array.isArray(snap)) return;
+   const changedCells = [];
+    const changedCropGroups = [];
+    if (!Array.isArray(snap)) return { changedCells, changedCropGroups };
+
     for (let i = 0; i < snap.length && i < plantData.length; i++) {
       const gSnap = snap[i];
       const g = plantData[i];
       if (!gSnap || !g) continue;
-      g.cropStatus = gSnap.cropStatus;
+
+      if (g.cropStatus !== gSnap.cropStatus) {
+        g.cropStatus = gSnap.cropStatus;
+        changedCropGroups.push(g);
+      }
+
+      const isMach = isMachineGroupObj(g);
       for (let j = 0; j < gSnap.cells.length && j < g.cells.length; j++) {
         const cArr = gSnap.cells[j];
         const c = g.cells[j];
-        c.anodeStatus = cArr[0];
-        c.cathodeStatus = cArr[1];
-        if (!isMachineGroupObj(g)) {
-          c.electrolyteLevel = cArr[2];
+        const newA = cArr[0];
+        const newC = cArr[1];
+        const newEl = isMach ? (Number(c.electrolyteLevel) || 0) : cArr[2];
+        const newPcs = cArr[3];
+        const oldEl = Number(c.electrolyteLevel) || 0;
+
+        if (
+          c.anodeStatus !== newA ||
+          c.cathodeStatus !== newC ||
+          oldEl !== newEl ||
+          c.pcs !== newPcs
+        ) {
+          c.anodeStatus = newA;
+          c.cathodeStatus = newC;
+          if (!isMach) c.electrolyteLevel = newEl;
+          c.pcs = newPcs;
+          changedCells.push({ groupId: g.groupId, cellNum: c.cellNum });
         }
-        c.pcs = cArr[3];
       }
     }
+    return { changedCells, changedCropGroups };
+  }
+  
+  function applyHistorySnapshot(snap, logMsg) {
+    const { changedCells, changedCropGroups } = restoreCompactSnapshot(snap);
+
+    if (isAnyCellFilterActive()) {
+      renderMatrix();
+    } else {
+      for (let i = 0; i < changedCropGroups.length; i++) {
+        updateGroupCropDOM(changedCropGroups[i]);
+      }
+      for (let i = 0; i < changedCells.length; i++) {
+        updateCellDOM(changedCells[i].groupId, changedCells[i].cellNum);
+      }
+    }
+	
+	recalculateStats(false);
+    if (activeSelectedCell) updateSelectionUI(false);
+
+    if (changedCells.length > 120) {
+      syncBulkData();
+    } else {
+      for (let i = 0; i < changedCropGroups.length; i++) {
+        syncGroupCrop(changedCropGroups[i].groupId, changedCropGroups[i].cropStatus);
+      }
+      if (changedCells.length > 0) {
+        syncCellTargets(changedCells);
+      }
+    }
+	
+	logChange(logMsg, changedCells.length > 0 && changedCells.length <= 30 ? changedCells : null);
   }
 
   function saveState() {
@@ -3527,23 +3583,15 @@
   function undo() {
     if (undoStack.length === 0) return;
     redoStack.push(createCompactSnapshot());
-    restoreCompactSnapshot(undoStack.pop());
-    recalculateStats(true);
-    renderMatrix();
-    if (activeSelectedCell) updateSelectionUI();
-    syncBulkData();
-    logChange(currentLang === 'id' ? `Melakukan Undo (Batal) aksi sebelumnya.` : `Performed Undo on last action.`);
+    const msg = currentLang === 'id' ? `Melakukan Undo (Batal) aksi sebelumnya.` : `Performed Undo on last action.`;
+    applyHistorySnapshot(undoStack.pop(), msg);
   }
 
   function redo() {
     if (redoStack.length === 0) return;
     undoStack.push(createCompactSnapshot());
-    restoreCompactSnapshot(redoStack.pop());
-    recalculateStats(true);
-    renderMatrix();
-    if (activeSelectedCell) updateSelectionUI();
-    syncBulkData();
-    logChange(currentLang === 'id' ? `Melakukan Redo (Ulangi).` : `Performed Redo.`);
+    const msg = currentLang === 'id' ? `Melakukan Redo (Ulangi).` : `Performed Redo.`;
+    applyHistorySnapshot(redoStack.pop(), msg);
   }
 
   function deselectCell() {
