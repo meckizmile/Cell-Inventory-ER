@@ -397,7 +397,13 @@
     padding: 10px;
     height: 100%;
     overflow-y: auto;
+    overflow-anchor: none;
+    position: relative;
     contain: layout paint;
+  }
+
+  .matrix-box.is-jumping .group-section {
+    content-visibility: visible !important;
   }
 
   .group-section {
@@ -2632,8 +2638,8 @@
     if (!grp) return;
 
     closeModal('previewModal');
-	
-	// Reset semua filter agar Group & Cell 1 dipastikan tampil
+
+    // Reset semua filter agar Group & Cell 1 dipastikan tampil
     currentPhaseFilter = 'ALL';
     document.querySelectorAll('.controls-bar .segmented-pills .lumi-chip').forEach((b, idx) => {
       if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('setPhaseFilter')) {
@@ -2649,20 +2655,48 @@
     renderMatrix();
     selectCell(gId, 1, null, true, false);
 
-    // Gulir langsung ke header Group & posisi paling kiri (Cell 1)
     const cell1El = getCellElement(gId, 1);
-    if (cell1El) {
-      const gridWrapper = cell1El.closest('.group-grid-wrapper');
-      if (gridWrapper) gridWrapper.scrollLeft = 0;
+    const container = document.getElementById('matrixContainer');
+    if (!cell1El || !container) return;
 
-      const groupSection = cell1El.closest('.group-section');
-      if (groupSection) {
-        groupSection.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    // Pastikan posisi horizontal kembali ke Cell 1 (paling kiri)
+    const gridWrapper = cell1El.closest('.group-grid-wrapper');
+    if (gridWrapper) gridWrapper.scrollLeft = 0;
+
+    const groupSection = cell1El.closest('.group-section');
+    if (!groupSection) return;
+
+    // Aktifkan tinggi asli semua Group & paksa browser menghitung layout sebelum scroll
+    container.classList.add('is-jumping');
+    void container.offsetHeight;
+
+    const centerGroupExact = () => {
+      const targetScrollTop =
+        groupSection.offsetTop +
+        (groupSection.offsetHeight / 2) -
+        (container.clientHeight / 2);
+      container.scrollTop = Math.max(0, targetScrollTop);
+    };
+
+    centerGroupExact();
+
+    requestAnimationFrame(() => {
+      centerGroupExact();
+      requestAnimationFrame(() => {
+        centerGroupExact();
+        if (window.innerWidth <= 900) {
+          container.scrollIntoView({ block: 'center', behavior: 'auto' });
+        }
         groupSection.classList.remove('is-jump-target');
-        void groupSection.offsetWidth; // trigger reflow animasi
+        void groupSection.offsetWidth;
         groupSection.classList.add('is-jump-target');
-      }
-    }
+      });
+    });
+
+    // Lepas mode is-jumping hanya saat user mulai scroll manual agar posisi tidak bergeser
+    const clearJumpMode = () => container.classList.remove('is-jumping');
+    container.addEventListener('wheel', clearJumpMode, { once: true, passive: true });
+    container.addEventListener('touchmove', clearJumpMode, { once: true, passive: true });
   }
 
   /* ====== FULL 1-SCREEN PLANT PREVIEW (HMI / PI VISION BLOCK STYLE) ====== */
@@ -3065,43 +3099,66 @@
     const grp = getGroupById(gId);
     if (!grp) return;
 
-    document.querySelectorAll('#fullPreviewBody .pv-hmi-item.pv-selected').forEach(el => {
-      el.classList.remove('pv-selected');
+    closeModal('previewModal');
+
+    // Reset semua filter agar Group & Cell 1 dipastikan tampil
+    currentPhaseFilter = 'ALL';
+    document.querySelectorAll('.controls-bar .segmented-pills .lumi-chip').forEach((b, idx) => {
+      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('setPhaseFilter')) {
+        b.classList.toggle('is-active', idx === 0);
+      }
     });
-    const clickedCard = Array.from(document.querySelectorAll('#fullPreviewBody .pv-hmi-item'))
-      .find(el => el.getAttribute('data-pv-group') === String(rawGroupId));
-    if (clickedCard) {
-      clickedCard.classList.add('pv-selected');
-    }
 
-    if (pvJumpTimer) clearTimeout(pvJumpTimer);
-    pvJumpTimer = setTimeout(() => {
-      pvJumpTimer = null;
-      closeModal('previewModal');
+    ['contentSelect', 'zoneSelect', 'groupSelect', 'statusSelect', 'cathSelect', 'electrolyteSelect'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = 'ALL';
+    });
 
-      currentPhaseFilter = 'ALL';
-      document.querySelectorAll('.controls-bar .segmented-pills .lumi-chip').forEach((b, idx) => {
-        if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('setPhaseFilter')) {
-          b.classList.toggle('is-active', idx === 0);
+    renderMatrix();
+    selectCell(gId, 1, null, true, false);
+
+    const cell1El = getCellElement(gId, 1);
+    const container = document.getElementById('matrixContainer');
+    if (!cell1El || !container) return;
+
+    // Pastikan posisi horizontal kembali ke Cell 1 (paling kiri)
+    const gridWrapper = cell1El.closest('.group-grid-wrapper');
+    if (gridWrapper) gridWrapper.scrollLeft = 0;
+
+    const groupSection = cell1El.closest('.group-section');
+    if (!groupSection) return;
+
+    // Aktifkan tinggi asli semua Group & paksa browser menghitung layout sebelum scroll
+    container.classList.add('is-jumping');
+    void container.offsetHeight;
+
+    const centerGroupExact = () => {
+      const targetScrollTop =
+        groupSection.offsetTop +
+        (groupSection.offsetHeight / 2) -
+        (container.clientHeight / 2);
+      container.scrollTop = Math.max(0, targetScrollTop);
+    };
+
+    centerGroupExact();
+
+    requestAnimationFrame(() => {
+      centerGroupExact();
+      requestAnimationFrame(() => {
+        centerGroupExact();
+        if (window.innerWidth <= 900) {
+          container.scrollIntoView({ block: 'center', behavior: 'auto' });
         }
+        groupSection.classList.remove('is-jump-target');
+        void groupSection.offsetWidth;
+        groupSection.classList.add('is-jump-target');
       });
-      const contentSel = document.getElementById('contentSelect');
-      const zoneSel = document.getElementById('zoneSelect');
-      const groupSel = document.getElementById('groupSelect');
-      const statusSel = document.getElementById('statusSelect');
-      const cathSel = document.getElementById('cathSelect');
-      const elSel = document.getElementById('electrolyteSelect');
+    });
 
-      if (contentSel) contentSel.value = 'ALL';
-      if (zoneSel) zoneSel.value = 'ALL';
-      if (groupSel) groupSel.value = 'ALL';
-      if (statusSel) statusSel.value = 'ALL';
-      if (cathSel) cathSel.value = 'ALL';
-      if (elSel) elSel.value = 'ALL';
-
-      renderMatrix();
-      selectCell(gId, 1, null, true, true);
-    }, 180);
+    // Lepas mode is-jumping hanya saat user mulai scroll manual agar posisi tidak bergeser
+    const clearJumpMode = () => container.classList.remove('is-jumping');
+    container.addEventListener('wheel', clearJumpMode, { once: true, passive: true });
+    container.addEventListener('touchmove', clearJumpMode, { once: true, passive: true });
   }
   /* ====================================================================== */
 
