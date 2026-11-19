@@ -1477,9 +1477,9 @@
       height: auto;
       min-height: 100vh;
       padding: 6px;
-      padding-bottom: 92px;
+      padding-bottom: 114px;
     }
-
+	
     .app-card {
       height: auto;
       overflow: visible;
@@ -1585,9 +1585,10 @@
       max-height: 68vh;
       height: auto;
       padding: 8px;
-      padding-bottom: 84px;
+      padding-bottom: 106px;
       transition: max-height 0.2s ease;
     }
+	
 	/* Area grid lebih fokus saat cell sedang diklik/diisi di Mobile */
     body.is-mobile-editing .matrix-box {
       max-height: 76vh;
@@ -1663,23 +1664,23 @@
       bottom: calc(10px + env(safe-area-inset-bottom, 0px));
       left: 50%;
       transform: translateX(-50%);
-      width: fit-content;
-      max-width: calc(100vw - 14px);
-      background: rgba(18, 22, 31, 0.90);
-      backdrop-filter: blur(8px) saturate(140%);
-      -webkit-backdrop-filter: blur(8px) saturate(140%);
-      border: 1px solid rgba(255, 255, 255, 0.14);
+      width: calc(100vw - 12px);
+      max-width: 480px;
+      background: rgba(18, 22, 31, 0.92);
+      backdrop-filter: blur(10px) saturate(145%);
+      -webkit-backdrop-filter: blur(10px) saturate(145%);
+      border: 1px solid rgba(255, 255, 255, 0.16);
       box-shadow: 
-        0 12px 32px rgba(0, 0, 0, 0.45),
-        0 2px 8px rgba(0, 0, 0, 0.25),
-        inset 0 1px 0 rgba(255, 255, 255, 0.10);
-      padding: 5px 7px;
-      border-radius: 15px;
+        0 14px 36px rgba(0, 0, 0, 0.5),
+        0 3px 10px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      padding: 7px 8px;
+      border-radius: 16px;
       display: none;
       flex-direction: column;
-      align-items: center;
+      align-items: stretch;
       justify-content: center;
-      gap: 5px;
+      gap: 7px;
       z-index: 10000;
       animation: dockSlideUp 0.2s cubic-bezier(0.22, 1, 0.36, 1);
     }
@@ -1709,21 +1710,29 @@
       flex-direction: row;
       flex-wrap: nowrap;
       align-items: center;
-      justify-content: center;
-      gap: 4px;
+      justify-content: safe center;
+      gap: 5px;
     }
 
     .mq-electrode-section {
-      background: rgba(148, 163, 184, 0.10);
-      border: 1px solid rgba(148, 163, 184, 0.20);
-      padding: 3px 4px;
-      border-radius: 10px;
-      max-width: 100%;
+      background: rgba(148, 163, 184, 0.11);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      padding: 4px 5px;
+      border-radius: 11px;
+      width: 100%;
       overflow-x: auto;
       scrollbar-width: none;
     }
+	
     .mq-electrode-section::-webkit-scrollbar {
       display: none;
+    }
+	
+	/* 6 tombol elektroda membagi lebar layar secara merata agar mudah ditekan */
+    .mq-electrode-section button {
+      flex: 1 1 0;
+      min-width: 44px;
+      padding: 0 4px;
     }
 
     .mq-bottom-row {
@@ -1731,9 +1740,9 @@
       flex-direction: row;
       flex-wrap: nowrap;
       align-items: center;
-      justify-content: center;
-      gap: 5px;
-      max-width: 100%;
+      justify-content: safe center;
+      gap: 6px;
+      width: 100%;
       overflow-x: auto;
       scrollbar-width: none;
     }
@@ -1742,10 +1751,10 @@
     }
 
     .mq-el-group {
-      background: rgba(14, 165, 233, 0.09);
-      border: 1px solid rgba(14, 165, 233, 0.26);
-      padding: 3px 4px;
-      border-radius: 10px;
+      background: rgba(14, 165, 233, 0.10);
+      border: 1px solid rgba(14, 165, 233, 0.28);
+      padding: 4px 5px;
+      border-radius: 11px;
       flex: 0 0 auto;
     }
 
@@ -1755,35 +1764,35 @@
 
     .mobile-quick-bar button {
       flex: 0 0 auto;
-      height: 27px;
-      min-height: 27px;
-      padding: 0 7.5px;
-      font-size: 10.5px;
-      font-weight: 700;
-      letter-spacing: 0.15px;
+      height: 36px;
+      min-height: 36px;
+      padding: 0 9.5px;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
       white-space: nowrap;
-      border-radius: 8px;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+      border-radius: 9px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
       transition: transform 0.12s ease, opacity 0.15s ease, box-shadow 0.15s ease;
     }
-
+	
     .mobile-quick-bar button:active {
       transform: scale(0.94);
     }
 
     .mobile-quick-bar button.mq-icon-btn {
-      width: 27px;
+      width: 36px;
       padding: 0;
-      font-size: 12px;
+      font-size: 14.5px;
     }
 
     .mobile-quick-bar button.mq-el-btn {
-      background: rgba(14, 165, 233, 0.14);
+      background: rgba(14, 165, 233, 0.15);
       color: var(--primary);
-      border: 1px solid rgba(14, 165, 233, 0.34);
+      border: 1px solid rgba(14, 165, 233, 0.36);
       font-family: var(--ff-mono);
       font-variant-numeric: tabular-nums;
-      padding: 0 6.5px;
+      padding: 0 8px;
     }
 
     .mobile-quick-bar button.mq-el-btn.is-active {
@@ -1799,7 +1808,7 @@
     .mq-divider {
       flex: 0 0 1px;
       width: 1px;
-      height: 20px;
+      height: 26px;
       background: rgba(148, 163, 184, 0.42);
       margin: 0 1px;
     }
