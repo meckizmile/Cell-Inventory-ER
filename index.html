@@ -40,8 +40,8 @@
     --lvl-pill-border: rgba(125, 211, 252, 0.55);
     --plate-shadow: rgba(2, 6, 23, 0.78);
 
-    --ff-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
-    --ff-mono: "JetBrains Mono", SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    --ff-sans: "Aptos", "Aptos Display", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --ff-mono: "Aptos Mono", "Aptos", ui-monospace, "Segoe UI", sans-serif;
     --r-s: 8px;
     --r-m: 14px;
     --r-full: 9999px;
@@ -133,7 +133,8 @@
     height: 100vh;
     background: var(--body-bg);
     color: var(--on-surface);
-    font-size: 11px;
+    font-family: var(--ff-sans);
+    font-size: 11.5px;
     overflow: hidden;
     transition: background 0.25s ease, color 0.25s ease;
   }
@@ -172,15 +173,15 @@
   }
   
   .title-area h1 {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 800;
-    letter-spacing: -0.3px;
+    letter-spacing: -0.25px;
     color: var(--on-surface);
   }
   
   .title-area p {
     color: var(--on-surface-variant);
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 500;
   }
   
@@ -196,8 +197,9 @@
     border: 1px solid var(--stroke-default);
     padding: 4px 10px;
     border-radius: var(--r-full);
-    font-size: 10px;
+    font-size: 10.5px;
     font-family: var(--ff-mono);
+    font-variant-numeric: tabular-nums;
     font-weight: 600;
     color: var(--on-surface-variant);
     white-space: nowrap;
@@ -210,7 +212,8 @@
     justify-content: center;
     min-height: 28px;
     padding: 2px 12px;
-    font-size: 11px;
+    font-family: var(--ff-sans);
+    font-size: 11.5px;
     font-weight: 600;
     color: var(--on-surface);
     background-color: var(--surface-dim);
@@ -264,7 +267,7 @@
   }
   
   .kpi-label {
-    font-size: 9px;
+    font-size: 9.5px;
     text-transform: uppercase;
     letter-spacing: 0.3px;
     color: var(--on-surface-variant);
@@ -277,16 +280,18 @@
   }
   
   .kpi-value {
-    font-size: 15px;
+    font-size: 16px;
     font-weight: 800;
-    letter-spacing: -0.5px;
+    letter-spacing: -0.4px;
+    font-variant-numeric: tabular-nums;
     margin: 2px 0;
     color: var(--on-surface);
   }
   
   .kpi-sub {
-    font-size: 9.5px;
+    font-size: 10px;
     font-family: var(--ff-mono);
+    font-variant-numeric: tabular-nums;
     color: var(--on-surface-variant);
   }
 
@@ -319,7 +324,7 @@
   }
   
   .control-group label {
-    font-size: 9.5px;
+    font-size: 10px;
     color: var(--on-surface-variant);
     font-weight: 700;
     text-transform: uppercase;
@@ -346,7 +351,7 @@
   .lumi-chip {
     padding: 0 8px;
     min-height: 26px;
-    font-size: 10px;
+    font-size: 10.5px;
     background: var(--surface);
     border: 1px solid var(--stroke-default);
     border-radius: var(--r-full);
@@ -370,7 +375,8 @@
     border-radius: var(--r-full);
     background-color: var(--surface);
     color: var(--on-surface);
-    font-size: 11px;
+    font-family: var(--ff-sans);
+    font-size: 11.5px;
     font-weight: 600;
     cursor: pointer;
     outline: none;
@@ -414,7 +420,7 @@
 
   .group-title {
     font-weight: 800;
-    font-size: 12px;
+    font-size: 12.5px;
     display: flex;
     align-items: center;
     gap: 6px;
@@ -423,7 +429,7 @@
   .crop-tag {
     padding: 3px 10px;
     border-radius: var(--r-full);
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 700;
     cursor: pointer;
     white-space: nowrap;
@@ -438,7 +444,7 @@
     flex-direction: column;
     gap: 6px;
     overflow-x: auto;
-    padding-bottom: 6px;
+    padding: 3px 3px 6px 3px;
     -webkit-overflow-scrolling: touch;
   }
 
@@ -525,20 +531,67 @@
 
   .cell-card:hover {
     border-style: solid !important;
-    border-color: var(--primary) !important;
+    border-color: #38bdf8 !important;
     background: var(--surface-container-high) !important;
-    box-shadow: none !important;
-    transform: none !important;
-    opacity: 1 !important;
-  }
-
-  .cell-card.selected {
-    border: 2px solid var(--primary) !important;
-    background: var(--surface-container-high) !important;
-    box-shadow: inset 0 0 0 1px var(--primary) !important;
+    box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.5), 0 4px 10px rgba(56, 189, 248, 0.25) !important;
     transform: none !important;
     z-index: 2;
     opacity: 1 !important;
+  }
+  @keyframes selectedPulse {
+    0%, 100% {
+      box-shadow:
+        inset 0 0 0 2px #facc15,
+        inset 0 0 0 3.5px rgba(15, 23, 42, 0.85),
+        0 0 0 1.5px #facc15,
+        0 0 10px rgba(250, 204, 21, 0.55);
+    }
+    50% {
+      box-shadow:
+        inset 0 0 0 2.5px #fde047,
+        inset 0 0 0 4px rgba(15, 23, 42, 0.9),
+        0 0 0 2px #f59e0b,
+        0 0 14px rgba(245, 158, 11, 0.75);
+    }
+  }
+
+  .cell-card.selected {
+   border: 1.5px solid #facc15 !important;
+    background: var(--surface-container-high) !important;
+    box-shadow:
+      inset 0 0 0 2px #facc15,
+      inset 0 0 0 3.5px rgba(15, 23, 42, 0.85),
+      0 0 0 1.5px #facc15,
+      0 0 10px rgba(250, 204, 21, 0.55) !important;
+    animation: selectedPulse 1.6s infinite ease-in-out;
+    transform: none !important;
+    z-index: 4;
+    opacity: 1 !important;
+  }
+  
+  [data-theme="light"] .cell-card.selected {
+    border: 1.5px solid #d97706 !important;
+    background: #fef9c3 !important;
+    box-shadow:
+      inset 0 0 0 2px #f59e0b,
+      inset 0 0 0 3.5px #ffffff,
+      0 0 0 1.5px #d97706,
+      0 2px 8px rgba(217, 119, 6, 0.45) !important;
+  }
+  
+  .cell-card.selected:hover {
+    border: 1.5px solid #facc15 !important;
+    z-index: 5;
+  }
+  
+  /* EFEK FLASH PADA GROUP SAAT BARU DIKLIK DARI PREVIEW */
+  @keyframes groupJumpFlash {
+    0%   { box-shadow: 0 0 0 3px #facc15, 0 0 24px rgba(250, 204, 21, 0.75); background: rgba(250, 204, 21, 0.12); }
+    100% { box-shadow: none; background: transparent; }
+  }
+  .group-section.is-jump-target {
+    border-radius: var(--r-s);
+    animation: groupJumpFlash 1.8s ease-out;
   }
 
   /* =====================================================================
@@ -646,8 +699,9 @@
   }
 
   .cell-id {
-    font-size: 10px;
+    font-size: 10.5px;
     font-family: var(--ff-mono);
+    font-variant-numeric: tabular-nums;
     font-weight: 800;
     letter-spacing: -0.1px;
     line-height: 1;
@@ -662,10 +716,11 @@
 
   .lvl-corner-badge {
     font-family: var(--ff-mono);
-    font-size: 7.5px;
+    font-variant-numeric: tabular-nums;
+    font-size: 8px;
     font-weight: 800;
     line-height: 1;
-    padding: 1.5px 3px;
+    padding: 1.5px 3.5px;
     border-radius: 3.5px;
     background: var(--lvl-pill-bg);
     color: var(--lvl-pill-text);
@@ -695,7 +750,7 @@
   }
 
   .anode-tag, .cathode-tag {
-    font-size: 8.5px;
+    font-size: 9px;
     font-weight: 800;
     padding: 2.5px 0;
     border-radius: 4px;
@@ -780,8 +835,9 @@
 
   .el-preset-btn {
     padding: 2px 4px;
-    font-size: 10px;
+    font-size: 10.5px;
     font-family: var(--ff-mono);
+    font-variant-numeric: tabular-nums;
     font-weight: 700;
     border-color: rgba(14, 165, 233, 0.45);
     color: var(--primary);
@@ -809,7 +865,7 @@
   }
 
   .inspector-title {
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 800;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -821,7 +877,7 @@
   .detail-row {
     display: flex;
     justify-content: space-between;
-    font-size: 11px;
+    font-size: 11.5px;
     margin-bottom: 3px;
   }
   .detail-label { color: var(--on-surface-variant); }
@@ -837,7 +893,7 @@
     gap: 8px;
   }
   .action-box h4 {
-    font-size: 9.5px;
+    font-size: 10px;
     text-transform: uppercase;
     letter-spacing: 0.4px;
     color: var(--on-surface-variant);
@@ -857,7 +913,8 @@
     border: 1px solid var(--stroke-default);
     color: var(--on-surface);
     font-family: var(--ff-mono);
-    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    font-size: 10.5px;
     padding: 8px;
     border-radius: var(--r-s);
     resize: none;
@@ -890,7 +947,7 @@
     padding: 12px 16px; border-bottom: 1px solid var(--stroke-default);
     display: flex; justify-content: space-between; align-items: center;
   }
-  .modal-header h2 { font-size: 14px; font-weight: 800; margin: 0; user-select: none; -webkit-user-select: none; }
+  .modal-header h2 { font-size: 15px; font-weight: 800; margin: 0; user-select: none; -webkit-user-select: none; }
   .modal-header button {
     background: transparent; border: none; color: var(--error);
     font-size: 16px; font-weight: bold; cursor: pointer; padding: 4px; outline: none;
@@ -898,7 +955,7 @@
   .modal-body {
     padding: 16px; 
     overflow-y: auto; 
-    font-size: 11.5px;
+    font-size: 12px;
     color: var(--on-surface-variant); 
     line-height: 1.6;
     -webkit-overflow-scrolling: touch;
@@ -956,7 +1013,7 @@
     -webkit-user-select: none;
   }
   .pv-title-wrap h2 {
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 800;
     margin: 0;
     white-space: nowrap;
@@ -966,7 +1023,7 @@
     align-items: center;
     gap: 4px;
     flex-wrap: wrap;
-    font-size: 9.5px;
+    font-size: 10px;
     font-weight: 700;
   }
   .pv-leg-item {
@@ -1021,7 +1078,7 @@
     min-height: 20px;
     height: 20px;
     padding: 0 6px;
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 800;
     font-family: var(--ff-mono);
     border-radius: 99px;
@@ -1035,7 +1092,8 @@
   }
   .pv-zoom-label {
     font-family: var(--ff-mono);
-    font-size: 9.5px;
+    font-variant-numeric: tabular-nums;
+    font-size: 10px;
     font-weight: 800;
     padding: 0 4px;
     min-width: 36px;
@@ -1101,7 +1159,7 @@
     gap: 4px;
   }
   .pv-phase-title {
-    font-size: 11px;
+    font-size: 11.5px;
     font-weight: 900;
     letter-spacing: 0.4px;
     text-transform: uppercase;
@@ -1109,7 +1167,8 @@
   }
   .pv-phase-summary {
     font-family: var(--ff-mono);
-    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+    font-size: 9.5px;
     font-weight: 700;
     color: #94a3b8;
     white-space: nowrap;
@@ -1132,13 +1191,44 @@
     flex-direction: column;
     min-height: 0;
     min-width: 0;
+    border-radius: 5px;
     cursor: pointer;
-    transition: opacity 0.15s ease;
+    transition: opacity 0.15s ease, box-shadow 0.12s ease, background-color 0.12s ease;
   }
+  .pv-hmi-item:hover {
+    background-color: rgba(56, 189, 248, 0.16);
+    box-shadow: 0 0 0 2px #38bdf8, 0 4px 12px rgba(56, 189, 248, 0.4);
+    z-index: 4;
+  }
+  
   .pv-hmi-item:hover .pv-hmi-box {
-    outline: 2px solid #facc15;
-    outline-offset: 0px;
+    border-color: #38bdf8 !important;
+    box-shadow: inset 0 0 0 1px rgba(56, 189, 248, 0.85);
   }
+  
+  .pv-hmi-item:active,
+  .pv-hmi-item.pv-selected {
+   background-color: rgba(250, 204, 21, 0.24);
+    box-shadow: 0 0 0 2px #0f172a, 0 0 0 4px #facc15, 0 4px 16px rgba(250, 204, 21, 0.65);
+    z-index: 5;
+  }
+  
+  .pv-hmi-item:active .pv-hmi-box,
+  .pv-hmi-item.pv-selected .pv-hmi-box {
+    border-color: #facc15 !important;
+    outline: 2px solid #0f172a;
+    outline-offset: -3px;
+  }
+  
+  [data-theme="light"] .pv-hmi-item:active .pv-hmi-box,
+  [data-theme="light"] .pv-hmi-item.pv-selected .pv-hmi-box {
+    outline-color: #0f172a;
+  }
+  .pv-hmi-item.pv-selected:hover {
+    box-shadow: 0 0 0 2px #0f172a, 0 0 0 4.5px #facc15, 0 4px 18px rgba(250, 204, 21, 0.8);
+    z-index: 6;
+  }
+  
   .pv-hmi-item.pv-dimmed {
     opacity: 0.22;
   }
@@ -1156,7 +1246,7 @@
     flex-shrink: 0;
   }
   .pv-hmi-gname {
-    font-size: 10px;
+    font-size: 10.5px;
     font-weight: 800;
     white-space: nowrap;
     overflow: hidden;
@@ -1169,7 +1259,8 @@
 
   .pv-hmi-el {
     font-family: var(--ff-mono);
-    font-size: 9.5px;
+    font-variant-numeric: tabular-nums;
+    font-size: 10px;
     font-weight: 800;
     color: #facc15;
     white-space: nowrap;
@@ -1221,7 +1312,7 @@
     line-height: 1.05;
   }
   .pv-hmi-status {
-    font-size: 9.5px;
+    font-size: 10px;
     font-weight: 900;
     letter-spacing: 0.15px;
     white-space: nowrap;
@@ -1229,7 +1320,7 @@
     text-overflow: ellipsis;
   }
   .pv-hmi-crop {
-    font-size: 9px;
+    font-size: 9.5px;
     font-weight: 900;
     padding: 0 3.5px;
     border-radius: 2px;
@@ -1244,7 +1335,8 @@
     align-items: center;
     gap: 3px;
     font-family: var(--ff-mono);
-    font-size: 9px;
+    font-variant-numeric: tabular-nums;
+    font-size: 9.5px;
     font-weight: 800;
     line-height: 1.05;
     white-space: nowrap;
@@ -1259,7 +1351,7 @@
     color: #0f172a;
     padding: 0 3px;
     border-radius: 2px;
-    font-size: 8.5px;
+    font-size: 9px;
     font-weight: 900;
     flex-shrink: 0;
   }
@@ -1300,7 +1392,7 @@
     border-radius: 8px;
     padding: 8px 10px;
     box-shadow: 0 10px 28px rgba(0, 0, 0, 0.55);
-    font-size: 10.5px;
+    font-size: 11px;
     color: var(--on-surface);
     min-width: 185px;
     max-width: 260px;
@@ -1308,7 +1400,7 @@
   }
   .pv-hover-tip-title {
     font-weight: 800;
-    font-size: 11.5px;
+    font-size: 12px;
     color: var(--primary);
     border-bottom: 1px solid var(--stroke-default);
     padding-bottom: 4px;
@@ -1320,7 +1412,8 @@
     display: flex;
     justify-content: space-between;
     font-family: var(--ff-mono);
-    font-size: 10px;
+    font-variant-numeric: tabular-nums;
+    font-size: 10.5px;
     margin-bottom: 2px;
   }
 
@@ -1359,16 +1452,16 @@
       gap: 6px;
     }
     .pv-hmi-gname {
-      font-size: 10.5px;
+      font-size: 11px;
     }
     .pv-hmi-el {
-      font-size: 10px;
+      font-size: 10.5px;
     }
     .pv-hmi-status {
-      font-size: 10px;
+      font-size: 10.5px;
     }
     .pv-hmi-row2 {
-      font-size: 9.5px;
+      font-size: 10px;
     }
   }
 
@@ -1426,12 +1519,12 @@
     }
 
     .kpi-label {
-      font-size: 8.5px;
+      font-size: 9px;
       min-height: 20px;
     }
 
     .kpi-value {
-      font-size: 14px;
+      font-size: 15px;
     }
 
     .controls-bar {
@@ -1489,10 +1582,15 @@
     }
 
     .matrix-box {
-      max-height: 60vh;
+      max-height: 68vh;
       height: auto;
       padding: 8px;
-      padding-bottom: 52px;
+      padding-bottom: 84px;
+      transition: max-height 0.2s ease;
+    }
+	/* Area grid lebih fokus saat cell sedang diklik/diisi di Mobile */
+    body.is-mobile-editing .matrix-box {
+      max-height: 76vh;
     }
 
     .group-header {
@@ -1502,23 +1600,23 @@
     }
 
     .group-title {
-      font-size: 13px;
+      font-size: 14px;
     }
 
     .cell-row-26 {
-      grid-template-columns: repeat(13, minmax(60px, 1fr));
-      gap: 6px;
+      grid-template-columns: repeat(13, minmax(68px, 1fr));
+      gap: 7px;
     }
 
     .cell-row-28 {
-      grid-template-columns: repeat(14, minmax(60px, 1fr));
-      gap: 6px;
+      grid-template-columns: repeat(14, minmax(68px, 1fr));
+      gap: 7px;
     }
 
     .cell-card {
-      min-height: 58px;
-      padding: 5px 3px;
-      border-radius: 8px;
+      min-height: 66px;
+      padding: 5px 4px;
+      border-radius: 9px;
     }
 
     .cell-card.has-electrolyte {
@@ -1526,11 +1624,11 @@
     }
 
     .electrode-shadow-layer {
-      height: 52px;
+      height: 58px;
     }
 
     .electrode-shadow-layer.mode-cath {
-      height: 50px;
+      height: 56px;
     }
 
     .cell-card.has-electrolyte .electrode-shadow-layer {
@@ -1538,21 +1636,21 @@
     }
 
     .cell-id {
-      font-size: 11px;
+      font-size: 12.5px;
       font-weight: 800;
     }
 
     .lvl-corner-badge {
-      font-size: 8px;
-      padding: 1.5px 3.5px;
+      font-size: 9.5px;
+      padding: 2px 4px;
     }
 
     .anode-tag, .cathode-tag {
-      font-size: 9.5px;
-      padding: 3px 0;
+      font-size: 11px;
+      padding: 3.5px 0;
       border-radius: 4px;
     }
-
+	
     .inspector-panel {
       height: auto;
       max-height: none;
@@ -1660,7 +1758,7 @@
       height: 27px;
       min-height: 27px;
       padding: 0 7.5px;
-      font-size: 10px;
+      font-size: 10.5px;
       font-weight: 700;
       letter-spacing: 0.15px;
       white-space: nowrap;
@@ -1676,7 +1774,7 @@
     .mobile-quick-bar button.mq-icon-btn {
       width: 27px;
       padding: 0;
-      font-size: 11.5px;
+      font-size: 12px;
     }
 
     .mobile-quick-bar button.mq-el-btn {
@@ -1684,6 +1782,7 @@
       color: var(--primary);
       border: 1px solid rgba(14, 165, 233, 0.34);
       font-family: var(--ff-mono);
+      font-variant-numeric: tabular-nums;
       padding: 0 6.5px;
     }
 
@@ -1744,7 +1843,7 @@
 
     <div class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label" data-i18n="kpi63">Anode 63 FL (63FL)</div>
+        <div class="kpi-label" data-i18n="kpi63">Anode 63 (63A)</div>
         <div class="kpi-value" id="kpiCount63" style="color: var(--positive);">0</div>
         <div class="kpi-sub" id="kpiCount63NS">N: 0 • S: 0</div>
       </div>
@@ -1764,12 +1863,12 @@
         <div class="kpi-sub" id="kpiCount62SANS">N: 0 • S: 0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label" data-i18n="kpicath">Cathodes (CATH)</div>
+        <div class="kpi-label" data-i18n="kpicath">Cathode (C)</div>
         <div class="kpi-value" id="kpiCathodeCount" style="color: var(--copper);">0</div>
         <div class="kpi-sub" id="kpiCathodeNS">N: 0 • S: 0</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label" data-i18n="kpiss">SS Blanks (SS)</div>
+        <div class="kpi-label" data-i18n="kpiss">SS Blank (SS)</div>
         <div class="kpi-value" id="kpiSSCount" style="color: var(--stainless);">0</div>
         <div class="kpi-sub" id="kpiSSNS">N: 0 • S: 0</div>
       </div>
@@ -1833,7 +1932,7 @@
           <label data-i18n="anodeFilterLabel">Anode Filter</label>
           <select class="lumi-select" id="statusSelect" onchange="renderMatrix()">
             <option value="ALL" data-i18n="optAllAnodes">All Anodes</option>
-            <option value="63 FL">63FL (Anode 63 Full)</option>
+            <option value="63 FL">63A (Anode 63)</option>
             <option value="62 KU">62KU (Anode 62 Kosong Utara)</option>
             <option value="62 KS">62KS (Anode 62 Kosong Selatan)</option>
             <option value="62 SA">62SA (Spent Anode)</option>
@@ -1885,7 +1984,7 @@
         <div class="inspector-title" data-i18n="inspTitle">Cell Settings</div>
         
         <div id="inspectorContent">
-          <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11px; user-select: none; -webkit-user-select: none;" data-i18n="clickCell">
+          <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11.5px; user-select: none; -webkit-user-select: none;" data-i18n="clickCell">
             Click a cell in the grid to configure status.
           </div>
         </div>
@@ -1893,7 +1992,7 @@
         <div class="action-box" id="inspectorControls" style="display: none;">
           <h4 data-i18n="h1Anode">1. Cell Anode Status:</h4>
           <div class="status-btn-grid">
-            <button type="button" style="border-color: rgba(16, 185, 129, 0.5); color: #10b981;" onclick="updateActiveCellAnode('63 FL')">63FL [1]</button>
+            <button type="button" style="border-color: rgba(16, 185, 129, 0.5); color: #10b981;" onclick="updateActiveCellAnode('63 FL')">63A [1]</button>
             <button type="button" style="border-color: rgba(2, 132, 199, 0.5); color: #0284c7;" onclick="updateActiveCellAnode('62 KU')">62KU [2]</button>
             <button type="button" style="border-color: rgba(168, 85, 247, 0.5); color: var(--chart-8);" onclick="updateActiveCellAnode('62 KS')">62KS [3]</button>
             <button type="button" style="background: #57534e; color: #ffffff; font-weight: 700; border: 1px solid #78716c;" onclick="updateActiveCellAnode('62 SA')">62SA [4]</button>
@@ -1906,7 +2005,7 @@
             <button type="button" data-cath-btn="true" style="background:var(--stainless); color:#ffffff; font-weight:bold; border-color:var(--stainless-border);" onclick="updateActiveCellCathode('SS')">SS [S]</button>
             <button type="button" style="grid-column: span 2;" onclick="updateActiveCellCathode('NONE')" data-i18n="btnClearCathode">Clear Cathode</button>
           </div>
-          <div id="cathodeLockHint" style="display:none; font-size:9.5px; color:#f59e0b; line-height:1.3; user-select:none; -webkit-user-select:none;"></div>
+          <div id="cathodeLockHint" style="display:none; font-size:10px; color:#f59e0b; line-height:1.3; user-select:none; -webkit-user-select:none;"></div>
 
           <div id="electrolyteControlSection" style="display: flex; flex-direction: column; gap: 6px;">
             <h4 data-i18n="hElectrolyte">Electrolyte Level (Cell Only):</h4>
@@ -1945,7 +2044,7 @@
 <!-- Mobile Quick Toolbar: Terpusat & Terpisah Jelas Electrode | Electrolyte -->
 <div class="mobile-quick-bar" id="mobileQuickBar">
   <div class="mq-section mq-electrode-section">
-    <button type="button" style="background: #10b981; color: #ffffff; border: 1px solid #059669;" onclick="updateActiveCellAnode('63 FL')">63FL</button>
+    <button type="button" style="background: #10b981; color: #ffffff; border: 1px solid #059669;" onclick="updateActiveCellAnode('63 FL')">63A</button>
     <button type="button" style="background: #0284c7; color: #ffffff; border: 1px solid #0369a1;" onclick="updateActiveCellAnode('62 KU')">62KU</button>
     <button type="button" style="background: #a855f7; color: #ffffff; border: 1px solid #7e22ce;" onclick="updateActiveCellAnode('62 KS')">62KS</button>
     <button type="button" style="background: #57534e; color: #ffffff; border: 1px solid #78716c;" onclick="updateActiveCellAnode('62 SA')">62SA</button>
@@ -1980,7 +2079,7 @@
       <div class="pv-legend" id="pvLegendBar">
         <span class="pv-leg-item" data-spot="CHG" onclick="togglePreviewSpotlight('CHG')"><span class="pv-leg-swatch" style="background:#16a34a;"></span>⚡ Charging</span>
         <span class="pv-leg-item" data-spot="NONCHG" onclick="togglePreviewSpotlight('NONCHG')"><span class="pv-leg-swatch" style="background:#dc2626;"></span>Non-Charging</span>
-        <span class="pv-leg-item" data-spot="63 FL" onclick="togglePreviewSpotlight('63 FL')"><span class="pv-leg-swatch" style="background:#10b981;"></span>63FL</span>
+        <span class="pv-leg-item" data-spot="63 FL" onclick="togglePreviewSpotlight('63 FL')"><span class="pv-leg-swatch" style="background:#10b981;"></span>63A</span>
         <span class="pv-leg-item" data-spot="62 KU" onclick="togglePreviewSpotlight('62 KU')"><span class="pv-leg-swatch" style="background:#0ea5e9;"></span>62KU</span>
         <span class="pv-leg-item" data-spot="62 KS" onclick="togglePreviewSpotlight('62 KS')"><span class="pv-leg-swatch" style="background:#a855f7;"></span>62KS</span>
         <span class="pv-leg-item" data-spot="62 SA" onclick="togglePreviewSpotlight('62 SA')"><span class="pv-leg-swatch" style="background:#78716c;"></span>62SA</span>
@@ -2103,12 +2202,12 @@
       waTitle: "MAPPING REPORT - ER TANKHOUSE",
       waNorth: "NORTH",
       waSouth: "SOUTH",
-      kpi63: "Anode 63 FL (63FL)",
+      kpi63: "Anode 63 (63A)",
       kpi62ku: "Anode 62 KU (62KU)",
       kpi62ks: "Anode 62 KS (62KS)",
       kpi62sa: "Spent Anode (62SA)",
-      kpicath: "Cathodes (CATH)",
-      kpiss: "SS Blanks (SS)",
+      kpicath: "Cathode (C)",
+      kpiss: "SS Blank (SS)",
       kpiel: "Electrolyte (m³)",
       kpistorage: "Storage",
       txtSelection: "Selection",
@@ -2123,7 +2222,7 @@
       txtFilledStr: "FILLED",
       txtCompEmpty: "COMPLETELY EMPTY",
       cathLockHint: "⚠️ Electrolyte > 10%: Anode only. Set 0–10% (Storage) or Harvest (Crop 1–3) to store CATH / SS.",
-      instBody: `<b>1. PC (Desktop) vs. Mobile View Differences:</b><br>• <b>PC (Desktop):</b> Top header places Language &amp; Show Changes on the left; all Filter dropdowns are expanded in one bar; the Cell Grid sits on the left side-by-side with <b>Cell Settings</b> and <b>WA Report</b> on the right.<br>• <b>Mobile (Phone):</b> Top header is centered with Show Changes &amp; Language at the bottom row; Filter menus are tucked inside the <b>🔍 Show Filters</b> button to save screen space; tapping a cell pops up a floating <b>Quick Toolbar</b> at the bottom; <b>Cell Settings</b> and <b>WA Report</b> are located below the Cell Grid (scroll down).<br><br><b>2. Switching Theme (Light / Dark Mode):</b><br>• Click the <b>☀️ Light</b> or <b>🌙 Dark</b> button in the top header to toggle between Light and Dark themes. Your theme preference is saved automatically.<br><br><b>3. Switching Language (Indonesian / English):</b><br>• Click <b>🌐 English (US)</b> or <b>🌐 Bahasa Indonesia</b> in the header to translate all menus, filters, instructions, and the WA Report format.<br>• <i>Position:</i> On <b>PC</b>, it is on the far left of the header actions; on <b>Mobile</b>, it is next to <b>🔄 Show Changes</b>.<br><br><b>4. Show Changes (Modification History):</b><br>• Click <b>🔄 Show Changes</b> in the top header.<br>• <b>Function:</b> Automatically logs every change in real time (date, time, action type, Phase, Group, and exact Cell numbers). Logs sync with the database and are retained for <b>3 days</b>.<br><br><b>5. Top Summary Cards (KPI Overview):</b><br>• Displays real-time totals with <b>North (N)</b> and <b>South (S)</b> zone breakdowns:<br>  • <b>Anode 63 FL (63FL)</b>, <b>Anode 62 KU (62KU)</b>, <b>Anode 62 KS (62KS)</b>, <b>Spent Anode (62SA)</b>, <b>Cathodes (CATH)</b>, and <b>SS Blanks (SS)</b>.<br>  • <b>Electrolyte (m³):</b> Calculated as <b>10% = 1 m³</b> up to <b>100% = 10 m³</b> across all Group cells (including <b>Group Charging</b>), shown in KPI only and excluded from WA Report.<br>  • <b>Storage (0-10%):</b> Counts non-charging Group cells with <b>0% to 10% electrolyte</b> (empty cells, Anode only, SS only, or Cathode only). Cells filled with <b>both Anode + Cathode</b> or <b>Anode + SS Blank</b>, cells with <b>&gt; 10% electrolyte</b>, and <b>Machine</b> (Rack/Station) are NOT Storage.<br>  • <i>Note:</i> Groups set to <b>Harvest (Crop 1 ⚡ / Crop 2 ⚡ / Crop 3 ⚡)</b> are <b>Charging / Energized</b> — their electrodes are excluded from KPI and WA Report, while their Electrolyte (m³) remains counted.<br><br><b>6. Phase Navigation:</b><br>• Use the <b>Phase</b> pills (<b>All</b>, <b>P1</b>, <b>P2</b>, <b>P3</b>, <b>Machine</b>) to view the entire plant or focus on Phase 1 (G1–G16), Phase 2 (G17–G32), Phase 3 (G33–G48), or <b>Machine</b> racks/stations (CSM, ASM, APM).<br><br><b>7. Filtering Cells:</b><br>• On <b>PC</b>, filters are always visible; on <b>Mobile</b>, tap <b>🔍 Show Filters</b> first:<br>  • <b>Cell View:</b> All Cells, Filled Cells Only, Empty Cells Only, <b>Group Charging</b> (groups with Harvest: Crop 1 ⚡, 2 ⚡, or 3 ⚡), or <b>Storage</b>.<br>  • <b>Zone &amp; Group:</b> Narrow down by North/South zone or a specific Group/Machine.<br>  • <b>Anode, Cathode &amp; Electrolyte Filters:</b> Filter by specific electrode types or electrolyte levels.<br><br><b>8. Clear Cell Data (Bulk Reset per Phase):</b><br>• Clicking <b>Clear P1</b>, <b>Clear P2</b>, <b>Clear P3</b>, or <b>Clear Machine</b> wipes all Anode, Cathode, Electrolyte, and Harvest data for that entire Phase/Machine after a confirmation prompt.<br><br><b>9. Storage (0–10%), Charging Groups &amp; Editing Cells:</b><br>• <b>Storage Rule (0% – 10% Electrolyte):</b> Group cells with <b>0% to 10% Electrolyte</b> are Storage (empty, Anode only, SS only, or Cathode only). Once a cell is filled with <b>Anode + Cathode</b> or <b>Anode + SS Blank</b>, it is excluded from Storage (-1 Cell). Cells with <b>&gt; 10% Electrolyte</b> or in <b>Machine</b> (Rack/Station) are also NOT Storage.<br>• <b>Electrolyte &gt; 10% Rule (Non-Harvest):</b> When a group has no Harvest (<b>-</b>), cells with <b>&gt; 10% Electrolyte</b> can <b>ONLY hold Anode</b> and cannot store CATH or SS Blank.<br>• <b>Group Charging / Energized (Harvest: Crop 1 ⚡, 2 ⚡, or 3 ⚡):</b> Updating a group's Harvest to <b>Crop 1</b>, <b>Crop 2</b>, or <b>Crop 3</b> marks it with <b>⚡</b> as <b>Charging / Energized</b> — allowing both <b>Cathode</b> and <b>Anode</b> to be filled at any electrolyte level, keeping Electrolyte (m³) counted while excluding its electrodes from KPI and WA Report.<br>• <b>Selecting &amp; Setting Electrodes:</b> Click/tap a cell, then choose <b>63FL</b>, <b>62KU</b>, <b>62KS</b>, <b>62SA</b>, <b>CATH</b>, or <b>SS</b> via <b>Cell Settings</b> (PC), <b>Quick Toolbar</b> (Mobile), or shortcuts (<b>1, 2, 3, 4, C, S</b>). Tap a colored tag inside a cell directly to remove just that tag.<br>• <b>Setting Electrolyte Level:</b> Click/tap a selected cell again (or its corner <b>%</b> badge) to cycle <b>0% → 10% → 50% → 70% → 100% → 0%</b>, or click a percentage button directly.<br><br><b>10. WA Report (Copying &amp; How to Read):</b><br>• <b>Copying:</b> Click <b>Copy WA Text</b> to copy the auto-generated report to your clipboard.<br>• <b>How to Read the Report:</b><br>  - Lists active non-charging categories in order: <b>1. CATHODE</b>, <b>2. ANODE 63</b>, <b>3. ANODE 62 KU</b>, <b>4. ANODE 62 KS</b>, <b>5. SPENT ANODE</b>, <b>6. SS BLANK</b>, and <b>7. STORAGE</b> (non-machine, non-charging cells with 0%–10% electrolyte that do not hold both Anode &amp; Cathode/SS), split by <b>NORTH (total)</b> and <b>SOUTH (total)</b>.`
+      instBody: `<b>1. PC (Desktop) vs. Mobile View Differences:</b><br>• <b>PC (Desktop):</b> Top header places Language &amp; Show Changes on the left; all Filter dropdowns are expanded in one bar; the Cell Grid sits on the left side-by-side with <b>Cell Settings</b> and <b>WA Report</b> on the right.<br>• <b>Mobile (Phone):</b> Top header is centered with Show Changes &amp; Language at the bottom row; Filter menus are tucked inside the <b>🔍 Show Filters</b> button to save screen space; tapping a cell pops up a floating <b>Quick Toolbar</b> at the bottom; <b>Cell Settings</b> and <b>WA Report</b> are located below the Cell Grid (scroll down).<br><br><b>2. Switching Theme (Light / Dark Mode):</b><br>• Click the <b>☀️ Light</b> or <b>🌙 Dark</b> button in the top header to toggle between Light and Dark themes. Your theme preference is saved automatically.<br><br><b>3. Switching Language (Indonesian / English):</b><br>• Click <b>🌐 English (US)</b> or <b>🌐 Bahasa Indonesia</b> in the header to translate all menus, filters, instructions, and the WA Report format.<br>• <i>Position:</i> On <b>PC</b>, it is on the far left of the header actions; on <b>Mobile</b>, it is next to <b>🔄 Show Changes</b>.<br><br><b>4. Show Changes (Modification History):</b><br>• Click <b>🔄 Show Changes</b> in the top header.<br>• <b>Function:</b> Automatically logs every change in real time (date, time, action type, Phase, Group, and exact Cell numbers). Logs sync with the database and are retained for <b>3 days</b>.<br><br><b>5. Top Summary Cards (KPI Overview):</b><br>• Displays real-time totals with <b>North (N)</b> and <b>South (S)</b> zone breakdowns:<br>  • <b>Anode 63 (63A)</b>, <b>Anode 62 KU (62KU)</b>, <b>Anode 62 KS (62KS)</b>, <b>Spent Anode (62SA)</b>, <b>Cathode (C)</b>, and <b>SS Blanks (SS)</b>.<br>  • <b>Electrolyte (m³):</b> Calculated as <b>10% = 1 m³</b> up to <b>100% = 10 m³</b> across all Group cells (including <b>Group Charging</b>), shown in KPI only and excluded from WA Report.<br>  • <b>Storage (0-10%):</b> Counts non-charging Group cells with <b>0% to 10% electrolyte</b> (empty cells, Anode only, SS only, or Cathode only). Cells filled with <b>both Anode + Cathode</b> or <b>Anode + SS Blank</b>, cells with <b>&gt; 10% electrolyte</b>, and <b>Machine</b> (Rack/Station) are NOT Storage.<br>  • <i>Note:</i> Groups set to <b>Harvest (Crop 1 ⚡ / Crop 2 ⚡ / Crop 3 ⚡)</b> are <b>Charging / Energized</b> — their electrodes are excluded from KPI and WA Report, while their Electrolyte (m³) remains counted.<br><br><b>6. Phase Navigation:</b><br>• Use the <b>Phase</b> pills (<b>All</b>, <b>P1</b>, <b>P2</b>, <b>P3</b>, <b>Machine</b>) to view the entire plant or focus on Phase 1 (G1–G16), Phase 2 (G17–G32), Phase 3 (G33–G48), or <b>Machine</b> racks/stations (CSM, ASM, APM).<br><br><b>7. Filtering Cells:</b><br>• On <b>PC</b>, filters are always visible; on <b>Mobile</b>, tap <b>🔍 Show Filters</b> first:<br>  • <b>Cell View:</b> All Cells, Filled Cells Only, Empty Cells Only, <b>Group Charging</b> (groups with Harvest: Crop 1 ⚡, 2 ⚡, or 3 ⚡), or <b>Storage</b>.<br>  • <b>Zone &amp; Group:</b> Narrow down by North/South zone or a specific Group/Machine.<br>  • <b>Anode, Cathode &amp; Electrolyte Filters:</b> Filter by specific electrode types or electrolyte levels.<br><br><b>8. Clear Cell Data (Bulk Reset per Phase):</b><br>• Clicking <b>Clear P1</b>, <b>Clear P2</b>, <b>Clear P3</b>, or <b>Clear Machine</b> wipes all Anode, Cathode, Electrolyte, and Harvest data for that entire Phase/Machine after a confirmation prompt.<br><br><b>9. Storage (0–10%), Charging Groups &amp; Editing Cells:</b><br>• <b>Storage Rule (0% – 10% Electrolyte):</b> Group cells with <b>0% to 10% Electrolyte</b> are Storage (empty, Anode only, SS only, or Cathode only). Once a cell is filled with <b>Anode + Cathode</b> or <b>Anode + SS Blank</b>, it is excluded from Storage (-1 Cell). Cells with <b>&gt; 10% Electrolyte</b> or in <b>Machine</b> (Rack/Station) are also NOT Storage.<br>• <b>Electrolyte &gt; 10% Rule (Non-Harvest):</b> When a group has no Harvest (<b>-</b>), cells with <b>&gt; 10% Electrolyte</b> can <b>ONLY hold Anode</b> and cannot store CATH or SS Blank.<br>• <b>Group Charging / Energized (Harvest: Crop 1 ⚡, 2 ⚡, or 3 ⚡):</b> Updating a group's Harvest to <b>Crop 1</b>, <b>Crop 2</b>, or <b>Crop 3</b> marks it with <b>⚡</b> as <b>Charging / Energized</b> — allowing both <b>Cathode</b> and <b>Anode</b> to be filled at any electrolyte level, keeping Electrolyte (m³) counted while excluding its electrodes from KPI and WA Report.<br>• <b>Selecting &amp; Setting Electrodes:</b> Click/tap a cell, then choose <b>63A</b>, <b>62KU</b>, <b>62KS</b>, <b>62SA</b>, <b>CATH</b>, or <b>SS</b> via <b>Cell Settings</b> (PC), <b>Quick Toolbar</b> (Mobile), or shortcuts (<b>1, 2, 3, 4, C, S</b>). Tap a colored tag inside a cell directly to remove just that tag.<br>• <b>Setting Electrolyte Level:</b> Click/tap a selected cell again (or its corner <b>%</b> badge) to cycle <b>0% → 10% → 50% → 70% → 100% → 0%</b>, or click a percentage button directly.<br><br><b>10. WA Report (Copying &amp; How to Read):</b><br>• <b>Copying:</b> Click <b>Copy WA Text</b> to copy the auto-generated report to your clipboard.<br>• <b>How to Read the Report:</b><br>  - Lists active non-charging categories in order: <b>1. CATHODE</b>, <b>2. ANODE 63</b>, <b>3. ANODE 62 KU</b>, <b>4. ANODE 62 KS</b>, <b>5. SPENT ANODE</b>, <b>6. SS BLANK</b>, and <b>7. STORAGE</b> (non-machine, non-charging cells with 0%–10% electrolyte that do not hold both Anode &amp; Cathode/SS), split by <b>NORTH (total)</b> and <b>SOUTH (total)</b>.`
     },
     id: {
       appTitle: "Inventaris Cell",
@@ -2190,12 +2289,12 @@
       waTitle: "LAPORAN MAPPING - ER TANKHOUSE",
       waNorth: "UTARA",
       waSouth: "SELATAN",
-      kpi63: "Anode 63 FL (63FL)",
+      kpi63: "Anode 63 (63A)",
       kpi62ku: "Anode 62 KU (62KU)",
       kpi62ks: "Anode 62 KS (62KS)",
       kpi62sa: "Spent Anode (62SA)",
-      kpicath: "Cathodes (CATH)",
-      kpiss: "SS Blanks (SS)",
+      kpicath: "Cathode (C)",
+      kpiss: "SS Blank (SS)",
       kpiel: "Electrolyte (m³)",
       kpistorage: "Storage",
       txtSelection: "Seleksi",
@@ -2210,7 +2309,7 @@
       txtFilledStr: "TERISI",
       txtCompEmpty: "KOSONG TOTAL",
       cathLockHint: "⚠️ Elektrolit > 10%: Hanya untuk Anode. Atur 0–10% (Storage) atau Panen (Crop 1–3) untuk CATH / SS.",
-      instBody: `<b>1. Perbedaan Tampilan PC &amp; Mobile (HP):</b><br>• <b>Tampilan PC:</b> Tombol Bahasa &amp; Riwayat Perubahan berada di sisi kiri header; seluruh menu Filter tampil terbuka dalam satu baris; Grid Cell berada di kiri berdampingan langsung dengan panel <b>Pengaturan Cell</b> &amp; <b>Laporan WA</b> di kanan.<br>• <b>Tampilan Mobile (HP):</b> Header tersusun terpusat dengan tombol Riwayat Perubahan &amp; Bahasa di bagian bawah header; menu Filter disembunyikan di dalam tombol <b>🔍 Tampilkan Filter</b> agar grid lebih luas; saat cell diklik akan muncul <b>Quick Toolbar</b> melayang di bawah layar; panel <b>Pengaturan Cell</b> &amp; <b>Laporan WA</b> berada di bawah Grid Cell (gulir ke bawah).<br><br><b>2. Mengganti Tema (Light / Dark Mode):</b><br>• Klik tombol <b>☀️ Light</b> atau <b>🌙 Dark</b> di bagian atas (Header) untuk beralih antara mode terang dan mode gelap. Pilihan tema otomatis tersimpan.<br><br><b>3. Mengganti Bahasa (Indonesia / English):</b><br>• Klik tombol <b>🌐 English (US)</b> atau <b>🌐 Bahasa Indonesia</b> pada Header untuk mengubah bahasa seluruh menu, filter, panduan, serta format Laporan WA.<br>• <i>Posisi Tombol:</i> Di <b>PC</b> terletak di paling kiri barisan tombol header; di <b>Mobile</b> terletak di sebelah kanan tombol <b>🔄 Riwayat Perubahan</b>.<br><br><b>4. Show Changes (Riwayat Perubahan):</b><br>• Klik tombol <b>🔄 Riwayat Perubahan</b> / <b>🔄 Show Changes</b> pada Header.<br>• <b>Fungsi:</b> Mencatat setiap perubahan data secara otomatis &amp; <i>real-time</i> (lengkap dengan tanggal, jam, jenis perubahan status/elektrolit/panen/hapus, serta lokasi Phase, Group, dan nomor Cell). Riwayat tersinkron ke server dan tersimpan selama <b>3 hari</b>.<br><br><b>5. Ringkasan Jumlah (Kartu KPI Atas):</b><br>• Menampilkan total jumlah secara <i>real-time</i> beserta rincian zona <b>Utara (N)</b> dan <b>Selatan (S)</b>:<br>  • <b>Anode 63 FL (63FL)</b>, <b>Anode 62 KU (62KU)</b>, <b>Anode 62 KS (62KS)</b>, <b>Spent Anode (62SA)</b>, <b>Cathodes (CATH)</b>, dan <b>SS Blanks (SS)</b>.<br>  • <b>Electrolyte (m³):</b> Dihitung dengan rumus <b>10% = 1 m³</b> hingga <b>100% = 10 m³</b> di seluruh Group (termasuk <b>Group Charging</b>), tampil di KPI atas saja dan tidak masuk Laporan WA.<br>  • <b>Storage (0-10%):</b> Menghitung cell Group (non-Charging) dengan <b>0% sampai 10% elektrolit</b> (kosong, ada Anode saja, SS saja, atau Cathode saja). Jika 1 cell terisi <b>Anode + Cathode</b> atau <b>Anode + SS Blank</b>, elektrolit <b>&gt; 10%</b>, maupun bagian <b>Machine</b> (Rack/Station), bukan Storage.<br>  • <i>Catatan:</i> Group dengan status <b>Panen (Crop 1 ⚡ / Crop 2 ⚡ / Crop 3 ⚡)</b> berstatus <b>Charging / Energized</b> — elektrodanya tidak masuk ke KPI &amp; Laporan WA, namun volume Electrolyte (m³) tetap terhitung.<br><br><b>6. Navigasi Phase:</b><br>• Gunakan pilihan <b>Fase / Phase</b> (<b>Semua</b>, <b>P1</b>, <b>P2</b>, <b>P3</b>, <b>Mesin</b>) untuk menampilkan seluruh area atau memfilter khusus Phase 1 (G1–G16), Phase 2 (G17–G32), Phase 3 (G33–G48), atau area <b>Mesin</b> (Rack &amp; Station CSM/ASM/APM).<br><br><b>7. Filter Data Grid:</b><br>• Di <b>PC</b>, filter langsung terlihat; di <b>Mobile</b>, tekan <b>🔍 Tampilkan Filter</b> terlebih dahulu:<br>  • <b>Tampilan Cell:</b> Semua Cell, Hanya Cell Terisi, Hanya Cell Kosong, <b>Group Charging</b> (Group dengan Panen: Crop 1 ⚡, 2 ⚡, atau 3 ⚡), atau <b>Storage</b>.<br>  • <b>Zona &amp; Grup:</b> Menyaring zona Utara/Selatan atau memilih Group/Mesin tertentu.<br>  • <b>Filter Anoda, Katoda &amp; Elektrolit:</b> Menyaring jenis elektroda atau level elektrolit.<br><br><b>8. Clear Cell Data (Hapus Data Per Fase/Mesin):</b><br>• Tombol <b>Hapus P1</b>, <b>Hapus P2</b>, <b>Hapus P3</b>, dan <b>Hapus Mesin</b> berfungsi menghapus total seluruh data Anoda, Katoda, Elektrolit, dan Panen pada Fase/Mesin tersebut (dilengkapi konfirmasi sebelum menghapus).<br><br><b>9. Aturan Storage (0–10%), Group Charging &amp; Pengisian Cell:</b><br>• <b>Aturan Storage (0% – 10% Elektrolit):</b> Cell Group dengan <b>0% sampai 10% Elektrolit</b> terhitung sebagai Storage (tanpa elektrolit 0%, ada Anode saja, SS saja, atau Cathode saja). Ketika 1 cell diisi <b>Anode + Cathode</b> atau <b>Anode + SS Blank</b>, Storage berkurang 1 cell (bukan Storage). Ketika elektrolit <b>di atas 10%</b> atau berada di <b>Machine</b> (Rack/Station), juga bukan Storage.<br>• <b>Aturan Elektrolit &gt; 10% (Non-Panen):</b> Jika Group belum di-set Panen (<b>-</b>), cell dengan <b>Elektrolit &gt; 10%</b> <b>HANYA bisa menyimpan Anode</b> dan tidak bisa menyimpan CATH atau SS Blank.<br>• <b>Group Charging / Energized (Panen: Crop 1 ⚡, 2 ⚡, atau 3 ⚡):</b> Saat Group di-update menjadi <b>Crop 1</b>, <b>Crop 2</b>, atau <b>Crop 3</b>, muncul ikon petir <b>⚡</b> dan cell berstatus <b>Charging / Energized</b> sehingga bisa diisi <b>Cathode</b> maupun <b>Anode</b> pada level elektrolit berapa pun, dengan Electrolyte (m³) tetap terhitung.<br>• <b>Mengisi &amp; Menghapus Tag Status:</b> Klik/tap cell, lalu pilih <b>63FL</b>, <b>62KU</b>, <b>62KS</b>, <b>62SA</b>, <b>CATH</b>, atau <b>SS</b> melalui <b>Pengaturan Cell</b> (PC), <b>Quick Toolbar</b> (Mobile), atau shortcut keyboard (<b>1, 2, 3, 4, C, S</b>). Klik/tap langsung pada tag berwarna di dalam cell untuk menghapus tag tersebut.<br>• <b>Mengisi Level Elektrolit:</b> Klik/tap ulang cell yang sudah terpilih (atau tap indikator <b>%</b>) untuk menaikkan level secara bertahap: <b>0% → 10% → 50% → 70% → 100% → 0%</b>, atau pilih langsung angkanya.<br><br><b>10. Laporan WA (Cara Copy &amp; Pembacaan):</b><br>• <b>Cara Copy:</b> Klik tombol <b>Salin Teks WA</b> untuk menyalin laporan otomatis ke clipboard.<br>• <b>Cara Membaca Laporan WA:</b><br>  - Menampilkan kategori aktif secara berurutan: <b>1. CATHODE</b>, <b>2. ANODE 63</b>, <b>3. ANODE 62 KU</b>, <b>4. ANODE 62 KS</b>, <b>5. SPENT ANODE</b>, <b>6. SS BLANK</b>, dan <b>7. STORAGE</b> (cell Group non-Charging dengan elektrolit 0%–10% yang tidak terisi pasangan Anode + Cathode/SS), dipisah menjadi zona <b>UTARA (total)</b> dan <b>SELATAN (total)</b>.`
+      instBody: `<b>1. Perbedaan Tampilan PC &amp; Mobile (HP):</b><br>• <b>Tampilan PC:</b> Tombol Bahasa &amp; Riwayat Perubahan berada di sisi kiri header; seluruh menu Filter tampil terbuka dalam satu baris; Grid Cell berada di kiri berdampingan langsung dengan panel <b>Pengaturan Cell</b> &amp; <b>Laporan WA</b> di kanan.<br>• <b>Tampilan Mobile (HP):</b> Header tersusun terpusat dengan tombol Riwayat Perubahan &amp; Bahasa di bagian bawah header; menu Filter disembunyikan di dalam tombol <b>🔍 Tampilkan Filter</b> agar grid lebih luas; saat cell diklik akan muncul <b>Quick Toolbar</b> melayang di bawah layar; panel <b>Pengaturan Cell</b> &amp; <b>Laporan WA</b> berada di bawah Grid Cell (gulir ke bawah).<br><br><b>2. Mengganti Tema (Light / Dark Mode):</b><br>• Klik tombol <b>☀️ Light</b> atau <b>🌙 Dark</b> di bagian atas (Header) untuk beralih antara mode terang dan mode gelap. Pilihan tema otomatis tersimpan.<br><br><b>3. Mengganti Bahasa (Indonesia / English):</b><br>• Klik tombol <b>🌐 English (US)</b> atau <b>🌐 Bahasa Indonesia</b> pada Header untuk mengubah bahasa seluruh menu, filter, panduan, serta format Laporan WA.<br>• <i>Posisi Tombol:</i> Di <b>PC</b> terletak di paling kiri barisan tombol header; di <b>Mobile</b> terletak di sebelah kanan tombol <b>🔄 Riwayat Perubahan</b>.<br><br><b>4. Show Changes (Riwayat Perubahan):</b><br>• Klik tombol <b>🔄 Riwayat Perubahan</b> / <b>🔄 Show Changes</b> pada Header.<br>• <b>Fungsi:</b> Mencatat setiap perubahan data secara otomatis &amp; <i>real-time</i> (lengkap dengan tanggal, jam, jenis perubahan status/elektrolit/panen/hapus, serta lokasi Phase, Group, dan nomor Cell). Riwayat tersinkron ke server dan tersimpan selama <b>3 hari</b>.<br><br><b>5. Ringkasan Jumlah (Kartu KPI Atas):</b><br>• Menampilkan total jumlah secara <i>real-time</i> beserta rincian zona <b>Utara (N)</b> dan <b>Selatan (S)</b>:<br>  • <b>Anode 63 (63A)</b>, <b>Anode 62 KU (62KU)</b>, <b>Anode 62 KS (62KS)</b>, <b>Spent Anode (62SA)</b>, <b>Cathode (C)</b>, dan <b>SS Blanks (SS)</b>.<br>  • <b>Electrolyte (m³):</b> Dihitung dengan rumus <b>10% = 1 m³</b> hingga <b>100% = 10 m³</b> di seluruh Group (termasuk <b>Group Charging</b>), tampil di KPI atas saja dan tidak masuk Laporan WA.<br>  • <b>Storage (0-10%):</b> Menghitung cell Group (non-Charging) dengan <b>0% sampai 10% elektrolit</b> (kosong, ada Anode saja, SS saja, atau Cathode saja). Jika 1 cell terisi <b>Anode + Cathode</b> atau <b>Anode + SS Blank</b>, elektrolit <b>&gt; 10%</b>, maupun bagian <b>Machine</b> (Rack/Station), bukan Storage.<br>  • <i>Catatan:</i> Group dengan status <b>Panen (Crop 1 ⚡ / Crop 2 ⚡ / Crop 3 ⚡)</b> berstatus <b>Charging / Energized</b> — elektrodanya tidak masuk ke KPI &amp; Laporan WA, namun volume Electrolyte (m³) tetap terhitung.<br><br><b>6. Navigasi Phase:</b><br>• Gunakan pilihan <b>Fase / Phase</b> (<b>Semua</b>, <b>P1</b>, <b>P2</b>, <b>P3</b>, <b>Mesin</b>) untuk menampilkan seluruh area atau memfilter khusus Phase 1 (G1–G16), Phase 2 (G17–G32), Phase 3 (G33–G48), atau area <b>Mesin</b> (Rack &amp; Station CSM/ASM/APM).<br><br><b>7. Filter Data Grid:</b><br>• Di <b>PC</b>, filter langsung terlihat; di <b>Mobile</b>, tekan <b>🔍 Tampilkan Filter</b> terlebih dahulu:<br>  • <b>Tampilan Cell:</b> Semua Cell, Hanya Cell Terisi, Hanya Cell Kosong, <b>Group Charging</b> (Group dengan Panen: Crop 1 ⚡, 2 ⚡, atau 3 ⚡), atau <b>Storage</b>.<br>  • <b>Zona &amp; Grup:</b> Menyaring zona Utara/Selatan atau memilih Group/Mesin tertentu.<br>  • <b>Filter Anoda, Katoda &amp; Elektrolit:</b> Menyaring jenis elektroda atau level elektrolit.<br><br><b>8. Clear Cell Data (Hapus Data Per Fase/Mesin):</b><br>• Tombol <b>Hapus P1</b>, <b>Hapus P2</b>, <b>Hapus P3</b>, dan <b>Hapus Mesin</b> berfungsi menghapus total seluruh data Anoda, Katoda, Elektrolit, dan Panen pada Fase/Mesin tersebut (dilengkapi konfirmasi sebelum menghapus).<br><br><b>9. Aturan Storage (0–10%), Group Charging &amp; Pengisian Cell:</b><br>• <b>Aturan Storage (0% – 10% Elektrolit):</b> Cell Group dengan <b>0% sampai 10% Elektrolit</b> terhitung sebagai Storage (tanpa elektrolit 0%, ada Anode saja, SS saja, atau Cathode saja). Ketika 1 cell diisi <b>Anode + Cathode</b> atau <b>Anode + SS Blank</b>, Storage berkurang 1 cell (bukan Storage). Ketika elektrolit <b>di atas 10%</b> atau berada di <b>Machine</b> (Rack/Station), juga bukan Storage.<br>• <b>Aturan Elektrolit &gt; 10% (Non-Panen):</b> Jika Group belum di-set Panen (<b>-</b>), cell dengan <b>Elektrolit &gt; 10%</b> <b>HANYA bisa menyimpan Anode</b> dan tidak bisa menyimpan CATH atau SS Blank.<br>• <b>Group Charging / Energized (Panen: Crop 1 ⚡, 2 ⚡, atau 3 ⚡):</b> Saat Group di-update menjadi <b>Crop 1</b>, <b>Crop 2</b>, atau <b>Crop 3</b>, muncul ikon petir <b>⚡</b> dan cell berstatus <b>Charging / Energized</b> sehingga bisa diisi <b>Cathode</b> maupun <b>Anode</b> pada level elektrolit berapa pun, dengan Electrolyte (m³) tetap terhitung.<br>• <b>Mengisi &amp; Menghapus Tag Status:</b> Klik/tap cell, lalu pilih <b>63A</b>, <b>62KU</b>, <b>62KS</b>, <b>62SA</b>, <b>CATH</b>, atau <b>SS</b> melalui <b>Pengaturan Cell</b> (PC), <b>Quick Toolbar</b> (Mobile), atau shortcut keyboard (<b>1, 2, 3, 4, C, S</b>). Klik/tap langsung pada tag berwarna di dalam cell untuk menghapus tag tersebut.<br>• <b>Mengisi Level Elektrolit:</b> Klik/tap ulang cell yang sudah terpilih (atau tap indikator <b>%</b>) untuk menaikkan level secara bertahap: <b>0% → 10% → 50% → 70% → 100% → 0%</b>, atau pilih langsung angkanya.<br><br><b>10. Laporan WA (Cara Copy &amp; Pembacaan):</b><br>• <b>Cara Copy:</b> Klik tombol <b>Salin Teks WA</b> untuk menyalin laporan otomatis ke clipboard.<br>• <b>Cara Membaca Laporan WA:</b><br>  - Menampilkan kategori aktif secara berurutan: <b>1. CATHODE</b>, <b>2. ANODE 63</b>, <b>3. ANODE 62 KU</b>, <b>4. ANODE 62 KS</b>, <b>5. SPENT ANODE</b>, <b>6. SS BLANK</b>, dan <b>7. STORAGE</b> (cell Group non-Charging dengan elektrolit 0%–10% yang tidak terisi pasangan Anode + Cathode/SS), dipisah menjadi zona <b>UTARA (total)</b> dan <b>SELATAN (total)</b>.`
     }
   };
 
@@ -2497,11 +2596,56 @@
     document.getElementById(id).style.display = 'flex';
   }
 
+  let pvJumpTimer = null;
+
   function closeModal(id) {
     if (id === 'previewModal') {
       hidePreviewHoverTip();
     }
     document.getElementById(id).style.display = 'none';
+  }
+
+  function jumpToGroupFromPreview(rawGroupId) {
+    if (pvLongPressActive) {
+      pvLongPressActive = false;
+      return;
+    }
+    const gId = parseGroupIdAttr(rawGroupId);
+    const grp = getGroupById(gId);
+    if (!grp) return;
+
+    closeModal('previewModal');
+	
+	// Reset semua filter agar Group & Cell 1 dipastikan tampil
+    currentPhaseFilter = 'ALL';
+    document.querySelectorAll('.controls-bar .segmented-pills .lumi-chip').forEach((b, idx) => {
+      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('setPhaseFilter')) {
+        b.classList.toggle('is-active', idx === 0);
+      }
+    });
+
+    ['contentSelect', 'zoneSelect', 'groupSelect', 'statusSelect', 'cathSelect', 'electrolyteSelect'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = 'ALL';
+    });
+
+    renderMatrix();
+    selectCell(gId, 1, null, true, false);
+
+    // Gulir langsung ke header Group & posisi paling kiri (Cell 1)
+    const cell1El = getCellElement(gId, 1);
+    if (cell1El) {
+      const gridWrapper = cell1El.closest('.group-grid-wrapper');
+      if (gridWrapper) gridWrapper.scrollLeft = 0;
+
+      const groupSection = cell1El.closest('.group-section');
+      if (groupSection) {
+        groupSection.scrollIntoView({ block: 'start', behavior: 'smooth' });
+        groupSection.classList.remove('is-jump-target');
+        void groupSection.offsetWidth; // trigger reflow animasi
+        groupSection.classList.add('is-jump-target');
+      }
+    }
   }
 
   /* ====== FULL 1-SCREEN PLANT PREVIEW (HMI / PI VISION BLOCK STYLE) ====== */
@@ -2663,7 +2807,7 @@
       : `${st.elM3} m³`;
 
     const parts = [];
-    if (st.c63) parts.push(`63FL:${st.c63}`);
+    if (st.c63) parts.push(`63A:${st.c63}`);
     if (st.c62ku) parts.push(`62KU:${st.c62ku}`);
     if (st.c62ks) parts.push(`62KS:${st.c62ks}`);
     if (st.c62sa) parts.push(`62SA:${st.c62sa}`);
@@ -2694,12 +2838,17 @@
     const stgBadge = (!st.isMach && !st.isChg && st.stgCount > 0)
       ? `<span class="pv-hmi-stg">Stg:${st.stgCount}</span>`
       : '';
+	const isCurrentActiveGroup = Boolean(
+      activeSelectedCell && String(activeSelectedCell.groupId) === String(g.groupId)
+    );
 
     let itemCls = 'pv-hmi-item';
+    if (isCurrentActiveGroup) {
+      itemCls += ' pv-selected';
+    }
     if (previewSpotlight) {
       itemCls += doesGroupMatchSpotlight(g, st) ? ' pv-highlighted' : ' pv-dimmed';
     }
-
     const safeId = String(g.groupId).replace(/"/g, '&quot;');
 
     return `
@@ -2811,7 +2960,7 @@
         rows.push(`<div class="pv-hover-tip-row" style="color:var(--error);"><span>Mode:</span><b>Non-Charging</b></div>`);
       }
     }
-    if (st.c63) rows.push(`<div class="pv-hover-tip-row"><span>Anode 63FL:</span><b>${st.c63}</b></div>`);
+    if (st.c63) rows.push(`<div class="pv-hover-tip-row"><span>Anode 63A:</span><b>${st.c63}</b></div>`);
     if (st.c62ku) rows.push(`<div class="pv-hover-tip-row"><span>Anode 62KU:</span><b>${st.c62ku}</b></div>`);
     if (st.c62ks) rows.push(`<div class="pv-hover-tip-row"><span>Anode 62KS:</span><b>${st.c62ks}</b></div>`);
     if (st.c62sa) rows.push(`<div class="pv-hover-tip-row"><span>Spent 62SA:</span><b>${st.c62sa}</b></div>`);
@@ -2896,32 +3045,46 @@
       return;
     }
     const gId = parseGroupIdAttr(rawGroupId);
-    closeModal('previewModal');
     const grp = getGroupById(gId);
     if (!grp) return;
 
-    currentPhaseFilter = 'ALL';
-    document.querySelectorAll('.controls-bar .segmented-pills .lumi-chip').forEach((b, idx) => {
-      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('setPhaseFilter')) {
-        b.classList.toggle('is-active', idx === 0);
-      }
+    document.querySelectorAll('#fullPreviewBody .pv-hmi-item.pv-selected').forEach(el => {
+      el.classList.remove('pv-selected');
     });
-    const contentSel = document.getElementById('contentSelect');
-    const zoneSel = document.getElementById('zoneSelect');
-    const groupSel = document.getElementById('groupSelect');
-    const statusSel = document.getElementById('statusSelect');
-    const cathSel = document.getElementById('cathSelect');
-    const elSel = document.getElementById('electrolyteSelect');
+    const clickedCard = Array.from(document.querySelectorAll('#fullPreviewBody .pv-hmi-item'))
+      .find(el => el.getAttribute('data-pv-group') === String(rawGroupId));
+    if (clickedCard) {
+      clickedCard.classList.add('pv-selected');
+    }
 
-    if (contentSel) contentSel.value = 'ALL';
-    if (zoneSel) zoneSel.value = 'ALL';
-    if (groupSel) groupSel.value = 'ALL';
-    if (statusSel) statusSel.value = 'ALL';
-    if (cathSel) cathSel.value = 'ALL';
-    if (elSel) elSel.value = 'ALL';
+    if (pvJumpTimer) clearTimeout(pvJumpTimer);
+    pvJumpTimer = setTimeout(() => {
+      pvJumpTimer = null;
+      closeModal('previewModal');
 
-    renderMatrix();
-    selectCell(gId, 1, null, true, true);
+      currentPhaseFilter = 'ALL';
+      document.querySelectorAll('.controls-bar .segmented-pills .lumi-chip').forEach((b, idx) => {
+        if (b.getAttribute('onclick') && b.getAttribute('onclick').includes('setPhaseFilter')) {
+          b.classList.toggle('is-active', idx === 0);
+        }
+      });
+      const contentSel = document.getElementById('contentSelect');
+      const zoneSel = document.getElementById('zoneSelect');
+      const groupSel = document.getElementById('groupSelect');
+      const statusSel = document.getElementById('statusSelect');
+      const cathSel = document.getElementById('cathSelect');
+      const elSel = document.getElementById('electrolyteSelect');
+
+      if (contentSel) contentSel.value = 'ALL';
+      if (zoneSel) zoneSel.value = 'ALL';
+      if (groupSel) groupSel.value = 'ALL';
+      if (statusSel) statusSel.value = 'ALL';
+      if (cathSel) cathSel.value = 'ALL';
+      if (elSel) elSel.value = 'ALL';
+
+      renderMatrix();
+      selectCell(gId, 1, null, true, true);
+    }, 180);
   }
   /* ====================================================================== */
 
@@ -3373,11 +3536,12 @@
     activeSelectedCell = null;
     selectionAnchor = null;
     selectedCellsList = [];
+    document.body.classList.remove('is-mobile-editing'); // <-- TAMBAHKAN INI
     document.getElementById('inspectorControls').style.display = 'none';
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'none';
     document.getElementById('inspectorContent').innerHTML = `
-      <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11px; user-select: none; -webkit-user-select: none;">
+      <div style="text-align: center; color: var(--on-surface-variant); padding: 8px 0; font-size: 11.5px; user-select: none; -webkit-user-select: none;">
         ${tr('clickCell')}
       </div>
     `;
@@ -3395,7 +3559,7 @@
     if (!toast) {
       toast = document.createElement('div');
       toast.id = 'toastMsg';
-      toast.style.cssText = 'position:fixed; bottom:84px; left:50%; transform:translateX(-50%); background:var(--surface-dim); color:var(--primary); padding:6px 14px; border-radius:20px; border:1px solid var(--primary); font-size:11px; z-index:99999; pointer-events:none; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,0.3); white-space:nowrap; user-select:none; -webkit-user-select:none;';
+      toast.style.cssText = 'position:fixed; bottom:84px; left:50%; transform:translateX(-50%); background:var(--surface-dim); color:var(--primary); padding:6px 14px; border-radius:20px; border:1px solid var(--primary); font-family:var(--ff-sans); font-size:11.5px; z-index:99999; pointer-events:none; font-weight:700; box-shadow:0 8px 24px rgba(0,0,0,0.3); white-space:nowrap; user-select:none; -webkit-user-select:none;';
       document.body.appendChild(toast);
     }
     toast.textContent = msg;
@@ -3666,7 +3830,8 @@
     activeSelectedCell = { groupId: gId, cellNum: cNum };
     selectedCellsList = [{ groupId: gId, cellNum: cNum }];
 
-    document.getElementById('inspectorControls').style.display = 'flex';
+    document.body.classList.add('is-mobile-editing');
+	document.getElementById('inspectorControls').style.display = 'flex';
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'flex';
 
@@ -3696,7 +3861,8 @@
     let hasElectrolyte = elLevel > 0;
     let isStorage = isCellStorage(grp, c);
 
-    let shortA = c.anodeStatus === '63 FL' ? '63FL' : (c.anodeStatus === '62 KU' ? '62KU' : (c.anodeStatus === '62 KS' ? '62KS' : (c.anodeStatus === '62 SA' ? '62SA' : '')));
+    let shortA = c.anodeStatus === '63 FL' ? '63A' : (c.anodeStatus === '62 KU' ? '62KU' : (c.anodeStatus === '62 KS' ? '62KS' : (c.anodeStatus === '62 SA' ? '62SA' : '')));
+    let shortC = c.cathodeStatus === 'CATH' ? 'C' : (c.cathodeStatus === 'SS' ? 'SS' : '');
     let anodeClass = c.anodeStatus === '63 FL' ? 'tag-63' : (c.anodeStatus === '62 KU' ? 'tag-62ku' : (c.anodeStatus === '62 KS' ? 'tag-62ks' : 'tag-62sa'));
     let cathClass = c.cathodeStatus === 'CATH' ? 'tag-cath' : (c.cathodeStatus === 'SS' ? 'tag-ss' : '');
 
@@ -3711,8 +3877,8 @@
       if (shortA) {
         html += `<div class="anode-tag ${anodeClass}" data-remove-tag="anode">${shortA}</div>`;
       }
-      if (c.cathodeStatus && c.cathodeStatus !== 'NONE') {
-        html += `<div class="cathode-tag ${cathClass}" data-remove-tag="cathode">${c.cathodeStatus}</div>`;
+      if (shortC) {
+        html += `<div class="cathode-tag ${cathClass}" data-remove-tag="cathode">${shortC}</div>`;
       }
       html += `</div>`;
     }
@@ -4030,8 +4196,8 @@
         <div class="group-header">
           <div class="group-title">
             <span>${groupDisplayName}</span> 
-            <span style="font-size:9px; background:var(--primary-container); color:var(--primary); padding:1px 5px; border-radius:4px;">${trZone}</span>
-            <span style="font-size:9px; background:var(--surface); padding:1px 5px; border:1px solid var(--stroke-default); border-radius:4px; color:var(--on-surface-variant); font-family:var(--ff-mono);">${tagSpecial}</span>
+            <span style="font-size:9.5px; background:var(--primary-container); color:var(--primary); padding:1px 5px; border-radius:4px;">${trZone}</span>
+            <span style="font-size:9.5px; background:var(--surface); padding:1px 5px; border:1px solid var(--stroke-default); border-radius:4px; color:var(--on-surface-variant); font-family:var(--ff-mono); font-variant-numeric:tabular-nums;">${tagSpecial}</span>
           </div>
           ${cropHtml}
         </div>
@@ -4148,7 +4314,8 @@
     activeSelectedCell = { groupId: gId, cellNum: cNum };
     selectedCellsList = [{ groupId: gId, cellNum: cNum }];
 
-    document.getElementById('inspectorControls').style.display = 'flex';
+    document.body.classList.add('is-mobile-editing');
+	document.getElementById('inspectorControls').style.display = 'flex';
     let mb = document.getElementById('mobileQuickBar');
     if (mb) mb.style.display = 'flex';
 
